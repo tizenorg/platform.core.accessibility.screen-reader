@@ -2,6 +2,7 @@
 #define __screen_reader_H__
 
 #include <atspi/atspi.h>
+#include <Eldbus.h>
 #include <tts.h>
 
 #define LAN_NAME 6
@@ -12,8 +13,6 @@
 #define MIN_POS_REACHED ", begin of text reached"
 
 #define FOCUS_SIG "focused"
-
-#define EDITING_STARTED "Editing"
 
 #define FOCUS_CHANGED_SIG "object:state-changed:focused"
 #define VALUE_CHANGED_SIG "object:property-change:accessible-value"
@@ -45,7 +44,7 @@ typedef struct _Service_Data
 
 	//Set by tts
 	tts_h tts;
-	GList *available_languages;
+	Eina_List *available_languages;
 
 	char *text_to_say_info;
 	char *current_value;
@@ -57,6 +56,9 @@ typedef struct _Service_Data
 	bool update_language_list;
 
 	//Set by spi
+	AtspiEventListener *state_changed_listener;
+	AtspiEventListener *value_changed_listener;
+	AtspiEventListener *caret_moved_listener;
 	AtspiEventListener *spi_listener;
 
 	AtspiAccessible  *currently_focused;
@@ -64,6 +66,7 @@ typedef struct _Service_Data
 	AtspiAccessible  *clicked_widget;
 
 	//Set by dbus
+	Eldbus_Proxy *proxy;
 	char **last_tokens;
 	char *available_requests;
 	char **available_apps;

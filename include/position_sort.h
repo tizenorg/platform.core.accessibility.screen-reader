@@ -2,7 +2,7 @@
 #define SMART_NAVI_POSITION_SORT_H_
 
 #include <atspi/atspi.h>
-#include <glib.h>
+#include <Eina.h>
 
 
 /**
@@ -32,6 +32,6 @@
  *
  * @ret list List of lists
  */
-GList *position_sort(const GList *obj);
+Eina_List *position_sort(const Eina_List *obj);
 
 #endif /* end of include guard: POSITION_SORT_H_ */

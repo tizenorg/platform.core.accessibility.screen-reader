@@ -1,8 +1,8 @@
+#include <Elementary.h>
 #include <vconf.h>
 #include "screen_reader_vconf.h"
 #include "screen_reader_spi.h"
 #include "logger.h"
-#include <stdio.h>
 
 #ifdef RUN_IPC_TEST_SUIT
 	#include "test_suite/test_suite.h"
@@ -20,7 +20,7 @@ bool set_langauge(Service_Data *sd, const char *new_language, int new_voice)
 {
 	DEBUG("START");
 
-	GList *l;
+	Eina_List *l;
 	Voice_Info *vi;
 
 	if(strncmp(sd->language, new_language, LAN_NAME - 1) == 0 && sd->voice_type == new_voice)
@@ -31,9 +31,8 @@ bool set_langauge(Service_Data *sd, const char *new_language, int new_voice)
 		return true;
 	}
 
-	for (l = sd->available_languages; l; l = l->next)
+	EINA_LIST_FOREACH(sd->available_languages, l, vi)
 	{
-		vi = l->data;
 		DEBUG("foreach %s <- %s", vi->language, new_language);
 		if(strncmp(vi->language, new_language, LAN_NAME - 1) == 0 &&
 				vi->voice_type == new_voice)
@@ -64,12 +63,12 @@ char *fold_tracker_signal(const char *signal_name)
 	{
 		return FOCUS_CHANGED_SIG;
 	}
-        return NULL;
+	return NULL;
 }
 
 bool set_tracking_listener(Service_Data *sd, const char *signal_name)
 {
-	DEBUG("START: %s", sd->tracking_signal_name);
+	DEBUG("START");
 
 	char *new_tracking_signal;
 
@@ -94,7 +93,7 @@ bool set_tracking_listener(Service_Data *sd, const char *signal_name)
 	gboolean ret1 = atspi_event_listener_register(sd->spi_listener, sd->tracking_signal_name, NULL);
 	if(ret1 == false)
 	{
-		DEBUG("FAILED TO REGISTER spi focus listener");
+		DEBUG("FAILED TO REGISTER spi focus/highlight listener");
 		return false;
 	}
 	else
@@ -109,10 +108,10 @@ bool set_tracking_listener(Service_Data *sd, const char *signal_name)
 void information_level_cb(keynode_t *node, void *user_data)
 {
 	DEBUG("START");
-	DEBUG("Information level set: %d", vconf_keynode_get_int(node));
+	DEBUG("Information level set: %d", node->value.i);
 
 	Service_Data *service_data = user_data;
-	service_data->information_level = vconf_keynode_get_int(node);
+	service_data->information_level = node->value.i;
 
 	DEBUG("END");
 }
@@ -120,14 +119,14 @@ void information_level_cb(keynode_t *node, void *user_data)
 void app_termination_cb(keynode_t *node, void *user_data)
 {
 	DEBUG("START");
-	DEBUG("Application terminate %d", !vconf_keynode_get_int(node));
+	DEBUG("Application terminate %d", !node->value.i);
 
 	Service_Data *service_data = user_data;
-	service_data->run_service = vconf_keynode_get_int(node);
+	service_data->run_service = node->value.i;
 
 	if(service_data->run_service == 0)
 	{
-		atspi_exit();
+		elm_exit();
 	}
 
 	DEBUG("END");
@@ -136,14 +135,14 @@ void app_termination_cb(keynode_t *node, void *user_data)
 void language_cb(keynode_t *node, void *user_data)
 {
 	DEBUG("START");
-	DEBUG("Trying to set language to: %s", vconf_keynode_get_str(node));
+	DEBUG("Trying to set language to: %s", node->value.s);
 
 	Service_Data *sd = user_data;
 
 	int voice_type;
 
 	vconf_get_int("db/setting/accessibility/voice", (int*)(&voice_type));
-	set_langauge(sd, vconf_keynode_get_str(node), voice_type);
+	set_langauge(sd, node->value.s, voice_type);
 
 	DEBUG("END");
 }
@@ -151,12 +150,12 @@ void language_cb(keynode_t *node, void *user_data)
 void voice_cb(keynode_t *node, void *user_data)
 {
 	DEBUG("START");
-	DEBUG("Voice set to: %d", vconf_keynode_get_int(node));
+	DEBUG("Voice set to: %d", node->value.i);
 
 	Service_Data *sd = user_data;
 
 	const char *lang = vconf_get_str("db/setting/accessibility/language");
-	set_langauge(sd, lang, vconf_keynode_get_int(node));
+	set_langauge(sd, lang, (int)node->value.i);
 
 	DEBUG("END");
 }
@@ -164,10 +163,10 @@ void voice_cb(keynode_t *node, void *user_data)
 void reading_speed_cb(keynode_t *node, void *user_data)
 {
 	DEBUG("START");
-	DEBUG("Reading speed set to: %d", vconf_keynode_get_int(node));
+	DEBUG("Reading speed set to: %d", node->value.i);
 
 	Service_Data *service_data = user_data;
-	service_data->reading_speed = vconf_keynode_get_int(node);
+	service_data->reading_speed = node->value.i;
 
 	DEBUG("END");
 }
@@ -175,7 +174,7 @@ void reading_speed_cb(keynode_t *node, void *user_data)
 void tracking_signal_changed_cb(keynode_t *node, void *user_data)
 {
 	DEBUG("START");
-	DEBUG("Tracking signal set to: %s", vconf_keynode_get_str(node));
+	DEBUG("Tracking signal set to: %s", node->value.s);
 
 	Service_Data *sd = user_data;
 	const char *tracking_signal = vconf_get_str("db/setting/accessibility/tracking_signal");
@@ -233,6 +232,7 @@ int get_key_values(Service_Data *sd)
 bool vconf_init(Service_Data *service_data)
 {
 	DEBUG( "--------------------- VCONF_init START ---------------------");
+	printf( "--------------------- VCONF_init START ---------------------");
 	int ret = 0;
 
 	//TODO: Remove when adequate keys in the settings(control?) panel are added
@@ -242,7 +242,7 @@ bool vconf_init(Service_Data *service_data)
 	vconf_keylist_add_int(keys, "db/setting/accessibility/information_level", 2);
 	vconf_keylist_add_str(keys, "db/setting/accessibility/language", "en_US");
 	vconf_keylist_add_int(keys, "db/setting/accessibility/voice", 1);
-	vconf_keylist_add_str(keys, "db/setting/accessibility/tracking_signal", FOCUS_SIG);
+	vconf_keylist_add_str(keys, "db/setting/accessibility/tracking_signal",  FOCUS_CHANGED_SIG);
     //-----------------------------------------------------------------------------------
 	//vconf_set_bool(VCONFKEY_SETAPPL_ACCESSIBILITY_TTS, EINA_TRUE);
 

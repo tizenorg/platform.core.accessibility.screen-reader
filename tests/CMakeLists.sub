@@ -1,5 +1,5 @@
 ## PROJECT NAME
-PROJECT(smart-navigator-tests C)
+PROJECT(screen-reader-tests C)
 
 ## INCLUDES
 INCLUDE_DIRECTORIES(${CMAKE_SOURCE_DIR}/include)

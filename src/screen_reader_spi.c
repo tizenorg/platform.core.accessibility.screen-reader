@@ -7,9 +7,7 @@
 #ifdef RUN_IPC_TEST_SUIT
     #include "test_suite/test_suite.h"
 #endif
-#include <stdlib.h>
 
-#define MEMORY_ERROR "Memory allocation failed"
 #define NO_VALUE_INTERFACE "No value interface present"
 #define NO_TEXT_INTERFACE "No text interface present"
 
@@ -45,31 +43,34 @@ static void display_info(const AtspiEvent *event)
     DEBUG("--------------------------------------------------------");
 }
 
-gboolean double_click_timer_cb(void *data)
+Eina_Bool double_click_timer_cb(void *data)
 {
     Service_Data *sd = data;
     sd->clicked_widget = NULL;
 
-    return FALSE;
+    return EINA_FALSE;
 }
 
 bool allow_recursive_name(AtspiAccessible *obj)
 {
     AtspiRole r = atspi_accessible_get_role(obj, NULL);
     if (r == ATSPI_ROLE_FILLER)
-        return true;
+      return true;
     return false;
 }
 
 char *generate_description_for_subtree(AtspiAccessible *obj)
 {
+    DEBUG("START");
     if (!allow_recursive_name(obj))
         return strdup("");
+
 
     if (!obj)
         return strdup("");
     int child_count = atspi_accessible_get_child_count(obj, NULL);
 
+    DEBUG("There is %d children inside this filler", child_count);
     if (!child_count)
         return strdup("");
 
@@ -79,44 +80,48 @@ char *generate_description_for_subtree(AtspiAccessible *obj)
     char ret[256] = "\0";
     AtspiAccessible *child = NULL;
     for (i=0; i < child_count; i++) {
-      child = atspi_accessible_get_child_at_index(obj, i, NULL);
-      name = atspi_accessible_get_name(child, NULL);
-      if (strncmp(name, "\0", 1)) {
-        strncat(ret, name, sizeof(ret) - strlen(ret) - 1);
-      }
-      strncat(ret, " ", 1);
-      below = generate_description_for_subtree(child);
-      if (strncmp(below, "\0", 1)) {
-        strncat(ret, below, sizeof(ret) - strlen(ret) - 1);
-      }
-      g_object_unref(child);
-      free(below);
-      free(name);
+        child = atspi_accessible_get_child_at_index(obj, i, NULL);
+        name = atspi_accessible_get_name(child, NULL);
+        DEBUG("%d child name:%s", i, name);
+        if (strncmp(name, "\0", 1)) {
+            strncat(ret, name, sizeof(ret) - strlen(ret) - 1);
+        }
+        strncat(ret, " ", 1);
+        below = generate_description_for_subtree(child);
+        if (strncmp(below, "\0", 1)) {
+            strncat(ret, below, sizeof(ret) - strlen(ret) - 1);
+        }
+        g_object_unref(child);
+        free(below);
+        free(name);
     }
     return strdup(ret);
 }
 
-static char *spi_get_atspi_accessible_basic_text_description(AtspiAccessible *obj)
+static char *spi_on_state_changed_get_text(AtspiEvent *event, void *user_data)
 {
-    if(!obj) return NULL;
-
+    Service_Data *sd = (Service_Data*)user_data;
     char *name;
     char *description;
     char *role_name;
     char *other;
     char *return_text = NULL;
+    sd->currently_focused = event->source;
 
-    description = atspi_accessible_get_description(obj, NULL);
-    name = atspi_accessible_get_name(obj, NULL);
-    role_name = atspi_accessible_get_role_name(obj, NULL);
-    other = generate_description_for_subtree(obj);
+    description = atspi_accessible_get_description(sd->currently_focused, NULL);
+    name = atspi_accessible_get_name(sd->currently_focused, NULL);
+    role_name = atspi_accessible_get_role_name(sd->currently_focused, NULL);
+    other = generate_description_for_subtree(sd->currently_focused);
+
+    DEBUG("->->->->->-> WIDGET GAINED FOCUS: %s <-<-<-<-<-<-<-", name);
+    DEBUG("->->->->->-> FROM SUBTREE HAS NAME:  %s <-<-<-<-<-<-<-", other);
 
     if (strncmp(description, "\0", 1))
         return_text = strdup(description);
     else if (strncmp(name, "\0", 1))
         return_text = strdup(name);
     else if (strncmp(other, "\0", 1))
-        return_text = strdup(other);
+        return_text = strdup(name);
     else
         return_text = strdup(role_name);
 
@@ -124,18 +129,6 @@ static char *spi_get_atspi_accessible_basic_text_description(AtspiAccessible *ob
     free(description);
     free(role_name);
     free(other);
-
-    return return_text;
-}
-
-static char *spi_on_state_changed_get_text(AtspiEvent *event, void *user_data)
-{
-    Service_Data *sd = (Service_Data*)user_data;
-    char *return_text = NULL;
-    sd->currently_focused = event->source;
-
-    DEBUG("->->->->->-> WIDGET GAINED HIGHLIGHT <-<-<-<-<-<-<-");
-    return_text = spi_get_atspi_accessible_basic_text_description(sd->currently_focused);
 
     return return_text;
 }
@@ -234,68 +227,15 @@ static char *spi_on_value_changed_get_text(AtspiEvent *event, void *user_data)
     return text_to_read;
 }
 
-static void spi_object_append_relations_to_text_to_read(AtspiAccessible *obj,
-                                                        char **text_to_read)
-{
-    if(!obj || !text_to_read || !*text_to_read)
-    {
-        ERROR("Invalid parameter");
-        return;
-    }
-
-    GError *error = NULL;
-
-    GArray *relations = atspi_accessible_get_relation_set(obj, &error);
-    if(error != NULL)
-    {
-        ERROR("Can not get atspi object relations: %s", error->message);
-        g_error_free(error);
-        return;
-    }
-
-    if(!relations)
-    {
-        ERROR("Can not get accessible object relations");
-        return;
-    }
-
-    int i = 0;
-    for(; i < relations->len; ++i)
-    {
-        AtspiRelation *relation = g_array_index(relations, AtspiRelation*, i);
-        if(!relation) continue;
-
-        AtspiRelationType relation_type = atspi_relation_get_relation_type(relation);
-        if(relation_type == ATSPI_RELATION_LABEL_FOR ||
-            relation_type == ATSPI_RELATION_LABELLED_BY)
-        {
-            int relation_objects = atspi_relation_get_n_targets(relation);
-            int j;
-            for(j = 0; j < relation_objects; ++j)
-            {
-                AtspiAccessible *relation_object = atspi_relation_get_target(relation, j);
-                if(!relation_object || obj == relation_object) continue;
-
-                char *relation_obj_text = spi_get_atspi_accessible_basic_text_description(relation_object);
-
-                char *text = NULL;
-                if(asprintf(&text, "%s %s", *text_to_read, relation_obj_text) == -1)
-                    continue;
-                free(relation_obj_text);
-                free(*text_to_read);
-                *text_to_read = text;
-                g_object_unref(relation_object);
-            }
-        }
-    }
-
-    g_array_free(relations, TRUE);
-}
-
 char *spi_event_get_text_to_read(AtspiEvent *event, void *user_data)
 {
+    DEBUG("START");
+
     Service_Data *sd = (Service_Data*)user_data;
     char *text_to_read;
+
+    DEBUG("TRACK SIGNAL:%s", sd->tracking_signal_name);
+    DEBUG("WENT EVENT:%s", event->type);
 
     if(!sd->tracking_signal_name)
     {
@@ -317,18 +257,17 @@ char *spi_event_get_text_to_read(AtspiEvent *event, void *user_data)
     }
     else
     {
-        DEBUG("Unhandled event type: %s %d:%d", event->type, event->detail1, event->detail2);
+        ERROR("Unknown event type");
         return NULL;
     }
-
-    spi_object_append_relations_to_text_to_read(sd->currently_focused, &text_to_read);
-    DEBUG("%p %s", sd->currently_focused, text_to_read);
 
     return text_to_read;
 }
 
 void spi_event_listener_cb(AtspiEvent *event, void *user_data)
 {
+    DEBUG("START")
+
     display_info(event);
 
     if(!user_data)
@@ -343,8 +282,10 @@ void spi_event_listener_cb(AtspiEvent *event, void *user_data)
         ERROR("Can not prepare text to read");
         return;
     }
-    tts_speak(text_to_read, FALSE);
+    DEBUG("SPEAK:%s", text_to_read)
+    tts_speak(text_to_read, EINA_FALSE);
     free(text_to_read);
+    DEBUG("END")
 }
 
 /**
@@ -369,10 +310,12 @@ void spi_init(Service_Data *sd)
     sd->spi_listener = atspi_event_listener_new(spi_event_listener_cb, service_data, NULL);
     if(sd->spi_listener == NULL)
       {
-         DEBUG("FAILED TO CREATE spi state changed listener");
+         DEBUG("FAILED TO CREATE spi state changed listener")
       }
 
     // ---------------------------------------------------------------------------------------------------
+
+    DEBUG("TRACKING SIGNAL:%s", sd->tracking_signal_name);
 
     gboolean ret1 = atspi_event_listener_register(sd->spi_listener, sd->tracking_signal_name, NULL);
     if(ret1 == false)
@@ -391,7 +334,6 @@ void spi_init(Service_Data *sd)
       {
          DEBUG("FAILED TO REGISTER spi value changed listener");
       }
-
 
     if(ret1 == true && ret2 == true && ret3 == true)
       {

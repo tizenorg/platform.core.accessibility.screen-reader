@@ -1,5 +1,8 @@
+#include <Ecore.h>
+#include <Ecore_Evas.h>
+#include <Evas.h>
 #include <atspi/atspi.h>
-#include <stdio.h>
+#include <tone_player.h>
 #include "logger.h"
 #include "screen_reader_tts.h"
 #include "screen_reader_haptic.h"
@@ -10,7 +13,7 @@
 
 #define ITEMS_NOTIFICATION "Visible items from %d to %d"
 
-static gboolean status = FALSE;
+static Eina_Bool status = EINA_FALSE;
 
 static void _smart_notification_focus_chain_end(void);
 static void _smart_notification_realized_items(int start_idx, int end_idx);
@@ -24,6 +27,7 @@ static void _smart_notification_realized_items(int start_idx, int end_idx);
  */
 void smart_notification(Notification_Type nt, int start_index, int end_index)
 {
+    DEBUG("START");
     if(!status)
         return;
 
@@ -49,6 +53,7 @@ void smart_notification(Notification_Type nt, int start_index, int end_index)
  */
 void get_realized_items_count(AtspiAccessible *scrollable_object, int *start_idx, int *end_idx)
 {
+    DEBUG("START");
     int count_child, jdx;
     AtspiAccessible *child_iter;
     AtspiStateType state =  ATSPI_STATE_SHOWING;
@@ -85,8 +90,9 @@ void get_realized_items_count(AtspiAccessible *scrollable_object, int *start_idx
  * @param event AtspiEvent
  * @param user_data UNUSED
  */
+
 static void
-_scroll_event_cb(AtspiEvent     *event, void *user_data)
+_scroll_event_cb(AtspiEvent *event, gpointer user_data)
 {
    if(!status)
         return;
@@ -95,18 +101,18 @@ _scroll_event_cb(AtspiEvent     *event, void *user_data)
    start_index = 0;
    end_index = 0;
 
-   DEBUG("Event: %s: %d, obj: %p: role: %s\n", event->type, event->detail1, event->source,
-         atspi_accessible_get_role_name(event->source, NULL));
+   fprintf(stderr, "Event: %s: %d, obj: %p: role: %s\n", event->type, event->detail1, event->source,
+           atspi_accessible_get_role_name(event->source, NULL));
 
    if (!strcmp(event->type, "object:scroll-start"))
      {
         DEBUG("Scrolling started");
-        tts_speak("Scrolling started", TRUE);
+        tts_speak("Scrolling started", EINA_TRUE);
      }
    else if (!strcmp(event->type, "object:scroll-end"))
      {
         DEBUG("Scrolling finished");
-        tts_speak("Scrolling finished", FALSE);
+        tts_speak("Scrolling finished", EINA_FALSE);
         get_realized_items_count((AtspiAccessible *)event->source, &start_index, &end_index);
         _smart_notification_realized_items(start_index, end_index);
      }
@@ -129,7 +135,7 @@ void smart_notification_init(void)
 
     haptic_module_init();
 
-    status = TRUE;
+    status = EINA_TRUE;
 }
 
 /**
@@ -138,7 +144,7 @@ void smart_notification_init(void)
  */
 void smart_notification_shutdown(void)
 {
-    status = FALSE;
+    status = EINA_FALSE;
 }
 
 /**
@@ -151,6 +157,9 @@ static void _smart_notification_focus_chain_end(void)
        return;
 
     DEBUG(RED"Smart notification - FOCUS CHAIN END"RESET);
+
+    tone_player_stop(0);
+    tone_player_start(TONE_TYPE_SUP_CONFIRM, SOUND_TYPE_MEDIA, 200, NULL);
 }
 
 /**
@@ -171,5 +180,5 @@ static void _smart_notification_realized_items(int start_idx, int end_idx)
 
     snprintf(buf, sizeof(buf), ITEMS_NOTIFICATION, start_idx, end_idx);
 
-    tts_speak(strdup(buf), FALSE);
+    tts_speak(strdup(buf), EINA_FALSE);
 }

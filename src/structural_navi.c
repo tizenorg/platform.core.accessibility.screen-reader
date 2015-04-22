@@ -2,50 +2,51 @@
 #include "position_sort.h"
 #include "logger.h"
 
-static GList*
+static Eina_List*
 _atspi_children_list_get(AtspiAccessible *parent)
 {
-   GList *ret = NULL;
+   Eina_List *ret = NULL;
    int count = atspi_accessible_get_child_count(parent, NULL);
    int i;
 
    for (i = 0; i < count; i++)
      {
         AtspiAccessible *child = atspi_accessible_get_child_at_index(parent, i, NULL);
-        if (child) ret = g_list_append(ret, child);
+        if (child) ret = eina_list_append(ret, child);
      }
 
    return ret;
 }
 
 static void
-_atspi_children_list_free(GList *children)
+_atspi_children_list_free(Eina_List *children)
 {
-   for (; children; children = children->next)
-      g_object_unref(children->data);
+   AtspiAccessible *obj;
+
+   EINA_LIST_FREE(children, obj)
+      g_object_unref(obj);
 }
 
-static GList*
-_flat_review_get(GList *tosort)
+static Eina_List*
+_flat_review_get(Eina_List *tosort)
 {
-   GList *ret = NULL, *lines, *l, *line;
+   Eina_List *ret = NULL, *lines, *l, *line;
 
    lines = position_sort(tosort);
 
-   for (l = lines; l; l = l->next)
+   EINA_LIST_FOREACH(lines, l, line)
      {
-        line = l->data;
-        ret = g_list_concat(ret, line);
+        ret = eina_list_merge(ret, line);
      }
 
-   g_list_free(lines);
+   eina_list_free(lines);
 
    return ret;
 }
 
 AtspiAccessible *structural_navi_same_level_next(AtspiAccessible *current)
 {
-    AtspiAccessible *parent, *ret = NULL;
+    AtspiAccessible *parent;
     AtspiRole role;
 
     parent = atspi_accessible_get_parent(current, NULL);
@@ -54,13 +55,13 @@ AtspiAccessible *structural_navi_same_level_next(AtspiAccessible *current)
     role = atspi_accessible_get_role(parent, NULL);
     if (role != ATSPI_ROLE_DESKTOP_FRAME)
       {
-         GList *children = _atspi_children_list_get(parent);
-         GList *sorted = _flat_review_get(children);
-         GList *me = g_list_find(sorted, current);
-         if (me)
-           ret = me->next ? me->next->data : NULL;
+         Eina_List *children = _atspi_children_list_get(parent);
+         Eina_List *me = eina_list_data_find_list(children, current);
+         Eina_List *sorted = _flat_review_get(children);
+         me = eina_list_data_find_list(sorted, current);
+         AtspiAccessible *ret = eina_list_data_get(eina_list_next(me));
 
-         if (sorted) g_list_free(sorted);
+         eina_list_free(sorted);
          _atspi_children_list_free(children);
 
          return ret;
@@ -70,7 +71,7 @@ AtspiAccessible *structural_navi_same_level_next(AtspiAccessible *current)
 
 AtspiAccessible *structural_navi_same_level_prev(AtspiAccessible *current)
 {
-    AtspiAccessible *parent, *ret = NULL;
+    AtspiAccessible *parent;
     AtspiRole role;
 
     parent = atspi_accessible_get_parent(current, NULL);
@@ -79,13 +80,12 @@ AtspiAccessible *structural_navi_same_level_prev(AtspiAccessible *current)
     role = atspi_accessible_get_role(parent, NULL);
     if (role != ATSPI_ROLE_DESKTOP_FRAME)
       {
-         GList *children = _atspi_children_list_get(parent);
-         GList *sorted = _flat_review_get(children);
-         GList *me = g_list_find(sorted, current);
-         if (me)
-           ret = me->prev ? me->prev->data : NULL;
+         Eina_List *children = _atspi_children_list_get(parent);
+         Eina_List *sorted = _flat_review_get(children);
+         Eina_List *me = eina_list_data_find_list(sorted, current);
+         AtspiAccessible *ret = eina_list_data_get(eina_list_prev(me));
 
-         if (sorted) g_list_free(sorted);
+         eina_list_free(sorted);
          _atspi_children_list_free(children);
 
          return ret;
@@ -113,12 +113,12 @@ AtspiAccessible *structural_navi_level_down(AtspiAccessible *current)
 {
    AtspiAccessible *ret;
 
-   GList *children = _atspi_children_list_get(current);
-   GList *sorted = _flat_review_get(children);
+   Eina_List *children = _atspi_children_list_get(current);
+   Eina_List *sorted = _flat_review_get(children);
 
-   ret = sorted ? sorted->data : NULL;
+   ret = eina_list_data_get(sorted);
 
-   if (sorted) g_list_free(sorted);
+   eina_list_free(sorted);
    _atspi_children_list_free(children);
 
    return ret;

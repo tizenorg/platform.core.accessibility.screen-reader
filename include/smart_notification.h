@@ -5,7 +5,7 @@
  * @brief Type of notification events.
  *
  * @FOCUS_CHAIN_END_NOTIFICATION_EVENT emitted when
- * currnetly focued widget is the last one
+ * currnetly focued or highlighted widget is the last one
  * in focus chain for application current view.
  *
  * @REALIZED_ITEMS_NOTIFICATION_EVENT

@@ -38,13 +38,13 @@ Service_Data *get_pointer_to_service_data_struct()
 
 int screen_reader_create_service(void *data)
 {
-	DEBUG("Service Create Callback \n");
+	printf("\n\n\nService Create:%s\n\n\n", __func__);
 
 	Service_Data *service_data = data;
 
-	tts_init(service_data);
 	vconf_init(service_data);
 	spi_init(service_data);
+	tts_init(service_data);
 
 
 	/* XML TEST */
@@ -63,7 +63,7 @@ int screen_reader_terminate_service(void *data)
 
 	Service_Data *service_data = data;
 
-	int vconf_ret = vconf_set_bool("db/setting/accessibility/screen_reader", FALSE);
+	int vconf_ret = vconf_set_bool("db/setting/accessibility/screen_reader", EINA_FALSE);
 	if(vconf_ret == 0)
 	{
 		DEBUG("TTS key set to false");
@@ -74,7 +74,7 @@ int screen_reader_terminate_service(void *data)
 	}
 
 	
-	vconf_ret = vconf_set_bool(VCONFKEY_SETAPPL_ACCESSIBILITY_TTS, FALSE);
+	vconf_ret = vconf_set_bool(VCONFKEY_SETAPPL_ACCESSIBILITY_TTS, EINA_FALSE);
 	if(vconf_ret == 0)
 	{
 		DEBUG("TTS key set to false");

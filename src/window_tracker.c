@@ -10,8 +10,11 @@ static AtspiAccessible *last_active_win;
 static void
 _on_atspi_window_cb(const AtspiEvent *event)
 {
+   DEBUG("START");
+   DEBUG("%s", event->type);
    if (!strcmp(event->type, "window:activate") ||
-       !strcmp(event->type, "window:restore"))
+       !strcmp(event->type, "window:restore") ||
+       !strcmp(event->type, "window:create"))
      {
         if (last_active_win != event->source)
             {
@@ -35,6 +38,13 @@ _get_active_win(void)
    int i, j;
    last_active_win = NULL;
    AtspiAccessible *desktop = atspi_get_desktop(0);
+   DEBUG("START");
+   if (desktop) {
+       DEBUG("DESKTOP FOUND");
+   }
+   else {
+       ERROR("DESKTOP NOT FOUND");
+   }
 
    for (i = 0; i < atspi_accessible_get_child_count(desktop, NULL); i++) {
        AtspiAccessible *app = atspi_accessible_get_child_at_index(desktop, i, NULL);
@@ -57,8 +67,10 @@ _get_active_win(void)
 
 void window_tracker_init(void)
 {
+   DEBUG("START");
    listener = atspi_event_listener_new_simple(_on_atspi_window_cb, NULL);
    atspi_event_listener_register(listener, "window:activate", NULL);
+   atspi_event_listener_register(listener, "window:create", NULL);
    atspi_event_listener_register(listener, "window:deactivate", NULL);
    atspi_event_listener_register(listener, "window:restore", NULL);
    atspi_event_listener_register(listener, "window:destroy", NULL);
@@ -67,6 +79,7 @@ void window_tracker_init(void)
 void window_tracker_shutdown(void)
 {
    atspi_event_listener_deregister(listener, "window:activate", NULL);
+   atspi_event_listener_deregister(listener, "window:create", NULL);
    atspi_event_listener_deregister(listener, "window:deactivate", NULL);
    atspi_event_listener_deregister(listener, "window:restore", NULL);
    atspi_event_listener_deregister(listener, "window:destroy", NULL);
@@ -85,6 +98,7 @@ void window_tracker_register(Window_Tracker_Cb cb, void *data)
 
 void window_tracker_active_window_request(void)
 {
+   DEBUG("START");
    _get_active_win();
    if (user_cb) user_cb(user_data, last_active_win);
 }

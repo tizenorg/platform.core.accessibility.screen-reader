@@ -2,6 +2,7 @@
 #define FLAT_NAVI_H_
 
 #include <atspi/atspi.h>
+#include <Eina.h>
 
 typedef struct _FlatNaviContext FlatNaviContext;
 
@@ -95,7 +96,7 @@ AtspiAccessible *flat_navi_context_current_get(FlatNaviContext *ctx);
  *
  * @return EINA_TRUE is operation successed, EINA_FALSE otherwise
  */
-gboolean flat_navi_context_current_set(FlatNaviContext *ctx, AtspiAccessible *target);
+Eina_Bool flat_navi_context_current_set(FlatNaviContext *ctx, AtspiAccessible *target);
 
 /**
  * Advances to previous line in natural reading order and returns

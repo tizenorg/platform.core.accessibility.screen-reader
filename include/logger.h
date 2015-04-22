@@ -1,39 +1,18 @@
-/*
- * Copyright (c) 2015 Samsung Electronics Co., Ltd All Rights Reserved
- *
- * Licensed under the Apache License, Version 2.0 (the License);
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- * http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an AS IS BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
+#ifndef LOGGER_H_
+#define LOGGER_H_
 
-#ifndef _LOGGER_H_
+#include <eina_log.h>
 
-#include <dlog.h>
+extern int _eina_log_dom;
 
-#ifdef  LOG_TAG
-#undef  LOG_TAG
-#endif
-#define LOG_TAG "SmartNavigator"
+int logger_init(void);
+void logger_shutdown(void);
 
-#ifndef ERROR
-#define ERROR(fmt, arg...) LOGE("[%s:%d]:" fmt, __FILE__, __LINE__, ##arg)
-#endif
+#define INFO(...) EINA_LOG_DOM_INFO(_eina_log_dom, __VA_ARGS__);
+#define DEBUG(...) EINA_LOG_DOM_DBG(_eina_log_dom, __VA_ARGS__);
+#define ERROR(...) EINA_LOG_DOM_ERR(_eina_log_dom, __VA_ARGS__);
+#define WARNING(...) EINA_LOG_DOM_WRN(_eina_log_dom, __VA_ARGS__);
 
-#ifndef DEBUG
-#define DEBUG(fmt, arg...) LOGD("[%s:%d]:" fmt, __FILE__, __LINE__, ##arg)
-#endif
+#define MEMORY_ERROR "Memory allocation error"
 
-#ifndef INFO
-#define INFO(fmt, arg...) LOGI("[%s:%d]:" fmt, __FILE__, __LINE__, ##arg)
-#endif
-
-
-#endif /* _LOGGER_H_ */
+#endif /* end of include guard: LOGGER_H_ */

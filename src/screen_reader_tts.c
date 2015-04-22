@@ -1,18 +1,16 @@
 #define _GNU_SOURCE
 
+#include <Ecore.h>
 #include "screen_reader_tts.h"
 #include "logger.h"
-#include <stdlib.h>
-#include <stdio.h>
-#define MEMORY_ERROR "Memory allocation failed"
 
 // ---------------------------- DEBUG HELPERS ------------------------------
 
 #define FLUSH_LIMIT 1
 
 static int last_utt_id;
-static gboolean pause_state = FALSE;
-static gboolean flush_flag = FALSE;
+static Eina_Bool pause_state = EINA_FALSE;
+static Eina_Bool flush_flag = EINA_FALSE;
 
 static char * get_tts_error( int r )
 {
@@ -85,14 +83,14 @@ bool get_supported_voices_cb(tts_h tts, const char* language, int voice_type, vo
       {
          free(vi);
          ERROR(MEMORY_ERROR);
-         return FALSE;
+         return  ECORE_CALLBACK_CANCEL;
       }
 
     vi->voice_type = voice_type;
 
-    sd->available_languages = g_list_append(sd->available_languages, vi);
+    sd->available_languages = eina_list_append(sd->available_languages, vi);
 
-    return TRUE;
+    return ECORE_CALLBACK_RENEW;
 }
 
 static void __tts_test_utt_started_cb(tts_h tts, int utt_id, void* user_data)
@@ -105,17 +103,18 @@ static void __tts_test_utt_completed_cb(tts_h tts, int utt_id, void* user_data)
 {
     DEBUG("Utterance completed : utt id(%d) \n", utt_id);
     if(last_utt_id - utt_id > FLUSH_LIMIT)
-       flush_flag = TRUE;
+       flush_flag = EINA_TRUE;
     else
       {
          if(flush_flag)
-            flush_flag = FALSE;
+            flush_flag = EINA_FALSE;
       }
     return;
 }
 
 bool tts_init(void *data)
 {
+    printf( "--------------------- TTS_init START ---------------------");
     DEBUG( "--------------------- TTS_init START ---------------------");
     Service_Data *sd = data;
 
@@ -137,55 +136,55 @@ bool tts_init(void *data)
     return true;
 }
 
-gboolean tts_pause_set(gboolean pause_switch)
+Eina_Bool tts_pause_set(Eina_Bool pause_switch)
 {
     Service_Data *sd = get_pointer_to_service_data_struct();
     if(!sd)
-       return FALSE;
+       return EINA_FALSE;
 
     if(pause_switch)
       {
          if(!tts_pause(sd->tts))
-            pause_state = TRUE;
+            pause_state = EINA_TRUE;
          else
-            return FALSE;
+            return EINA_FALSE;
       }
     else if(!pause_switch)
       {
          if(!tts_play(sd->tts))
-            pause_state = FALSE;
+            pause_state = EINA_FALSE;
          else
-            return FALSE;
+            return EINA_FALSE;
       }
-    return TRUE;
+    return EINA_TRUE;
 }
 
-gboolean tts_speak(char *text_to_speak, gboolean flush_switch)
+Eina_Bool tts_speak(char *text_to_speak, Eina_Bool flush_switch)
 {
     Service_Data *sd = get_pointer_to_service_data_struct();
     int speak_id;
 
     if(!sd)
-       return FALSE;
+       return EINA_FALSE;
 
     if(flush_flag || flush_switch)
        tts_stop(sd->tts);
 
     DEBUG( "tts_speak\n");
     DEBUG( "text to say:%s\n", text_to_speak);
-    if ( !text_to_speak ) return FALSE;
-    if ( !text_to_speak[0] ) return FALSE;
+    if ( !text_to_speak ) return EINA_FALSE;
+    if ( !text_to_speak[0] ) return EINA_FALSE;
 
     if(tts_add_text( sd->tts, text_to_speak, sd->language, TTS_VOICE_TYPE_AUTO, TTS_SPEED_AUTO, &speak_id))
-       return FALSE;
+       return EINA_FALSE;
 
     DEBUG("added id to:%d\n", speak_id);
     last_utt_id = speak_id;
 
-    return TRUE;
+    return EINA_TRUE;
 }
 
-gboolean update_supported_voices(void *data)
+Eina_Bool update_supported_voices(void *data)
 {
     DEBUG("START");
     tts_state_e state;
@@ -197,7 +196,7 @@ gboolean update_supported_voices(void *data)
     if(res != TTS_ERROR_NONE)
       {
          DEBUG("CANNOT RETRIVE STATE");
-         return FALSE;
+         return EINA_FALSE;
       }
 
     if(state == TTS_STATE_READY)
@@ -206,11 +205,11 @@ gboolean update_supported_voices(void *data)
       }
     else
       {
-         sd->update_language_list = TRUE;
+         sd->update_language_list = EINA_TRUE;
       }
 
-    DEBUG("END");
-    return TRUE;
+    DEBUG("END")
+    return EINA_TRUE;
 }
 
 void state_changed_cb(tts_h tts, tts_state_e previous, tts_state_e current, void* user_data)

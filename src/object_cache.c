@@ -1,38 +1,39 @@
+#include <Eina.h>
+#include <Ecore.h>
+
 #include "object_cache.h"
 #include "logger.h"
 
-#include <glib.h>
-
-static GHashTable *cache;
-static int idler = -1;
-static GList *toprocess;
+static Eina_Hash *cache;
+static Ecore_Idler *idler;
+static Eina_List *toprocess;
 static void *user_data;
 static ObjectCacheReadyCb callback;
 static int bulk;
 
 static void
-_cache_item_free_cb(gpointer data)
+_cache_item_free_cb(void *data)
 {
-   if (!data) return;
    ObjectCache *co = data;
    g_free(co->bounds);
-   g_free(co);
+   free(co);
 }
 
 static void
-_list_obj_unref_and_free(GList *toprocess)
+_list_obj_unref_and_free(Eina_List *toprocess)
 {
-   for (; toprocess; toprocess = toprocess->next)
-      g_object_unref(toprocess->data);
+   AtspiAccessible *obj;
+   EINA_LIST_FREE(toprocess, obj)
+      g_object_unref(obj);
 }
 
 static void
 _object_cache_free_internal(void)
 {
-   if (idler > 0)
+   if (idler)
      {
-        g_source_remove(idler);
-        idler = -1;
+        ecore_idler_del(idler);
+        idler = NULL;
      }
    if (toprocess)
      {
@@ -41,32 +42,32 @@ _object_cache_free_internal(void)
      }
    if (cache)
      {
-        g_hash_table_destroy(cache);
+        eina_hash_free(cache);
         cache = NULL;
      }
 }
 
 /**
  * Returnes a list of all accessible object implementing AtkCompoment interface
- * GList should be free with g_list_Free function.
+ * Eina_List should be free with eina_list_free function.
  * Every AtspiAccessible in list should be unrefed with g_object_unref.
  */
-static GList*
+static Eina_List*
 _cache_candidates_list_prepare(AtspiAccessible *root)
 {
-   GList *toprocess = NULL, *ret = NULL;
+   Eina_List *toprocess = NULL, *ret = NULL;
    int n, i;
 
    if (!root) return NULL;
 
    // Keep ref counter +1 on every object in returned list
    g_object_ref(root);
-   toprocess = g_list_append(toprocess, root);
+   toprocess = eina_list_append(toprocess, root);
 
    while (toprocess)
      {
-        AtspiAccessible *obj = toprocess->data;
-        toprocess = g_list_delete_link(toprocess, toprocess);
+        AtspiAccessible *obj = eina_list_data_get(toprocess);
+        toprocess = eina_list_remove_list(toprocess, toprocess);
         if (!obj)
           continue;
         n = atspi_accessible_get_child_count(obj, NULL);
@@ -74,9 +75,9 @@ _cache_candidates_list_prepare(AtspiAccessible *root)
           {
              AtspiAccessible *cand = atspi_accessible_get_child_at_index(obj, i, NULL);
              if(cand)
-               toprocess = g_list_append(toprocess, cand);
+               toprocess = eina_list_append(toprocess, cand);
           }
-        ret = g_list_append(ret, obj);
+        ret = eina_list_append(ret, obj);
      }
 
    return ret;
@@ -91,7 +92,7 @@ _cache_item_construct(AtspiAccessible *obj)
    if (!obj)
      return NULL;
 
-   ret = g_new0(ObjectCache, 1);
+   ret = calloc(1, sizeof(ObjectCache));
    if (!ret)
      {
         ERROR("out-of memory");
@@ -110,40 +111,39 @@ _cache_item_construct(AtspiAccessible *obj)
    return ret;
 }
 
-static GList*
-_cache_item_n_cache(GList *objs, int count)
+static Eina_List*
+_cache_item_n_cache(Eina_List *objs, int count)
 {
    int i = 0;
-   GList *ret = objs;
+   Eina_List *ret = objs;
    ObjectCache *oc;
    AtspiAccessible *obj;
 
    for (i = 0; (i < count) && ret; i++)
      {
-        obj = ret->data;
-        ret = g_list_delete_link(ret, ret);
+        obj = eina_list_data_get(ret);
+        ret = eina_list_remove_list(ret, ret);
 
         oc = _cache_item_construct(obj);
         if (!oc) break;
 
-        g_hash_table_insert (cache, obj, oc);
-
+        eina_hash_add(cache, &obj, oc);
         g_object_unref(obj);
      }
 
    return ret;
 }
 
-static GHashTable*
+static Eina_Hash*
 _object_cache_new(void)
 {
-   return g_hash_table_new_full (g_direct_hash, g_direct_equal, NULL, _cache_item_free_cb);
+   return eina_hash_pointer_new(_cache_item_free_cb);
 }
 
 void
 object_cache_build(AtspiAccessible *root)
 {
-   GList *objs;
+   Eina_List *objs;
 
    _object_cache_free_internal();
    cache = _object_cache_new();
@@ -154,22 +154,22 @@ object_cache_build(AtspiAccessible *root)
      }
 
    objs = _cache_candidates_list_prepare(root);
-   _cache_item_n_cache(objs, g_list_length(objs));
+   _cache_item_n_cache(objs, eina_list_count(objs));
 
    return;
 }
 
-static gboolean
+static Eina_Bool
 _do_cache(void *data)
 {
    toprocess = _cache_item_n_cache(toprocess, bulk);
-   idler = -1;
+   idler = NULL;
 
    if (toprocess)
-     idler = g_idle_add(_do_cache, NULL);
+     idler = ecore_idler_add(_do_cache, NULL);
    else if (callback) callback(user_data);
 
-   return FALSE;
+   return EINA_FALSE;
 }
 
 void
@@ -189,7 +189,7 @@ object_cache_build_async(AtspiAccessible *root, int bulk_size, ObjectCacheReadyC
      }
 
    toprocess = _cache_candidates_list_prepare(root);
-   idler = g_idle_add(_do_cache, NULL);
+   idler = ecore_idler_add(_do_cache, NULL);
 
    return;
 }
@@ -204,7 +204,7 @@ const ObjectCache*
 object_cache_get(AtspiAccessible *obj)
 {
    ObjectCache *ret = NULL;
-   if (idler > 0)
+   if (idler)
      {
         ERROR("Invalid usage. Async cache build is ongoing...");
         return NULL;
@@ -220,12 +220,12 @@ object_cache_get(AtspiAccessible *obj)
           }
      }
 
-   ret = g_hash_table_lookup(cache, obj);
+   ret = eina_hash_find(cache, &obj);
    if (!ret)
      {
         // fallback to blocking d-bus call
         ret = _cache_item_construct(obj);
-        g_hash_table_insert(cache, obj, ret);
+        eina_hash_add(cache, &obj, ret);
      }
 
    return ret;

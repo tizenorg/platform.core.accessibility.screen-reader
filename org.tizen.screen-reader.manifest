@@ -1,5 +1,46 @@
 <manifest>
-   <request>
-      <domain name="_"/>
-   </request>
+ <define>
+    <domain name="screen-reader" />
+    <permit>
+       <smack permit="dbus" type="rwx" />
+       <smack permit="atspi" type="rwx" />
+       <smack permit="e17" type="rwx" />
+       <smack permit="tts-server" type="rwx" />
+       <smack permit="deviced" type="rwx" />
+       <smack permit="sensord" type="rwx" />
+       <smack permit="media-server" type="rwx" />
+    </permit>
+    <request>
+       <smack request="sdbd" type="rwx" />
+       <smack request="atspi" type="rwx" />
+       <smack request="dbus" type="rwx" />
+       <smack request="xorg" type="rwx" />
+       <smack request="pulseaudio" type="rwxat" />
+       <smack request="pkgmgr::db" type="rwx" />
+       <smack request="device::app_logging" type="rwx" />
+       <smack request="ail::db" type="rwx" />
+       <smack request="system::vconf" type="rwx" />
+       <smack request="system::vconf_setting" type="rwx" />
+       <smack request="system::vconf_system" type="rwx" />
+       <smack request="system::vconf_inhouse" type="rwx" />
+       <smack request="system::vconf_multimedia" type="rwx" />
+       <smack request="system::vconf_misc" type="rwx" />
+       <smack request="isf" type="rwx" />
+       <smack request="system::homedir" type="rwx" />
+       <smack request="system::tmpdir" type="rwx" />
+       <smack request="sys-assert::core" type="rwxat" />
+       <smack request="device::sys_logging" type="rwx" />
+       <smack request="svi-data" type="rwx" />
+       <smack request="e17" type="rwx" />
+       <smack request="tts-server" type="rwx" />
+       <smack request="sound_server" type="rwx" />
+       <smack request="deviced" type="rwx" />
+       <smack request="sensord" type="rwx" />
+       <smack request="media-server" type="rwx" />
+    </request>
+ </define>
+
+<request>
+<domain name="screen-reader"/>
+</request>
 </manifest>

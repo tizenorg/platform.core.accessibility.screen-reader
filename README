@@ -1,0 +1,9 @@
+Before running smart navigator extend /usr/lib/systemd/system/pulseaudio.service
+[Service]
+...
+ExecStartPre=/bin/chmod 777 /tmp/pulseaudio
+...
+To give other processes like smart-navigator access to pulseaudio tmp.
+
+Extending service with User=pulse or changing owner ship on /tmp/pulseaudio
+results with malfunction of service.

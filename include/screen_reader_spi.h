@@ -1,10 +1,3 @@
-/*
- * screen_reader_spi.h
- *
- *  Created on: Feb 20, 2014
- *      Author: m.skorupinsk
- */
-
 #ifndef SCREEN_READER_SPI_H_
 #define SCREEN_READER_SPI_H_
 

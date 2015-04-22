@@ -49,18 +49,17 @@ _sort_horizontally(const void *a, const void *b)
      return -1;
 }
 
-static GList*
-_get_zones(const GList *objs)
+static Eina_List*
+_get_zones(const Eina_List *objs)
 {
-   GList *candidates = NULL;
-   const GList *l;
+   Eina_List *candidates = NULL;
+   const Eina_List *l;
    AtspiAccessible *obj;
    AtspiComponent *comp;
    const ObjectCache *oc;
 
-   for (l = objs; l; l = l->next)
+   EINA_LIST_FOREACH(objs, l, obj)
      {
-        obj = l->data;
         if ((comp = atspi_accessible_get_component(obj)) != NULL)
           {
              oc = object_cache_get(obj);
@@ -74,7 +73,7 @@ _get_zones(const GList *objs)
                    atspi_accessible_get_role_name(obj, NULL));
                   continue;
                }
-             candidates = g_list_append(candidates, obj);
+             candidates = eina_list_append(candidates, obj);
           }
         else
           DEBUG("No component interface: skipping %s %s",
@@ -83,23 +82,22 @@ _get_zones(const GList *objs)
      }
 
    // Sort object by y - coordinate
-   return g_list_sort(candidates, _sort_vertically);
+   return eina_list_sort(candidates, 0, _sort_vertically);
 }
 
-static GList*
-_get_lines(const GList *objs)
+static Eina_List*
+_get_lines(const Eina_List *objs)
 {
-   GList *line = NULL, *lines = NULL;
-   const GList *l;
+   Eina_List *line = NULL, *lines = NULL;
+   const Eina_List *l;
    AtspiAccessible *obj;
    const ObjectCache *line_beg;
 
-   for (l = objs; l; l = l->next)
+   EINA_LIST_FOREACH(objs, l, obj)
      {
-        obj = l->data;
         if (!line) {
           // set first object in line
-          line = g_list_append(line, obj);
+          line = eina_list_append(line, obj);
           line_beg = object_cache_get(obj);
           continue;
         }
@@ -111,49 +109,48 @@ _get_lines(const GList *objs)
         if ((line_beg->bounds->y + (int)(0.25 * (double)line_beg->bounds->height)) >
             oc->bounds->y)
           {
-             line = g_list_append(line, obj);
+             line = eina_list_append(line, obj);
              continue;
           }
         else
           {
              //finish line & set new line leader
-             lines = g_list_append(lines, line);
+             lines = eina_list_append(lines, line);
              line = NULL;
-             line = g_list_append(line, obj);
+             line = eina_list_append(line, obj);
              line_beg = object_cache_get(obj);
           }
      }
 
    // finish last line
-   if (line) lines = g_list_append(lines, line);
+   if (line) lines = eina_list_append(lines, line);
 
    return lines;
 }
 
-GList *position_sort(const GList *objs)
+Eina_List *position_sort(const Eina_List *objs)
 {
-   GList *l, *line, *zones, *lines = NULL;
+   Eina_List *l, *line, *zones, *lines = NULL;
    int i = 0;
 
    // Get list of objects occupying place on the screen
-   DEBUG("PositionSort: Candidates; %d", g_list_length((GList*)objs));
+   DEBUG("PositionSort: Candidates; %d", eina_list_count(objs));
    zones = _get_zones(objs);
 
    // Cluster all zones into lines - verticaly
-   DEBUG("PositionSort: Zones; %d", g_list_length(zones));
+   DEBUG("PositionSort: Zones; %d", eina_list_count(zones));
    lines = _get_lines(zones);
 
    // sort all zones in line - horizontaly
-   DEBUG("PositionSort: Lines; %d", g_list_length(lines));
-   for (l = lines; l; l = l->next)
+   DEBUG("PositionSort: Lines; %d", eina_list_count(lines));
+   EINA_LIST_FOREACH(lines, l, line)
      {
-        line = l->data;
-        DEBUG("PositionSort: Line %d: %d items", i++, g_list_length(line));
-        line = g_list_sort(line, _sort_horizontally);
-        l->data = line;
+        DEBUG("PositionSort: Line %d: %d items", i++, eina_list_count(line));
+        line = eina_list_sort(line, 0, _sort_horizontally);
+        eina_list_data_set(l, line);
      }
 
-   if (zones) g_list_free(zones);
+   if (zones) eina_list_free(zones);
 
    return lines;
 }

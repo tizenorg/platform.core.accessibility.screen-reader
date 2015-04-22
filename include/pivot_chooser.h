@@ -4,7 +4,7 @@
 #include <atspi/atspi.h>
 
 /**
- * @brief Heuristic choosing first element of the UI.
+ * @brief Some heuristic choosing candidate to reacieve highlight.
  *
  * @param win Accessibility search tree object root.
  *

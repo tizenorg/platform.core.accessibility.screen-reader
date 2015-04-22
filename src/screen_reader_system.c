@@ -64,15 +64,15 @@ static void device_system_cb(device_callback_e type, void *value, void *user_dat
 
          if(status == DEVICE_BATTERY_LEVEL_LOW)
            {
-              tts_speak(BATTERY_LOW, TRUE);
+              tts_speak(BATTERY_LOW, EINA_TRUE);
            }
          else if(status == DEVICE_BATTERY_LEVEL_CRITICAL)
            {
-              tts_speak(BATTERY_CRITICAL, TRUE);
+              tts_speak(BATTERY_CRITICAL, EINA_TRUE);
            }
          else if(status == DEVICE_BATTERY_LEVEL_FULL)
            {
-              tts_speak(BATTERY_FULL, TRUE);
+              tts_speak(BATTERY_FULL, EINA_TRUE);
            }
       }
     else if(type == DEVICE_CALLBACK_BATTERY_CHARGING)
@@ -86,11 +86,11 @@ static void device_system_cb(device_callback_e type, void *value, void *user_dat
 
          if(charging)
            {
-              tts_speak(CHARGING, FALSE);
+              tts_speak(CHARGING, EINA_FALSE);
            }
          else
            {
-              tts_speak(NOT_CHARGING, FALSE);
+              tts_speak(NOT_CHARGING, EINA_FALSE);
            }
       }
     else if(type == DEVICE_CALLBACK_DISPLAY_STATE)
@@ -104,11 +104,11 @@ static void device_system_cb(device_callback_e type, void *value, void *user_dat
 
          if(state == DISPLAY_STATE_NORMAL)
            {
-              tts_speak(SCREEN_ON, FALSE);
+              tts_speak(SCREEN_ON, EINA_FALSE);
            }
          else if(state == DISPLAY_STATE_SCREEN_OFF)
            {
-              tts_speak(SCREEN_OFF, FALSE);
+              tts_speak(SCREEN_OFF, EINA_FALSE);
            }
       }
 }

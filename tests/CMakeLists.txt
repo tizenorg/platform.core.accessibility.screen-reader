@@ -14,9 +14,13 @@ pkg_check_modules(tests REQUIRED
     gobject-2.0
     dlog
     dbus-1
+    ecore
+    eldbus
+    eina
     tts
     check
     vconf
+    elementary
 )
 
 FOREACH(flag ${tests_CFLAGS})
@@ -31,9 +35,10 @@ SET(TESTED_SRCS ${CMAKE_SOURCE_DIR}/src/screen_reader.c
                 ${CMAKE_SOURCE_DIR}/src/screen_reader_vconf.c
                 ${CMAKE_SOURCE_DIR}/src/screen_reader_spi.c
                 ${CMAKE_SOURCE_DIR}/src/screen_reader_tts.c
+                ${CMAKE_SOURCE_DIR}/src/logger.c
                 ${CMAKE_SOURCE_DIR}/src/flat_navi.c
                 ${CMAKE_SOURCE_DIR}/src/position_sort.c
                 ${CMAKE_SOURCE_DIR}/src/object_cache.c)
 
-ADD_EXECUTABLE(screen_reader_test_suite screen_reader_test_suite.c ${TESTED_SRCS})
-TARGET_LINK_LIBRARIES(screen_reader_test_suite atspi ${tests_LDFLAGS} ${SLP_LD_PATH_FLAGS} ${SLP_LD_FLAGS} ${SLP_LINKER_FLAGS})
+ADD_EXECUTABLE(smart_navi_test_suite smart_navi_suite.c ${TESTED_SRCS})
+TARGET_LINK_LIBRARIES(smart_navi_test_suite atspi ${tests_LDFLAGS} ${SLP_LD_PATH_FLAGS} ${SLP_LD_FLAGS} ${SLP_LINKER_FLAGS})

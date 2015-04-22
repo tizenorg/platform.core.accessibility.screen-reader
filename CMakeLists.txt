@@ -10,13 +10,18 @@ SET(RESOURCE_DIR "${CMAKE_SOURCE_DIR}/res")
 
 INCLUDE(FindPkgConfig)
 pkg_check_modules(pkgs REQUIRED
-	capi-appfw-application
 	bundle
+	appcore-efl
+	eldbus
+	elementary
+	ecore
 	atspi-2
 	gobject-2.0
+	ecore-x
 	dlog
 	vconf
 	tts
+	capi-media-tone-player
 	capi-system-device
 )
 
@@ -29,8 +34,6 @@ SET(CMAKE_CXX_FLAGS_DUMP "${CMAKE_CXX_FLAGS}")
 SET(CMAKE_C_FLAGS "${SLP_DEBUG_FLAGS} ${SLP_OPT_FLAGS} ${CMAKE_C_FLAGS} ${EXTRA_CFLAGS} ${SLP_COMPILER_FLAGS}")
 SET(CMAKE_CXX_FLAGS "${SLP_DEBUG_FLAGS} ${SLP_OPT_FLAGS} ${CMAKE_CXX_FLAGS} ${EXTRA_CFLAGS} ${SLP_COMPILER_FLAGS}")
 
-MESSAGE(${CMAKE_C_FLAGS})
-
 ADD_EXECUTABLE(${PROJECT_NAME} ${SRCS})
 
 TARGET_LINK_LIBRARIES(${PROJECT_NAME} ${pkgs_LDFLAGS} ${SLP_LD_PATH_FLAGS} ${SLP_LD_FLAGS} ${SLP_LINKER_FLAGS})
@@ -39,7 +42,8 @@ TARGET_LINK_LIBRARIES(${PROJECT_NAME} ${pkgs_LDFLAGS} ${SLP_LD_PATH_FLAGS} ${SLP
 INSTALL(TARGETS ${PROJECT_NAME} DESTINATION bin)
 INSTALL(DIRECTORY ${RESOURCE_DIR}/icons DESTINATION res) 
 # Install Manifest File
-INSTALL(FILES org.tizen.screen-reader.xml DESTINATION /usr/share/packages)
+INSTALL(FILES org.tizen.screen-reader.xml DESTINATION /opt/share/packages)
+
 ADD_SUBDIRECTORY(${CMAKE_SOURCE_DIR}/tests)
-ADD_TEST(NAME screen_reader_test_suite COMMAND ${CMAKE_SOURCE_DIR}/tests/screen_reader_test_suite)
+ADD_TEST(NAME smart_navi_tests COMMAND ${CMAKE_SOURCE_DIR}/tests/smart_navi_test_suite)
 # END OF A FILE

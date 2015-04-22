@@ -1,5 +1,7 @@
 #include <atspi/atspi.h>
 #include "logger.h"
+#include <Eina.h>
+
 
 /**
  * @brief Finds first leaf in object hierarchy with given states,
@@ -43,20 +45,20 @@ _pivot_with_state_top_down_find(AtspiAccessible *parent, AtspiStateType type)
 static AtspiAccessible*
 _pivot_with_state_flat_find(AtspiAccessible *parent, AtspiStateType type)
 {
-   GList *candidates = NULL, *queue = NULL;
+   Eina_List *candidates = NULL, *queue = NULL;
 
    // ref object to keep same ref count
    g_object_ref(parent);
-   queue = g_list_append(queue, parent);
+   queue = eina_list_append(queue, parent);
 
    while (queue)
      {
-        AtspiAccessible *obj = queue->data;
-        queue = g_list_delete_link(queue, queue);
+        AtspiAccessible *obj = eina_list_data_get(queue);
+        queue = eina_list_remove_list(queue, queue);
 
         int n = atspi_accessible_get_child_count(obj, NULL);
         if (n == 0)
-          candidates = g_list_append(candidates, obj);
+          candidates = eina_list_append(candidates, obj);
         else
           {
              int i;
@@ -64,7 +66,7 @@ _pivot_with_state_flat_find(AtspiAccessible *parent, AtspiStateType type)
                {
                   AtspiAccessible *child = atspi_accessible_get_child_at_index(obj, i, NULL);
                   if (child)
-                     queue = g_list_append(queue, child);
+                     queue = eina_list_append(queue, child);
                }
              g_object_unref(obj);
           }
@@ -73,15 +75,15 @@ _pivot_with_state_flat_find(AtspiAccessible *parent, AtspiStateType type)
    // FIXME sort by (x,y) first ??
    while (candidates)
      {
-        AtspiAccessible *obj = candidates->data;
-        candidates = g_list_delete_link(candidates, candidates);
+        AtspiAccessible *obj = eina_list_data_get(candidates);
+        candidates = eina_list_remove_list(candidates, candidates);
 
         AtspiStateSet *states = atspi_accessible_get_state_set(obj);
         if (states && atspi_state_set_contains(states, type))
           {
              g_object_unref(states);
              g_object_unref(obj);
-             g_list_free(candidates);
+             eina_list_free(candidates);
 
              return obj;
           }
