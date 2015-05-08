@@ -62,6 +62,7 @@ _current_highlight_object_set(AtspiAccessible *obj)
      }
     if (obj && ATSPI_IS_COMPONENT(obj))
       {
+         DEBUG("OBJ && IS COMPONENT");
          AtspiComponent *comp = atspi_accessible_get_component(obj);
          if (!comp)
            {
@@ -77,7 +78,6 @@ _current_highlight_object_set(AtspiAccessible *obj)
          gchar *name;
          gchar *role;
 
-
          current_obj = obj;
          const ObjectCache *oc = object_cache_get(obj);
 
@@ -87,8 +87,8 @@ _current_highlight_object_set(AtspiAccessible *obj)
              role = atspi_accessible_get_role_name(obj, &err);
              GERROR_CHECK(err)
              DEBUG("New focused object: %s, role: %s, (%d %d %d %d)",
-               role,
                name,
+               role,
                oc->bounds->x, oc->bounds->y, oc->bounds->width, oc->bounds->height);
              haptic_vibrate_start();
          }

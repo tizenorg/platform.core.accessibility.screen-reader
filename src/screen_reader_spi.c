@@ -102,10 +102,11 @@ static char *spi_on_state_changed_get_text(AtspiEvent *event, void *user_data)
 {
     Service_Data *sd = (Service_Data*)user_data;
     char *name;
+    char *names = NULL;
     char *description;
     char *role_name;
     char *other;
-    char *return_text = NULL;
+    char ret[256] = "\0";
     sd->currently_focused = event->source;
 
     description = atspi_accessible_get_description(sd->currently_focused, NULL);
@@ -116,21 +117,27 @@ static char *spi_on_state_changed_get_text(AtspiEvent *event, void *user_data)
     DEBUG("->->->->->-> WIDGET GAINED FOCUS: %s <-<-<-<-<-<-<-", name);
     DEBUG("->->->->->-> FROM SUBTREE HAS NAME:  %s <-<-<-<-<-<-<-", other);
 
-    if (strncmp(description, "\0", 1))
-        return_text = strdup(description);
-    else if (strncmp(name, "\0", 1))
-        return_text = strdup(name);
+    if (strncmp(name, "\0", 1))
+        names = strdup(name);
     else if (strncmp(other, "\0", 1))
-        return_text = strdup(name);
-    else
-        return_text = strdup(role_name);
+        names = strdup(other);
+
+    if (names) {
+      strncat(ret, names, sizeof(ret) - strlen(ret) - 1);
+      strncat(ret, ", ", 2);
+    }
+
+    strncat(ret, role_name, sizeof(ret) - strlen(ret) - 1);
+    if (strncmp(description, "\0", 1))
+      strncat(ret, ", ", 2);
+    strncat(ret, description, sizeof(ret) - strlen(ret) - 1);
 
     free(name);
     free(description);
     free(role_name);
     free(other);
 
-    return return_text;
+    return strdup(ret);
 }
 
 static char *spi_on_caret_move_get_text(AtspiEvent *event, void *user_data)

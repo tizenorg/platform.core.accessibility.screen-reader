@@ -195,7 +195,7 @@ _flat_review_candidates_get(AtspiAccessible *root)
 {
    Eina_List *desc, *ret = NULL;
    FilterResult fr0;
-   
+
    desc = _descendants_list_get(root);
 
    DEBUG("All descendants: %d", eina_list_count(desc));
@@ -205,20 +205,6 @@ _flat_review_candidates_get(AtspiAccessible *root)
    GArray *states = NULL;
    int a;
 
-/*
-   DEBUG("Przed lista");
-   EINA_LIST_FOREACH_SAFE(desc, l, ln, obj) {
-	DEBUG("Role: %s, Name:%s", atspi_accessible_get_name(obj, NULL), atspi_accessible_get_role_name(obj, NULL));
-	st = atspi_accessible_get_state_set (obj);
-        states = atspi_state_set_get_states (st);
-        DEBUG("Has states:%d", states->len);
-        for (a = 0; a < states->len; ++a) {
-		DEBUG("%d", g_array_index (states, AtspiStateType, a));
-	}
-
-   }
-   DEBUG("Po liscie");
-*/
    // remove object that are not in root's viewport
    const ObjectCache *oc = object_cache_get(root);
    if (!oc || !oc->bounds || (oc->bounds->height < 0) || (oc->bounds->width < 0))
@@ -243,14 +229,12 @@ _flat_review_candidates_get(AtspiAccessible *root)
 
    DEBUG("Candidates: %d", eina_list_count(ret));
    EINA_LIST_FOREACH_SAFE(ret, l, ln, obj) {
-	DEBUG("Role: %s, Name:%s", atspi_accessible_get_name(obj, NULL), atspi_accessible_get_role_name(obj, NULL));
-	st = atspi_accessible_get_state_set (obj);
-        states = atspi_state_set_get_states (st);
-        DEBUG("Has states:%d", states->len);
-        for (a = 0; a < states->len; ++a) {
-		DEBUG("%d", g_array_index (states, AtspiStateType, a));
-	}
-
+     DEBUG("Role: %s, Name:%s", atspi_accessible_get_name(obj, NULL), atspi_accessible_get_role_name(obj, NULL));
+     st = atspi_accessible_get_state_set (obj);
+     states = atspi_state_set_get_states (st);
+     DEBUG("Has states:%d", states->len);
+     for (a = 0; a < states->len; ++a)
+       DEBUG("%d", g_array_index (states, AtspiStateType, a));
    }
 
    return ret;

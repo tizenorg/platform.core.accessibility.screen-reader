@@ -90,10 +90,11 @@ START_TEST(spi_on_state_change_name)
     sd->tracking_signal_name = "test_event";
     event.detail1 = 1;
     accessible.name = "test_name";
+    accessible.role = ATSPI_ROLE_ICON;
     accessible.description = NULL;
     event.source = &accessible;
     char *return_value = spi_event_get_text_to_read(&event, sd);
-    fail_if(!return_value || strcmp(return_value, "test_name"));
+    fail_if(!return_value || strcmp(return_value, "test_name, Icon"));
     free(return_value);
 }
 END_TEST
@@ -108,9 +109,10 @@ START_TEST(spi_on_state_change_description)
     event.detail1 = 1;
     accessible.name = "test_name";
     accessible.description = "test description";
+    accessible.role = ATSPI_ROLE_ICON;
     event.source = &accessible;
     char *return_value = spi_event_get_text_to_read(&event, sd);
-    fail_if(!return_value || strcmp(return_value, "test description"));
+    fail_if(!return_value || strcmp(return_value, "test_name, Icon, test description"));
     free(return_value);
 }
 END_TEST
