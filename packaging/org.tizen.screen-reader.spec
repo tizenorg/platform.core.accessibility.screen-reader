@@ -46,10 +46,6 @@ rm -rf %{buildroot}
 
 %post 
 /sbin/ldconfig
-vconftool set -t string db/setting/accessibility/language "en_US" -u 5000 -s screen-reader -f
-vconftool set -t int db/setting/accessibility/information_level 2 -u 5000 -s screen-reader -f
-vconftool set -t int db/setting/accessibility/voice 1 -u 5000 -s screen-reader -f
-vconftool set -t string db/setting/accessibility/tracking_signal "focused" -u 5000 -s screen-reader -f
 
 %postun -p /sbin/ldconfig
 
