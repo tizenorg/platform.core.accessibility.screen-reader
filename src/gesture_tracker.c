@@ -73,6 +73,7 @@ static Gesture gesture_name_to_enum (const char *gesture_name)
 
 static void on_gesture_detected(void *context EINA_UNUSED, const Eldbus_Message *msg)
 {
+    DEBUG("START");
     const char *gesture_name;
     int x_s, y_s, x_e, y_e, state;
 

@@ -12,6 +12,9 @@ struct _FlatNaviContext {
 };
 
 static const AtspiStateType required_states[] = {
+     ATSPI_STATE_SHOWING,
+     ATSPI_STATE_VISIBLE,
+     ATSPI_STATE_FOCUSABLE,
      ATSPI_STATE_LAST_DEFINED
 };
 
@@ -102,8 +105,6 @@ typedef struct {
 static FilterResult
 _accessible_list_split_with_filter(Eina_List *list, Eina_Each_Cb cb, void *user_data)
 {
-
-   DEBUG("START");
    FilterResult ret = { NULL, NULL};
    Eina_List *l, *ln;
    AtspiAccessible *obj;
@@ -117,40 +118,39 @@ _accessible_list_split_with_filter(Eina_List *list, Eina_Each_Cb cb, void *user_
           eina_list_move_list(&ret.failure, &list, l);
      }
 
-   DEBUG("END");
    return ret;
 }
 
 static Eina_Bool
 _filter_state_cb(const void *container, void *data, void *fdata)
 {
-   DEBUG("START");
-
    AtspiStateType *state = data;
+
    Eina_Bool ret = EINA_TRUE;
    AtspiAccessible *obj = fdata;
+
    AtspiStateSet *ss = atspi_accessible_get_state_set(obj);
+
+   if (atspi_accessible_get_role(obj, NULL) == ATSPI_ROLE_LIST_ITEM)
+     return EINA_TRUE;
 
    while (*state != ATSPI_STATE_LAST_DEFINED)
      {
         if (!atspi_state_set_contains(ss, *state))
           {
              ret = EINA_FALSE;
-             DEBUG("BREAK, NO STATES SUIABLE FOR OBJ");
              break;
           }
         state++;
      }
 
    g_object_unref(ss);
-   DEBUG("END");
    return ret;
 }
 
 static Eina_Bool
 _filter_role_cb(const void *container, void *data, void *fdata)
 {
-   DEBUG("START");
    AtspiRole *role = data;
    Eina_Bool ret = EINA_FALSE;
    AtspiAccessible *obj = fdata;
@@ -160,34 +160,27 @@ _filter_role_cb(const void *container, void *data, void *fdata)
         if (atspi_accessible_get_role(obj, NULL) == *role)
           {
              ret = EINA_TRUE;
-             DEBUG("END");
              break;
           }
         role++;
      }
-   DEBUG("END WITH FALSE");
    return ret;
-}
-
-static inline Eina_Bool
-_rectangle_intersect(int x1, int y1, int w1, int h1, int x2, int y2, int w2, int h2)
-{
-   return !(((y1 + h1) <= y2) || (y1 >= (y2 + h2)) || ((x1 + w1) <= x2) || (x1 >= (x2 + w2)));
 }
 
 static Eina_Bool
 _filter_viewport_cb(const void *container, void *data, void *fdata)
 {
-   const ObjectCache *oc, *ocr = data;
+   const ObjectCache *oc = data;
    AtspiAccessible *obj = fdata;
 
    oc = object_cache_get(obj);
    if (!oc || !oc->bounds || (oc->bounds->height < 0) || (oc->bounds->width < 0))
      return EINA_FALSE;
 
-   // at least one pixel of child have to be in viewport
-   return _rectangle_intersect(ocr->bounds->x, ocr->bounds->y, ocr->bounds->width, ocr->bounds->height,
-                               oc->bounds->x, oc->bounds->y, oc->bounds->width, oc->bounds->height);
+   if (((oc->bounds->x + oc->bounds->width) < 0) || ((oc->bounds->y + oc->bounds->height) < 0))
+     return EINA_FALSE;
+
+   return EINA_TRUE;
 }
 
 static Eina_List*
@@ -201,11 +194,9 @@ _flat_review_candidates_get(AtspiAccessible *root)
    DEBUG("All descendants: %d", eina_list_count(desc));
    Eina_List *l, *ln;
    AtspiAccessible *obj;
-   AtspiStateSet *st = NULL;
-   GArray *states = NULL;
-   int a;
 
    // remove object that are not in root's viewport
+
    const ObjectCache *oc = object_cache_get(root);
    if (!oc || !oc->bounds || (oc->bounds->height < 0) || (oc->bounds->width < 0))
      {
@@ -227,14 +218,9 @@ _flat_review_candidates_get(AtspiAccessible *root)
    ret = eina_list_merge(ret, fr2.success);
    _accessible_list_free(fr2.failure);
 
-   DEBUG("Candidates: %d", eina_list_count(ret));
+   DEBUG("Candidates after filters count: %d", eina_list_count(ret));
    EINA_LIST_FOREACH_SAFE(ret, l, ln, obj) {
-     DEBUG("Role: %s, Name:%s", atspi_accessible_get_name(obj, NULL), atspi_accessible_get_role_name(obj, NULL));
-     st = atspi_accessible_get_state_set (obj);
-     states = atspi_state_set_get_states (st);
-     DEBUG("Has states:%d", states->len);
-     for (a = 0; a < states->len; ++a)
-       DEBUG("%d", g_array_index (states, AtspiStateType, a));
+     DEBUG("Name:[%s] Role:[%s]", atspi_accessible_get_name(obj, NULL), atspi_accessible_get_role_name(obj, NULL));
    }
 
    return ret;

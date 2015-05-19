@@ -301,6 +301,7 @@ AtspiAccessible *atspi_create_accessible()
     AtspiStateType s[] = {
          ATSPI_STATE_VISIBLE,
          ATSPI_STATE_SHOWING,
+         ATSPI_STATE_FOCUSABLE,
          ATSPI_STATE_LAST_DEFINED
     };
     int i;
@@ -398,6 +399,11 @@ gint atspi_relation_get_n_targets (AtspiRelation *obj)
 AtspiAccessible * atspi_relation_get_target (AtspiRelation *obj, gint i)
 {
     return NULL;
+}
+
+AtspiAccessible * atspi_accessible_get_parent (AtspiAccessible *obj, GError **error)
+{
+    return obj->accessible_parent;
 }
 
 int atspi_exit(void)

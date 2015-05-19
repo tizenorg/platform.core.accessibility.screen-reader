@@ -114,7 +114,7 @@ static char *spi_on_state_changed_get_text(AtspiEvent *event, void *user_data)
     role_name = atspi_accessible_get_role_name(sd->currently_focused, NULL);
     other = generate_description_for_subtree(sd->currently_focused);
 
-    DEBUG("->->->->->-> WIDGET GAINED FOCUS: %s <-<-<-<-<-<-<-", name);
+    DEBUG("->->->->->-> WIDGET GAINED HIGHLIGHT: %s <-<-<-<-<-<-<-", name);
     DEBUG("->->->->->-> FROM SUBTREE HAS NAME:  %s <-<-<-<-<-<-<-", other);
 
     if (strncmp(name, "\0", 1))
@@ -308,7 +308,6 @@ void spi_init(Service_Data *sd)
         ERROR("Invalid parameter");
         return;
     }
-
     DEBUG( "--------------------- SPI_init START ---------------------");
     service_data = sd;
 

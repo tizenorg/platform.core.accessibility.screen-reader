@@ -57,52 +57,6 @@ bool set_langauge(Service_Data *sd, const char *new_language, int new_voice)
 	return false;
 }
 
-char *fold_tracker_signal(const char *signal_name)
-{
-	if(strcmp(signal_name, FOCUS_SIG) == 0)
-	{
-		return FOCUS_CHANGED_SIG;
-	}
-	return NULL;
-}
-
-bool set_tracking_listener(Service_Data *sd, const char *signal_name)
-{
-	DEBUG("START");
-
-	char *new_tracking_signal;
-
-	new_tracking_signal = fold_tracker_signal(signal_name);
-
-	if(strcmp(sd->tracking_signal_name, new_tracking_signal) == 0)
-	{
-		DEBUG("No need to change accessibility tracking signal: %s == %s",
-				sd->tracking_signal_name, new_tracking_signal);
-
-		return true;
-	}
-
-	gboolean ret = atspi_event_listener_deregister(sd->spi_listener, sd->tracking_signal_name, NULL);
-	if(ret == false)
-	{
-		DEBUG("Tracking signal listerner deregister successful");
-	}
-
-	sd->tracking_signal_name = strdup(new_tracking_signal);
-
-	gboolean ret1 = atspi_event_listener_register(sd->spi_listener, sd->tracking_signal_name, NULL);
-	if(ret1 == false)
-	{
-		DEBUG("FAILED TO REGISTER spi focus/highlight listener");
-		return false;
-	}
-	else
-	{
-		DEBUG("Tracking listener register for new signal");
-	}
-	return true;
-}
-
 // ------------------------------ vconf callbacks----------------------
 
 void information_level_cb(keynode_t *node, void *user_data)
@@ -171,16 +125,6 @@ void reading_speed_cb(keynode_t *node, void *user_data)
 	DEBUG("END");
 }
 
-void tracking_signal_changed_cb(keynode_t *node, void *user_data)
-{
-	DEBUG("START");
-	DEBUG("Tracking signal set to: %s", node->value.s);
-
-	Service_Data *sd = user_data;
-	const char *tracking_signal = vconf_get_str("db/setting/accessibility/tracking_signal");
-	set_tracking_listener(sd, tracking_signal);
-}
-
 // --------------------------------------------------------------------
 
 int get_key_values(Service_Data *sd)
@@ -232,19 +176,7 @@ int get_key_values(Service_Data *sd)
 bool vconf_init(Service_Data *service_data)
 {
 	DEBUG( "--------------------- VCONF_init START ---------------------");
-	printf( "--------------------- VCONF_init START ---------------------");
 	int ret = 0;
-
-	//TODO: Remove when adequate keys in the settings(control?) panel are added
-	// -----------------------  TEST ONLY -----------------------------------------------
-	DEBUG("TESTS START");
-	keys = vconf_keylist_new();
-	vconf_keylist_add_int(keys, "db/setting/accessibility/information_level", 2);
-	vconf_keylist_add_str(keys, "db/setting/accessibility/language", "en_US");
-	vconf_keylist_add_int(keys, "db/setting/accessibility/voice", 1);
-	vconf_keylist_add_str(keys, "db/setting/accessibility/tracking_signal",  FOCUS_CHANGED_SIG);
-    //-----------------------------------------------------------------------------------
-	//vconf_set_bool(VCONFKEY_SETAPPL_ACCESSIBILITY_TTS, EINA_TRUE);
 
 	if(vconf_set(keys))
 	{
@@ -300,13 +232,6 @@ bool vconf_init(Service_Data *service_data)
 	}
 
 	ret = vconf_notify_key_changed("db/setting/accessibility/speech_rate", reading_speed_cb, service_data);
-	if(ret != 0)
-	{
-		DEBUG("Could not add reading speed callback callback");
-		return false;
-	}
-
-	ret = vconf_notify_key_changed("db/setting/accessibility/tracking_signal", tracking_signal_changed_cb, service_data);
 	if(ret != 0)
 	{
 		DEBUG("Could not add reading speed callback callback");

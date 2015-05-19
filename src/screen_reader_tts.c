@@ -114,7 +114,6 @@ static void __tts_test_utt_completed_cb(tts_h tts, int utt_id, void* user_data)
 
 bool tts_init(void *data)
 {
-    printf( "--------------------- TTS_init START ---------------------");
     DEBUG( "--------------------- TTS_init START ---------------------");
     Service_Data *sd = data;
 

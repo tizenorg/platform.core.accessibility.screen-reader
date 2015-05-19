@@ -38,6 +38,7 @@ _is_descendant(AtspiAccessible *ancestor, AtspiAccessible *descendant)
 static void
 _subtree_callbacks_call(AppTrackerEventType event, SubTreeRootData *std)
 {
+   DEBUG("START");
    GList *l;
    EventCallbackData *ecd;
 
@@ -49,23 +50,29 @@ _subtree_callbacks_call(AppTrackerEventType event, SubTreeRootData *std)
              ecd->func(event, ecd->user_data);
           }
      }
+   DEBUG("END");
 }
 
 static gboolean
 _on_timeout_cb(gpointer user_data)
 {
+   DEBUG("START");
    SubTreeRootData *std = user_data;
 
    _subtree_callbacks_call(APP_TRACKER_EVENT_VIEW_CHANGED, std);
 
    std->timer = 0;
-
+   DEBUG("END");
    return FALSE;
 }
 
-static void 
+static void
 _on_atspi_event_cb(const AtspiEvent *event)
 {
+   DEBUG("START");
+   DEBUG("signal:%s", event->type);
+   if (!event->source)
+     ERROR("empty event source");
    GList *l;
    SubTreeRootData *std;
 
@@ -89,6 +96,7 @@ _on_atspi_event_cb(const AtspiEvent *event)
 static int
 _app_tracker_init_internal(void)
 {
+   DEBUG("START");
    _listener = atspi_event_listener_new_simple(_on_atspi_event_cb, NULL);
 
    atspi_event_listener_register(_listener, "object:state-changed:showing", NULL);
@@ -134,6 +142,7 @@ _app_tracker_shutdown_internal(void)
 
 int app_tracker_init(void)
 {
+   DEBUG("START");
    if (!_init_count)
      if (_app_tracker_init_internal()) return -1;
    return ++_init_count;
@@ -148,6 +157,7 @@ void app_tracker_shutdown(void)
 
 void app_tracker_callback_register(AtspiAccessible *app, AppTrackerEventType event, AppTrackerEventCB cb, void *user_data)
 {
+   DEBUG("START");
    SubTreeRootData *rd = NULL;
    EventCallbackData *cd;
    GList *l;
@@ -180,10 +190,12 @@ void app_tracker_callback_register(AtspiAccessible *app, AppTrackerEventType eve
    cd->user_data = user_data;
 
    rd->callbacks = g_list_append(rd->callbacks, cd);
+   DEBUG("END");
 }
 
 void app_tracker_callback_unregister(AtspiAccessible *app, AppTrackerEventType event, AppTrackerEventCB cb, void *user_data)
 {
+   DEBUG("START");
    GList *l;
    EventCallbackData *ecd;
    SubTreeRootData *std = NULL;

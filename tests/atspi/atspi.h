@@ -395,6 +395,7 @@ GArray * atspi_accessible_get_relation_set (AtspiAccessible *obj, GError **error
 AtspiRelationType atspi_relation_get_relation_type (AtspiRelation *obj);
 gint atspi_relation_get_n_targets (AtspiRelation *obj);
 AtspiAccessible * atspi_relation_get_target (AtspiRelation *obj, gint i);
+AtspiAccessible * atspi_accessible_get_parent (AtspiAccessible *obj, GError **error);
 int atspi_exit(void);
 
 #endif /*__ATSPI_H__*/

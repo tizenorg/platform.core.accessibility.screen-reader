@@ -1,4 +1,5 @@
 #include <appcore-efl.h>
+#include <Elementary.h>
 #include <eldbus-1/Eldbus.h>
 #include "navigator.h"
 #include "window_tracker.h"
@@ -15,7 +16,7 @@ Eldbus_Connection *a11y_conn;
 
 static void _init_modules(void *data, const Eldbus_Message *msg, Eldbus_Pending *pending EINA_UNUSED)
 {
-   printf("START:%s", __func__);
+   DEBUG("START");
    const char *a11y_bus_address = NULL;
 
    logger_init();
@@ -29,7 +30,7 @@ static void _init_modules(void *data, const Eldbus_Message *msg, Eldbus_Pending 
 
 static int app_create(void *data)
 {
-    printf("START:%s", __func__);
+    DEBUG("START");
     eldbus_init();
     elm_init(0, NULL);
 
@@ -45,7 +46,7 @@ static int app_create(void *data)
 
 static int app_terminate(void *data)
 {
-    printf("START:%s", __func__);
+    DEBUG("START");
     screen_reader_terminate_service(data);
 
     eldbus_connection_unref(a11y_conn);
@@ -69,7 +70,6 @@ int main(int argc, char **argv)
         .resume = NULL,
         .reset = NULL
     };
-
     ops.data = get_pointer_to_service_data_struct();
 
     return appcore_efl_main("Smart Navigation", &argc, &argv, &ops);

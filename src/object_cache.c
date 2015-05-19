@@ -55,6 +55,13 @@ _object_cache_free_internal(void)
 static Eina_List*
 _cache_candidates_list_prepare(AtspiAccessible *root)
 {
+   DEBUG("START");
+   AtspiAccessible *r = atspi_accessible_get_parent(root, NULL);
+   if (r)
+      DEBUG("From application:%s [%s]", atspi_accessible_get_name(r, NULL), atspi_accessible_get_role_name(r, NULL));
+   DEBUG("Preparing candidates from root window: %s [%s]", atspi_accessible_get_name(root, NULL), atspi_accessible_get_role_name(root, NULL));
+
+
    Eina_List *toprocess = NULL, *ret = NULL;
    int n, i;
 
@@ -68,8 +75,11 @@ _cache_candidates_list_prepare(AtspiAccessible *root)
      {
         AtspiAccessible *obj = eina_list_data_get(toprocess);
         toprocess = eina_list_remove_list(toprocess, toprocess);
-        if (!obj)
-          continue;
+        if (!obj) 
+          {
+            DEBUG("NO OBJ");
+            continue;
+          }
         n = atspi_accessible_get_child_count(obj, NULL);
         for (i = 0; i < n; i++)
           {
@@ -79,6 +89,7 @@ _cache_candidates_list_prepare(AtspiAccessible *root)
           }
         ret = eina_list_append(ret, obj);
      }
+   DEBUG("END");
 
    return ret;
 }
@@ -90,7 +101,10 @@ _cache_item_construct(AtspiAccessible *obj)
    AtspiComponent *comp;
 
    if (!obj)
-     return NULL;
+     {
+        ERROR("object is NULL");
+        return NULL;
+     }
 
    ret = calloc(1, sizeof(ObjectCache));
    if (!ret)
@@ -143,6 +157,7 @@ _object_cache_new(void)
 void
 object_cache_build(AtspiAccessible *root)
 {
+   DEBUG("START");
    Eina_List *objs;
 
    _object_cache_free_internal();
@@ -175,6 +190,7 @@ _do_cache(void *data)
 void
 object_cache_build_async(AtspiAccessible *root, int bulk_size, ObjectCacheReadyCb cb, void *ud)
 {
+   DEBUG("START");
    _object_cache_free_internal();
 
    callback = cb;
@@ -188,9 +204,12 @@ object_cache_build_async(AtspiAccessible *root, int bulk_size, ObjectCacheReadyC
         return;
      }
 
+   DEBUG("will be preparing async candidates from:[%s] with role:[%s]\n",
+            atspi_accessible_get_name(root, NULL),
+            atspi_accessible_get_role_name(root, NULL));
    toprocess = _cache_candidates_list_prepare(root);
    idler = ecore_idler_add(_do_cache, NULL);
-
+   DEBUG("END");
    return;
 }
 
@@ -223,10 +242,10 @@ object_cache_get(AtspiAccessible *obj)
    ret = eina_hash_find(cache, &obj);
    if (!ret)
      {
+        DEBUG("EMPTY");
         // fallback to blocking d-bus call
         ret = _cache_item_construct(obj);
         eina_hash_add(cache, &obj, ret);
      }
-
    return ret;
 }

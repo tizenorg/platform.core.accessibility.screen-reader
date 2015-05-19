@@ -20,7 +20,7 @@ void setup(void)
     data->run_service = 1;
     data->voice_type = TTS_VOICE_TYPE_FEMALE;
     data->reading_speed = 2;
-    data->tracking_signal_name = FOCUS_CHANGED_SIG;
+    data->tracking_signal_name = HIGHLIGHT_CHANGED_SIG;
 
     //Set by tts
     data->tts = NULL;
@@ -365,6 +365,29 @@ Suite *screen_reader_suite(void)
     tcase_add_test(tc_spi_screen_reader_on_state_changed, spi_on_state_change_role);
     tcase_add_test(tc_spi_screen_reader_on_caret_move, spi_on_caret_move);
     tcase_add_test(tc_spi_screen_reader_on_access_value, spi_on_value_changed);
+
+   tcase_add_test(tc_spi_screen_reader_flat_navi, spi_flat_navi_context_create_null_parameter);
+   tcase_add_test(tc_spi_screen_reader_flat_navi, spi_flat_navi_context_create_valid_parameter);
+   tcase_add_test(tc_spi_screen_reader_flat_navi, spi_flat_navi_context_get_current_null_parameter);
+   tcase_add_test(tc_spi_screen_reader_flat_navi, spi_flat_navi_context_get_current_valid_parameter);
+   tcase_add_test(tc_spi_screen_reader_flat_navi, spi_flat_navi_context_next_null_parameter);
+   tcase_add_test(tc_spi_screen_reader_flat_navi, spi_flat_navi_context_next_valid_parameter);
+   tcase_add_test(tc_spi_screen_reader_flat_navi, spi_flat_navi_context_prev_null_parameter);
+   tcase_add_test(tc_spi_screen_reader_flat_navi, spi_flat_navi_context_prev_valid_parameter);
+   tcase_add_test(tc_spi_screen_reader_flat_navi, spi_flat_navi_context_last_null_parameter);
+   tcase_add_test(tc_spi_screen_reader_flat_navi, spi_flat_navi_context_last_valid_parameter);
+   tcase_add_test(tc_spi_screen_reader_flat_navi, spi_flat_navi_context_first_null_parameter);
+   tcase_add_test(tc_spi_screen_reader_flat_navi, spi_flat_navi_context_first_valid_parameter);
+   tcase_add_test(tc_spi_screen_reader_flat_navi, spi_flat_navi_context_current_set_null_parameters);
+   tcase_add_test(tc_spi_screen_reader_flat_navi, spi_flat_navi_context_current_set_valid_parameters);
+   tcase_add_test(tc_spi_screen_reader_flat_navi, spi_flat_navi_context_line_prev_null_parameter);
+   tcase_add_test(tc_spi_screen_reader_flat_navi, spi_flat_navi_context_line_prev_valid_parameter);
+   tcase_add_test(tc_spi_screen_reader_flat_navi, spi_flat_navi_context_line_next_null_parameter);
+   tcase_add_test(tc_spi_screen_reader_flat_navi, spi_flat_navi_context_line_next_valid_parameter);
+   tcase_add_test(tc_spi_screen_reader_flat_navi, spi_flat_navi_context_line_first_null_parameter);
+   tcase_add_test(tc_spi_screen_reader_flat_navi, spi_flat_navi_context_line_first_valid_parameter);
+   tcase_add_test(tc_spi_screen_reader_flat_navi, spi_flat_navi_context_line_last_null_parameter);
+   tcase_add_test(tc_spi_screen_reader_flat_navi, spi_flat_navi_context_line_last_valid_parameter);
 
     suite_add_tcase(s, tc_spi_screen_reader_init);
     suite_add_tcase(s, tc_spi_screen_reader_on_state_changed);

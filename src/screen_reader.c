@@ -18,7 +18,7 @@ Service_Data service_data = {
 		.language = "en_US",
 		.voice_type = TTS_VOICE_TYPE_FEMALE,
 		.reading_speed = 2,
-		.tracking_signal_name = FOCUS_CHANGED_SIG,
+		.tracking_signal_name = HIGHLIGHT_CHANGED_SIG,
 
 
 		//Set by tts
@@ -38,12 +38,14 @@ Service_Data *get_pointer_to_service_data_struct()
 
 int screen_reader_create_service(void *data)
 {
-	printf("\n\n\nService Create:%s\n\n\n", __func__);
-
+	int vconf_ret = vconf_set_bool("db/setting/accessibility/atspi", EINA_TRUE);
+	if(vconf_ret != 0)
+	{
+		ERROR("Gesture fail layer set to false with error:%d", vconf_ret);
+	}
 	Service_Data *service_data = data;
 
 	vconf_init(service_data);
-	spi_init(service_data);
 	tts_init(service_data);
 
 
@@ -53,6 +55,7 @@ int screen_reader_create_service(void *data)
 		run_xml_tests();
 		test_suite_init();
 	#endif
+
 
 	return 0;
 }
@@ -73,15 +76,14 @@ int screen_reader_terminate_service(void *data)
 		DEBUG("COULD NOT SET tts key to 0");
 	}
 
-	
-	vconf_ret = vconf_set_bool(VCONFKEY_SETAPPL_ACCESSIBILITY_TTS, EINA_FALSE);
+	vconf_ret = vconf_set_bool("db/setting/accessibility/atspi", EINA_FALSE);
 	if(vconf_ret == 0)
 	{
-		DEBUG("TTS key set to false");
+		DEBUG("Gesture layer set to false");
 	}
 	else
 	{
-		DEBUG("COULD NOT SET tts key to 0");
+		DEBUG("Gesture fail layer set to false");
 	}
 
 	tts_stop(service_data->tts);

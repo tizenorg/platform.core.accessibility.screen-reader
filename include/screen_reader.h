@@ -12,9 +12,7 @@
 #define MAX_POS_REACHED ", end of text reached"
 #define MIN_POS_REACHED ", begin of text reached"
 
-#define FOCUS_SIG "focused"
-
-#define FOCUS_CHANGED_SIG "object:state-changed:focused"
+#define HIGHLIGHT_CHANGED_SIG "object:state-change:highlighted"
 #define VALUE_CHANGED_SIG "object:property-change:accessible-value"
 #define CARET_MOVED_SIG "object:text-caret-moved"
 

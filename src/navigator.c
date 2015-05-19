@@ -15,6 +15,7 @@
 #include "smart_notification.h"
 #include "screen_reader_system.h"
 #include "screen_reader_haptic.h"
+#include "screen_reader_tts.h"
 
 #define QUICKPANEL_DOWN TRUE
 #define QUICKPANEL_UP FALSE
@@ -43,6 +44,217 @@ static AtspiAccessible *top_window;
 static Eina_Bool _window_cache_builded;
 static FlatNaviContext *context;
 
+char *
+state_to_char(AtspiStateType state)
+{
+    switch(state)
+    {
+    case ATSPI_STATE_INVALID:
+        return strdup("ATSPI_STATE_INVALID");
+    case ATSPI_STATE_ACTIVE:
+        return strdup("ATSPI_STATE_ACTIVE");
+    case ATSPI_STATE_ARMED:
+        return strdup("ATSPI_STATE_ARMED");
+    case ATSPI_STATE_BUSY:
+        return strdup("ATSPI_STATE_BUSY");
+    case ATSPI_STATE_CHECKED:
+        return strdup("ATSPI_STATE_CHECKED");
+    case ATSPI_STATE_COLLAPSED:
+        return strdup("ATSPI_STATE_COLLAPSED");
+    case ATSPI_STATE_DEFUNCT:
+        return strdup("ATSPI_STATE_DEFUNCT");
+    case ATSPI_STATE_EDITABLE:
+        return strdup("ATSPI_STATE_EDITABLE");
+    case ATSPI_STATE_ENABLED:
+        return strdup("ATSPI_STATE_ENABLED");
+    case ATSPI_STATE_EXPANDABLE:
+        return strdup("ATSPI_STATE_EXPANDABLE");
+    case ATSPI_STATE_EXPANDED:
+        return strdup("ATSPI_STATE_EXPANDED");
+    case ATSPI_STATE_FOCUSABLE:
+        return strdup("ATSPI_STATE_FOCUSABLE");
+    case ATSPI_STATE_FOCUSED:
+        return strdup("ATSPI_STATE_FOCUSED");
+    case ATSPI_STATE_HAS_TOOLTIP:
+        return strdup("ATSPI_STATE_HAS_TOOLTIP");
+    case ATSPI_STATE_HORIZONTAL:
+        return strdup("ATSPI_STATE_HORIZONTAL");
+    case ATSPI_STATE_ICONIFIED:
+        return strdup("ATSPI_STATE_ICONIFIED");
+    case ATSPI_STATE_MULTI_LINE:
+        return strdup("ATSPI_STATE_MULTI_LINE");
+    case ATSPI_STATE_MULTISELECTABLE:
+        return strdup("ATSPI_STATE_MULTISELECTABLE");
+    case ATSPI_STATE_OPAQUE:
+        return strdup("ATSPI_STATE_OPAQUE");
+    case ATSPI_STATE_PRESSED:
+        return strdup("ATSPI_STATE_PRESSED");
+    case ATSPI_STATE_RESIZABLE:
+        return strdup("ATSPI_STATE_RESIZABLE");
+    case ATSPI_STATE_SELECTABLE:
+        return strdup("ATSPI_STATE_SELECTABLE");
+    case ATSPI_STATE_SELECTED:
+        return strdup("ATSPI_STATE_SELECTED");
+    case ATSPI_STATE_SENSITIVE:
+        return strdup("ATSPI_STATE_SENSITIVE");
+    case ATSPI_STATE_SHOWING:
+        return strdup("ATSPI_STATE_SHOWING");
+    case ATSPI_STATE_SINGLE_LINE:
+        return strdup("ATSPI_STATE_SINGLE_LINE");
+    case ATSPI_STATE_STALE:
+        return strdup("ATSPI_STATE_STALE");
+    case ATSPI_STATE_TRANSIENT:
+        return strdup("ATSPI_STATE_TRANSIENT");
+    case ATSPI_STATE_VERTICAL:
+        return strdup("ATSPI_STATE_VERTICAL");
+    case ATSPI_STATE_VISIBLE:
+        return strdup("ATSPI_STATE_VISIBLE");
+    case ATSPI_STATE_MANAGES_DESCENDANTS:
+        return strdup("ATSPI_STATE_MANAGES_DESCENDANTS");
+    case ATSPI_STATE_INDETERMINATE:
+        return strdup("ATSPI_STATE_INDETERMINATE");
+    case ATSPI_STATE_REQUIRED:
+        return strdup("ATSPI_STATE_REQUIRED");
+    case ATSPI_STATE_TRUNCATED:
+        return strdup("ATSPI_STATE_TRUNCATED");
+    case ATSPI_STATE_ANIMATED:
+        return strdup("ATSPI_STATE_ANIMATED");
+    case ATSPI_STATE_INVALID_ENTRY:
+        return strdup("ATSPI_STATE_INVALID_ENTRY");
+    case ATSPI_STATE_SUPPORTS_AUTOCOMPLETION:
+        return strdup("ATSPI_STATE_SUPPORTS_AUTOCOMPLETION");
+    case ATSPI_STATE_SELECTABLE_TEXT:
+        return strdup("ATSPI_STATE_SELECTABLE_TEXT");
+    case ATSPI_STATE_IS_DEFAULT:
+        return strdup("ATSPI_STATE_IS_DEFAULT");
+    case ATSPI_STATE_VISITED:
+        return strdup("ATSPI_STATE_VISITED");
+    case ATSPI_STATE_CHECKABLE:
+        return strdup("ATSPI_STATE_CHECKABLE");
+    case ATSPI_STATE_HAS_POPUP:
+        return strdup("ATSPI_STATE_HAS_POPUP");
+    case ATSPI_STATE_READ_ONLY:
+        return strdup("ATSPI_STATE_READ_ONLY");
+    case ATSPI_STATE_LAST_DEFINED:
+        return strdup("ATSPI_STATE_LAST_DEFINED");
+
+    default:
+       return strdup("\0");
+    }
+
+}
+
+static void
+display_info_about_object(AtspiAccessible *obj)
+{
+    DEBUG("START");
+    DEBUG("------------------------");
+    const char *name = atspi_accessible_get_name(obj, NULL);
+    const char *role = atspi_accessible_get_role_name(obj, NULL);
+    const char *description = atspi_accessible_get_description(obj, NULL);
+    char *state_name = NULL;
+    AtspiStateSet *st = atspi_accessible_get_state_set (obj);
+    GArray *states = atspi_state_set_get_states (st);
+
+    DEBUG("NAME:%s", name);
+    DEBUG("ROLE:%s", role)
+    DEBUG("DESCRIPTION:%s", description);
+    DEBUG("CHILDS:%d", atspi_accessible_get_child_count(obj, NULL));
+    DEBUG("STATES:");
+    int a;
+    AtspiStateType stat;
+    for (a = 0; a < states->len; ++a) {
+        stat = g_array_index (states, AtspiStateType, a);
+        state_name = state_to_char(stat);
+        DEBUG("   %s", state_name);
+        free(state_name);
+    }
+
+    DEBUG("------------------------");
+    DEBUG("END");
+}
+
+char *
+generate_description_for_subtrees(AtspiAccessible *obj)
+{
+    DEBUG("START");
+    if (!obj)
+        return strdup("");
+    int child_count = atspi_accessible_get_child_count(obj, NULL);
+
+    DEBUG("There is %d children inside this filler", child_count);
+    if (!child_count)
+        return strdup("");
+
+    int i;
+    char *name = NULL;
+    char *below = NULL;
+    char ret[256] = "\0";
+    AtspiAccessible *child = NULL;
+    for (i=0; i < child_count; i++) {
+        child = atspi_accessible_get_child_at_index(obj, i, NULL);
+        name = atspi_accessible_get_name(child, NULL);
+        DEBUG("%d child name:%s", i, name);
+        if (strncmp(name, "\0", 1)) {
+            strncat(ret, name, sizeof(ret) - strlen(ret) - 1);
+        }
+        strncat(ret, " ", 1);
+        below = generate_description_for_subtrees(child);
+        DEBUG("%s from below", below);
+        if (strncmp(below, "\0", 1)) {
+            strncat(ret, below, sizeof(ret) - strlen(ret) - 1);
+        }
+        g_object_unref(child);
+        free(below);
+        free(name);
+    }
+    return strdup(ret);
+}
+
+static char *
+generate_what_to_read(AtspiAccessible *obj)
+{
+    char *name;
+    char *names = NULL;
+    char *description;
+    char *role_name;
+    char *other;
+    char ret[256] = "\0";
+
+    description = atspi_accessible_get_description(obj, NULL);
+    name = atspi_accessible_get_name(obj, NULL);
+    role_name = atspi_accessible_get_role_name(obj, NULL);
+    other = generate_description_for_subtrees(obj);
+
+    DEBUG("->->->->->-> WIDGET GAINED HIGHLIGHT: %s <-<-<-<-<-<-<-", name);
+    DEBUG("->->->->->-> FROM SUBTREE HAS NAME:  %s <-<-<-<-<-<-<-", other);
+
+    display_info_about_object(obj);
+
+    if (strncmp(name, "\0", 1))
+        names = strdup(name);
+    else if (strncmp(other, "\0", 1))
+        names = strdup(other);
+
+    if (names) {
+      strncat(ret, names, sizeof(ret) - strlen(ret) - 1);
+      strncat(ret, ", ", 2);
+    }
+
+    strncat(ret, role_name, sizeof(ret) - strlen(ret) - 1);
+    if (strncmp(description, "\0", 1))
+      strncat(ret, ", ", 2);
+    strncat(ret, description, sizeof(ret) - strlen(ret) - 1);
+
+    free(name);
+    free(description);
+    free(role_name);
+    free(other);
+
+    return strdup(ret);
+
+}
+
 static void
 _current_highlight_object_set(AtspiAccessible *obj)
 {
@@ -50,19 +262,19 @@ _current_highlight_object_set(AtspiAccessible *obj)
    GError *err = NULL;
    if (!obj)
      {
-        DEBUG("Clearing focus object");
+        DEBUG("Clearing highlight object");
         current_obj = NULL;
         return;
      }
    if (current_obj == obj)
      {
-        DEBUG("Object already focuseded");
+        DEBUG("Object already highlighted");
         DEBUG("Object name:%s", atspi_accessible_get_name(obj, NULL));
         return;
      }
     if (obj && ATSPI_IS_COMPONENT(obj))
       {
-         DEBUG("OBJ && IS COMPONENT");
+         DEBUG("OBJ WITH COMPONENT");
          AtspiComponent *comp = atspi_accessible_get_component(obj);
          if (!comp)
            {
@@ -73,7 +285,7 @@ _current_highlight_object_set(AtspiAccessible *obj)
              g_free(role);
              return;
            }
-         atspi_component_grab_focus(comp, &err);
+         atspi_component_grab_highlight(comp, &err);
          GERROR_CHECK(err)
          gchar *name;
          gchar *role;
@@ -82,32 +294,36 @@ _current_highlight_object_set(AtspiAccessible *obj)
          const ObjectCache *oc = object_cache_get(obj);
 
          if (oc) {
-             name = atspi_accessible_get_name(obj, &err);
-             GERROR_CHECK(err)
-             role = atspi_accessible_get_role_name(obj, &err);
-             GERROR_CHECK(err)
-             DEBUG("New focused object: %s, role: %s, (%d %d %d %d)",
-               name,
-               role,
-               oc->bounds->x, oc->bounds->y, oc->bounds->width, oc->bounds->height);
-             haptic_vibrate_start();
+           name = atspi_accessible_get_name(obj, &err);
+           GERROR_CHECK(err)
+           role = atspi_accessible_get_role_name(obj, &err);
+           GERROR_CHECK(err)
+           DEBUG("New highlighted object: %s, role: %s, (%d %d %d %d)",
+             name,
+             role,
+             oc->bounds->x, oc->bounds->y, oc->bounds->width, oc->bounds->height);
+           haptic_vibrate_start();
          }
          else {
            name = atspi_accessible_get_name(obj, &err);
            GERROR_CHECK(err)
            role = atspi_accessible_get_role_name(obj, &err);
            GERROR_CHECK(err)
-           DEBUG("New focused object: %s, role: %s",
-               name,
-               role
-               );
+           DEBUG("New highlighted object: %s, role: %s",
+             name,
+             role);
            haptic_vibrate_start();
-               }
+         }
+         char *text_to_speak = NULL;
+         text_to_speak = generate_what_to_read(obj);
+         DEBUG("SPEAK:%s", text_to_speak);
+         tts_speak(text_to_speak, EINA_TRUE);
          g_free(role);
          g_free(name);
+         g_free(text_to_speak);
       }
     else
-       DEBUG("Unable to focus on object");
+       DEBUG("Unable to highlight on object");
    DEBUG("END");
 }
 
@@ -495,14 +711,14 @@ static void _activate_widget(void)
     gchar *actionName;
     roleName = atspi_accessible_get_role_name(current_widget, &err);
     GERROR_CHECK(err)
-    ERROR("Widget role prev: %s\n", roleName);
+    DEBUG("Widget role prev: %s\n", roleName);
 
     if(!strcmp(roleName, "entry"))
     {
         focus_component = atspi_accessible_get_component(current_widget);
         if (focus_component != NULL)
         {
-            if (atspi_component_grab_focus(focus_component, &err) == TRUE)
+            if (atspi_component_grab_highlight(focus_component, &err) == TRUE)
               {
                 ERROR("Entry activated\n");
                 GERROR_CHECK(err)
@@ -526,28 +742,33 @@ static void _activate_widget(void)
         return;
       }
     number = atspi_action_get_n_actions(action, &err);
-    ERROR("Number of available action = %d\n", number);
+    DEBUG("Number of available action = %d\n", number);
     GERROR_CHECK(err)
-        GArray *array = atspi_accessible_get_interfaces(current_widget);
-        ERROR("TAB LEN = %d \n", array->len);
+    GArray *array = atspi_accessible_get_interfaces(current_widget);
+    DEBUG("TAB LEN = %d \n", array->len);
 
-        for (k=0; k < array->len; k++)
-            ERROR("Interface = %s\n", g_array_index( array, gchar *, k ));
+    for (k=0; k < array->len; k++)
+      ERROR("Interface = %s\n", g_array_index( array, gchar *, k ));
 
-        for (i=0; i<number; i++)
-        {
-            actionName = atspi_action_get_name(action, i, &err);
-            ERROR("Action name = %s\n", actionName);
+    for (i=0; i<number; i++)
+      {
+        actionName = atspi_action_get_name(action, i, &err);
+        DEBUG("Action name = %s\n", actionName);
+        GERROR_CHECK(err)
+
+        if (actionName && !strcmp("activate", actionName))
+          {
+            DEBUG("PERFORMING ATSPI ACTION NO.%d and name:%s", i, actionName);
+            atspi_action_do_action(action, i, &err);
             GERROR_CHECK(err)
-
-            if (actionName && !strcmp("click", actionName))
-            {
-                atspi_action_do_action(action, 0, &err);
-                GERROR_CHECK(err)
-            }
-            g_free(actionName);
-        }
-
+          }
+        else if (actionName) {
+            DEBUG("PERFORMING ATSPI DEFAULT ACTION");
+            atspi_action_do_action(action, 0, &err);
+            GERROR_CHECK(err)
+         }
+        g_free(actionName);
+     }
 }
 
 static void _quickpanel_change_state(gboolean quickpanel_switch)
@@ -802,7 +1023,7 @@ static void on_gesture_detected(void *data, Gesture_Info *info)
 static void
 _on_cache_builded(void *data)
 {
-   DEBUG("Cache building");
+   DEBUG("START");
    _window_cache_builded = EINA_TRUE;
    AtspiAccessible *pivot = NULL;
    if (context)
@@ -817,40 +1038,39 @@ _on_cache_builded(void *data)
      _current_highlight_object_set(pivot);
    else
      _current_highlight_object_set(flat_navi_context_current_get(context));
-   DEBUG("Cache building finished");
+   DEBUG("END");
 }
 
 static void
 _view_content_changed(AppTrackerEventType type, void *user_data)
 {
-   DEBUG("View content changed");
+   DEBUG("START");
    _window_cache_builded = EINA_FALSE;
    if (top_window)
       object_cache_build_async(top_window, 5, _on_cache_builded, NULL);
+   DEBUG("END");
 }
 
 static void on_window_activate(void *data, AtspiAccessible *window)
 {
-  gchar *name;
-      ERROR("... on window activate ...");
+   DEBUG("START");
 
-      app_tracker_callback_unregister(top_window, APP_TRACKER_EVENT_VIEW_CHANGED, _view_content_changed, NULL);
+   app_tracker_callback_unregister(top_window, APP_TRACKER_EVENT_VIEW_CHANGED, _view_content_changed, NULL);
 
-      if(window)
-      {
-         app_tracker_callback_register(window, APP_TRACKER_EVENT_VIEW_CHANGED, _view_content_changed, NULL);
-         name = atspi_accessible_get_name(window, NULL);
-         ERROR("Window name: %s", name);
-         _window_cache_builded = EINA_FALSE;
-         object_cache_build_async(window, 5, _on_cache_builded, NULL);
-         g_free(name);
-      }
-      else
-      {
-          ERROR("No top window found!");
-//          scrolled_obj = NULL;
-      }
-      top_window = window;
+   if(window)
+     {
+       DEBUG("Window name: %s", atspi_accessible_get_name(window, NULL));
+       app_tracker_callback_register(window, APP_TRACKER_EVENT_VIEW_CHANGED, _view_content_changed, NULL);
+       _window_cache_builded = EINA_FALSE;
+       object_cache_build_async(window, 5, _on_cache_builded, NULL);
+     }
+   else
+     {
+       ERROR("No top window found!");
+//     scrolled_obj = NULL;
+     }
+   top_window = window;
+   DEBUG("END");
 }
 
 void kb_tracker (void *data, Key k)
@@ -892,6 +1112,7 @@ void navigator_shutdown(void)
        AtspiComponent *comp = atspi_accessible_get_component(current_obj);
        if (comp)
          {
+           atspi_component_clear_highlight(comp, &err);
            GERROR_CHECK(err);
          }
      }
