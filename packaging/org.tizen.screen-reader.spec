@@ -3,8 +3,8 @@
 
 
 Name:       org.tizen.screen-reader
-Summary:    Empty app
-Version:    0.0.1
+Summary:    Screen Reader Assistive Technology
+Version:    0.0.2
 Release:    1
 License:    Apache-2.0
 Source0:    %{name}-%{version}.tar.gz
@@ -32,7 +32,7 @@ An utility library for developers of the menu screen.
 %setup -q
 
 %build
-cmake . -DCMAKE_INSTALL_PREFIX="%{AppInstallPath}" -DCMAKE_TARGET="%{Exec}" -DCMAKE_PACKAGE="%{name}"
+rm -rf CMakeFiles CMakeCache.txt && cmake . -DCMAKE_INSTALL_PREFIX="%{AppInstallPath}" -DCMAKE_TARGET="%{Exec}" -DCMAKE_PACKAGE="%{name}"
 make %{?jobs:-j%jobs} \
 2>&1 | sed \
 -e 's%^.*: error: .*$%\x1b[37;41m&\x1b[m%' \
