@@ -38,11 +38,6 @@ Service_Data *get_pointer_to_service_data_struct()
 
 int screen_reader_create_service(void *data)
 {
-	int vconf_ret = vconf_set_bool("db/setting/accessibility/atspi", EINA_TRUE);
-	if(vconf_ret != 0)
-	{
-		ERROR("Gesture fail layer set to false with error:%d", vconf_ret);
-	}
 	Service_Data *service_data = data;
 
 	vconf_init(service_data);
@@ -65,15 +60,6 @@ int screen_reader_terminate_service(void *data)
 	DEBUG("Service Terminate Callback \n");
 
 	Service_Data *service_data = data;
-	vconf_ret = vconf_set_bool("db/setting/accessibility/atspi", EINA_FALSE);
-	if(vconf_ret == 0)
-	{
-		DEBUG("Gesture layer set to false");
-	}
-	else
-	{
-		DEBUG("Gesture fail layer set to false");
-	}
 
 	tts_stop(service_data->tts);
 	tts_unprepare(service_data->tts);

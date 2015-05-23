@@ -4,7 +4,6 @@
 #include <atspi/atspi.h>
 #include "logger.h"
 #include "navigator.h"
-#include "gesture_tracker.h"
 #include "window_tracker.h"
 #include "keyboard_tracker.h"
 #include "pivot_chooser.h"
@@ -16,6 +15,7 @@
 #include "screen_reader_system.h"
 #include "screen_reader_haptic.h"
 #include "screen_reader_tts.h"
+#include "screen_reader_gestures.h"
 
 #define QUICKPANEL_DOWN TRUE
 #define QUICKPANEL_UP FALSE
@@ -37,7 +37,6 @@ typedef struct
   int x,y;
 } last_focus_t;
 
-static last_focus_t last_focus = {-1,-1};
 static AtspiAccessible *current_obj;
 static AtspiAccessible *top_window;
 //static AtspiScrollable *scrolled_obj;
@@ -490,6 +489,7 @@ static AtspiAccessible *get_nearest_widget(AtspiAccessible* app_obj, gint x_cord
 }
 #endif
 
+#if 0
 static void _focus_widget(Gesture_Info *info)
 {
     DEBUG("START");
@@ -521,6 +521,7 @@ static void _focus_widget(Gesture_Info *info)
             info->x_begin, info->y_begin);
     DEBUG("END");
 }
+#endif
 
 static void _focus_next(void)
 {
@@ -986,7 +987,7 @@ static void on_gesture_detected(void *data, Gesture_Info *info)
    switch(info->type)
    {
       case ONE_FINGER_HOVER:
-          _focus_widget(info);
+          //_focus_widget(info);
           break;
       case TWO_FINGERS_HOVER:
 //          _widget_scroll(info);
@@ -1004,7 +1005,7 @@ static void on_gesture_detected(void *data, Gesture_Info *info)
           _value_dec_widget();
           break;
       case ONE_FINGER_SINGLE_TAP:
-          _focus_widget(info);
+          //_focus_widget(info);
           break;
       case ONE_FINGER_DOUBLE_TAP:
           _activate_widget();
@@ -1091,8 +1092,7 @@ void kb_tracker (void *data, Key k)
 void navigator_init(void)
 {
    DEBUG("START");
-   // register on gesture_getected
-   gesture_tracker_register(on_gesture_detected, NULL);
+   screen_reader_gestures_tracker_register(on_gesture_detected, NULL);
    // register on active_window
    window_tracker_init();
    window_tracker_register(on_window_activate, NULL);
