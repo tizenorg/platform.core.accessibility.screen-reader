@@ -203,13 +203,6 @@ bool vconf_init(Service_Data *service_data)
 		return false;
 	}
 
-	ret = vconf_notify_key_changed("db/setting/accessibility/screen_reader", app_termination_cb, service_data);
-	if(ret != 0)
-	{
-		DEBUG("Could not add app termination callback");
-		return false;
-	}
-
 	ret = vconf_notify_key_changed("db/menu_widget/language", language_cb, service_data);
 	if(ret != 0)
 	{

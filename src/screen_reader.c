@@ -65,17 +65,6 @@ int screen_reader_terminate_service(void *data)
 	DEBUG("Service Terminate Callback \n");
 
 	Service_Data *service_data = data;
-
-	int vconf_ret = vconf_set_bool("db/setting/accessibility/screen_reader", EINA_FALSE);
-	if(vconf_ret == 0)
-	{
-		DEBUG("TTS key set to false");
-	}
-	else
-	{
-		DEBUG("COULD NOT SET tts key to 0");
-	}
-
 	vconf_ret = vconf_set_bool("db/setting/accessibility/atspi", EINA_FALSE);
 	if(vconf_ret == 0)
 	{
