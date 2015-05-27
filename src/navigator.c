@@ -700,76 +700,105 @@ static void _activate_widget(void)
     //special behavior for entry, caret should move from first/last last/first
     DEBUG("START");
     AtspiAccessible *current_widget = NULL;
-    AtspiComponent *focus_component;
+    AtspiComponent *focus_component = NULL;
+    AtspiAccessible *parent = NULL;
+    AtspiStateSet *ss = NULL;
+    AtspiSelection *selection = NULL;
+    AtspiAction *action;
+    AtspiEditableText *edit = NULL;
+
     GError *err = NULL;
+    gchar *roleName = NULL;
+    gchar *actionName = NULL;
+    gint number = 0;
+    gint i = 0;
+    gint index = 0;
+    Eina_Bool activate_found = EINA_FALSE;
 
     if(!current_obj)
       return;
 
     current_widget = current_obj;
 
-    gchar *roleName;
-    gchar *actionName;
     roleName = atspi_accessible_get_role_name(current_widget, &err);
     GERROR_CHECK(err)
     DEBUG("Widget role prev: %s\n", roleName);
 
-    if(!strcmp(roleName, "entry"))
-    {
-        focus_component = atspi_accessible_get_component(current_widget);
-        if (focus_component != NULL)
-        {
-            if (atspi_component_grab_highlight(focus_component, &err) == TRUE)
-              {
-                ERROR("Entry activated\n");
-                GERROR_CHECK(err)
-              }
-            g_free(roleName);
-            return;
-        }
-    }
-    g_free(roleName);
+    display_info_about_object(current_widget);
 
-    AtspiAction *action;
-    gint number;
-    int i;
-    int k;
+
+    edit = atspi_accessible_get_editable_text (current_widget);
+    if (edit)
+      {
+         DEBUG("Activated object has editable Interface");
+         focus_component = atspi_accessible_get_component(current_widget);
+         if (focus_component)
+            {
+            if (atspi_component_grab_focus(focus_component, &err) == TRUE){
+                DEBUG("Entry activated\n");
+                GERROR_CHECK(err)
+                g_object_unref(focus_component);
+            }
+         }
+      g_object_unref(edit);
+      return;
+    }
 
     action = atspi_accessible_get_action(current_widget);
-
-    if(!action)
-      {
-        ERROR("Action null");
-        return;
-      }
-    number = atspi_action_get_n_actions(action, &err);
-    DEBUG("Number of available action = %d\n", number);
-    GERROR_CHECK(err)
-    GArray *array = atspi_accessible_get_interfaces(current_widget);
-    DEBUG("TAB LEN = %d \n", array->len);
-
-    for (k=0; k < array->len; k++)
-      ERROR("Interface = %s\n", g_array_index( array, gchar *, k ));
-
-    for (i=0; i<number; i++)
-      {
-        actionName = atspi_action_get_name(action, i, &err);
-        DEBUG("Action name = %s\n", actionName);
-        GERROR_CHECK(err)
-
-        if (actionName && !strcmp("activate", actionName))
-          {
-            DEBUG("PERFORMING ATSPI ACTION NO.%d and name:%s", i, actionName);
-            atspi_action_do_action(action, i, &err);
-            GERROR_CHECK(err)
-          }
-        else if (actionName) {
-            DEBUG("PERFORMING ATSPI DEFAULT ACTION");
-            atspi_action_do_action(action, 0, &err);
-            GERROR_CHECK(err)
+    if (action) {
+       number = atspi_action_get_n_actions(action, &err);
+       DEBUG("Number of available action = %d\n", number);
+       GERROR_CHECK(err)
+       activate_found = EINA_FALSE;
+       while (i < number && !activate_found) {
+         actionName = atspi_action_get_name(action, i, &err);
+         if (actionName && !strcmp("activate", actionName)) {
+            DEBUG("There is activate action");
+            activate_found = EINA_TRUE;
          }
-        g_free(actionName);
-     }
+         else {
+            g_free(actionName);
+            i++;
+         }
+       }
+       if (activate_found) {
+         DEBUG("PERFORMING ATSPI ACTION NO.%d and name:%s", i, actionName);
+         atspi_action_do_action(action, i, &err);
+       }
+       else if (number > 0) {
+         DEBUG("NUMBER:%d", number);
+         DEBUG("PERFORMING ATSPI DEFAULT ACTION: %s", actionName);
+         atspi_action_do_action(action, 0, &err);
+       }
+       else
+         ERROR("There is no actions inside Action interface");
+       if (actionName) g_free(actionName);
+       g_object_unref(action);
+       GERROR_CHECK(err)
+       return;
+    }
+
+    ss = atspi_accessible_get_state_set(current_widget);
+    if (atspi_state_set_contains(ss, ATSPI_STATE_SELECTABLE) == EINA_TRUE) {
+        DEBUG("OBJECT IS SELECTABLE");
+        parent = atspi_accessible_get_parent(current_widget, NULL);
+        if (parent) {
+           index = atspi_accessible_get_index_in_parent(current_widget, NULL);
+           selection = atspi_accessible_get_selection (parent);
+           if (selection) {
+               DEBUG("SELECT CHILD NO:%d\n", index);
+               atspi_selection_select_child(selection, index, NULL);
+               g_object_unref(selection);
+               g_object_unref(parent);
+               g_object_unref(ss);
+               return;
+           }
+        }
+        else
+            ERROR("no selection iterface in parent");
+    }
+    g_object_unref(ss);
+
 }
 
 static void _quickpanel_change_state(gboolean quickpanel_switch)
