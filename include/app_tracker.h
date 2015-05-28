@@ -10,13 +10,14 @@
  * UI parts has change its visuals, including moving, resizing widgets, scrolling etc.
  *
  * @APP_TRACKER_EVENT_VIEW_CHANGED occuring when any of application's
- * UI parts has changed its visuals and a prefined time period elapsed 
+ * UI parts has changed its visuals and a prefined time period elapsed
  *
  */
-typedef enum {
-	APP_TRACKER_EVENT_VIEW_CHANGE_STARTED,
-	APP_TRACKER_EVENT_VIEW_CHANGED,
-	APP_TRACKER_EVENT_COUNT
+typedef enum
+{
+   APP_TRACKER_EVENT_VIEW_CHANGE_STARTED,
+   APP_TRACKER_EVENT_VIEW_CHANGED,
+   APP_TRACKER_EVENT_COUNT
 } AppTrackerEventType;
 
 /**

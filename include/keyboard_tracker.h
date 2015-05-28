@@ -1,12 +1,13 @@
 /**
  * @brief Supported Keys
  */
-enum _Key {
-     KEY_LEFT,
-     KEY_RIGHT,
-     KEY_UP,
-     KEY_DOWN,
-     KEY_COUNT
+enum _Key
+{
+   KEY_LEFT,
+   KEY_RIGHT,
+   KEY_UP,
+   KEY_DOWN,
+   KEY_COUNT
 };
 
 typedef enum _Key Key;

@@ -14,23 +14,23 @@ static haptic_effect_h effect_handle;
  */
 void haptic_module_init(void)
 {
-    int num;
+   int num;
 
-    if(!device_haptic_get_count(&num))
+   if(!device_haptic_get_count(&num))
       {
          DEBUG(RED"Haptic device received!"RESET);
       }
-    else
+   else
       {
          ERROR("Cannot receive haptic device count");
          return;
       }
 
-    if(!device_haptic_open(0, &handle))
+   if(!device_haptic_open(0, &handle))
       {
          DEBUG(RED"Device connected!"RESET);
       }
-    else
+   else
       {
          ERROR("Cannot open haptic device");
       }
@@ -42,16 +42,16 @@ void haptic_module_init(void)
  */
 void haptic_module_disconnect(void)
 {
-    if(!handle)
+   if(!handle)
       {
          ERROR("Haptic handle lost");
          return;
       }
-    if(!device_haptic_close(handle))
+   if(!device_haptic_close(handle))
       {
          DEBUG("Haptic disconnected");
       }
-    else
+   else
       {
          ERROR("Haptic close error");
       }
@@ -63,16 +63,16 @@ void haptic_module_disconnect(void)
  */
 void haptic_vibrate_start(void)
 {
-    if(!handle)
+   if(!handle)
       {
          ERROR("Haptic handle lost");
          return;
       }
-    if(!device_haptic_vibrate(handle, 1000, 100, &effect_handle))
+   if(!device_haptic_vibrate(handle, 1000, 100, &effect_handle))
       {
          DEBUG(RED"Vibrations started!"RESET);
       }
-    else
+   else
       {
          ERROR("Cannot start vibration");
       }
@@ -84,16 +84,16 @@ void haptic_vibrate_start(void)
  */
 void haptic_vibrate_stop(void)
 {
-    if(!handle)
+   if(!handle)
       {
          ERROR("Haptic handle lost");
          return;
       }
-    if(!device_haptic_stop(handle, &effect_handle))
+   if(!device_haptic_stop(handle, &effect_handle))
       {
          ERROR("Vibrations stopped!");
       }
-    else
+   else
       {
          DEBUG(RED"Cannot stop vibration"RESET);
       }

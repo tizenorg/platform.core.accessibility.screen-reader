@@ -3,50 +3,53 @@
 #include "object_cache.h"
 #include "logger.h"
 
-struct _FlatNaviContext {
-     AtspiAccessible *root;
-     Eina_List *current;
-     Eina_List *current_line;
-     Eina_List *lines;
-     Eina_List *candidates;
+struct _FlatNaviContext
+{
+   AtspiAccessible *root;
+   Eina_List *current;
+   Eina_List *current_line;
+   Eina_List *lines;
+   Eina_List *candidates;
 };
 
-static const AtspiStateType required_states[] = {
-     ATSPI_STATE_SHOWING,
-     ATSPI_STATE_VISIBLE,
-     ATSPI_STATE_FOCUSABLE,
-     ATSPI_STATE_LAST_DEFINED
+static const AtspiStateType required_states[] =
+{
+   ATSPI_STATE_SHOWING,
+   ATSPI_STATE_VISIBLE,
+   ATSPI_STATE_FOCUSABLE,
+   ATSPI_STATE_LAST_DEFINED
 };
 
-static const AtspiRole interesting_roles[] = {
-     ATSPI_ROLE_CHECK_BOX,
-     ATSPI_ROLE_COLOR_CHOOSER,
-     ATSPI_ROLE_COMBO_BOX,
-     ATSPI_ROLE_DATE_EDITOR,
-     ATSPI_ROLE_FILE_CHOOSER,
-     ATSPI_ROLE_FILLER,
-     ATSPI_ROLE_FONT_CHOOSER,
-     ATSPI_ROLE_HEADER,
-     ATSPI_ROLE_HEADING,
-     ATSPI_ROLE_ICON,
-     ATSPI_ROLE_ENTRY,
-     ATSPI_ROLE_LABEL,
-     ATSPI_ROLE_LIST_ITEM,
-     ATSPI_ROLE_MENU_ITEM,
-     ATSPI_ROLE_PARAGRAPH,
-     ATSPI_ROLE_PASSWORD_TEXT,
-     ATSPI_ROLE_PUSH_BUTTON,
-     ATSPI_ROLE_PROGRESS_BAR,
-     ATSPI_ROLE_RADIO_BUTTON,
-     ATSPI_ROLE_RADIO_MENU_ITEM,
-     ATSPI_ROLE_SLIDER,
-     ATSPI_ROLE_SPIN_BUTTON,
-     ATSPI_ROLE_TABLE_CELL,
-     ATSPI_ROLE_TEXT,
-     ATSPI_ROLE_TOGGLE_BUTTON,
-     ATSPI_ROLE_TOOL_TIP,
-     ATSPI_ROLE_TREE_ITEM,
-     ATSPI_ROLE_LAST_DEFINED
+static const AtspiRole interesting_roles[] =
+{
+   ATSPI_ROLE_CHECK_BOX,
+   ATSPI_ROLE_COLOR_CHOOSER,
+   ATSPI_ROLE_COMBO_BOX,
+   ATSPI_ROLE_DATE_EDITOR,
+   ATSPI_ROLE_FILE_CHOOSER,
+   ATSPI_ROLE_FILLER,
+   ATSPI_ROLE_FONT_CHOOSER,
+   ATSPI_ROLE_HEADER,
+   ATSPI_ROLE_HEADING,
+   ATSPI_ROLE_ICON,
+   ATSPI_ROLE_ENTRY,
+   ATSPI_ROLE_LABEL,
+   ATSPI_ROLE_LIST_ITEM,
+   ATSPI_ROLE_MENU_ITEM,
+   ATSPI_ROLE_PARAGRAPH,
+   ATSPI_ROLE_PASSWORD_TEXT,
+   ATSPI_ROLE_PUSH_BUTTON,
+   ATSPI_ROLE_PROGRESS_BAR,
+   ATSPI_ROLE_RADIO_BUTTON,
+   ATSPI_ROLE_RADIO_MENU_ITEM,
+   ATSPI_ROLE_SLIDER,
+   ATSPI_ROLE_SPIN_BUTTON,
+   ATSPI_ROLE_TABLE_CELL,
+   ATSPI_ROLE_TEXT,
+   ATSPI_ROLE_TOGGLE_BUTTON,
+   ATSPI_ROLE_TOOL_TIP,
+   ATSPI_ROLE_TREE_ITEM,
+   ATSPI_ROLE_LAST_DEFINED
 };
 
 /**
@@ -72,18 +75,18 @@ _descendants_list_get(AtspiAccessible *obj)
    toprocess = eina_list_append(toprocess, obj);
 
    while (toprocess)
-     {
-        AtspiAccessible *obj = eina_list_data_get(toprocess);
-        toprocess = eina_list_remove_list(toprocess, toprocess);
-        int n = atspi_accessible_get_child_count(obj, NULL);
-        for (i = 0; i < n; i++)
-          {
-             AtspiAccessible *child = atspi_accessible_get_child_at_index(obj, i, NULL);
-             if (child) toprocess = eina_list_append(toprocess, child);
-          }
+      {
+         AtspiAccessible *obj = eina_list_data_get(toprocess);
+         toprocess = eina_list_remove_list(toprocess, toprocess);
+         int n = atspi_accessible_get_child_count(obj, NULL);
+         for (i = 0; i < n; i++)
+            {
+               AtspiAccessible *child = atspi_accessible_get_child_at_index(obj, i, NULL);
+               if (child) toprocess = eina_list_append(toprocess, child);
+            }
 
-        ret = eina_list_append(ret, obj);
-     }
+         ret = eina_list_append(ret, obj);
+      }
 
    return ret;
 }
@@ -94,12 +97,15 @@ _accessible_list_free(Eina_List *d)
    AtspiAccessible *obj;
 
    EINA_LIST_FREE(d, obj)
+   {
       g_object_unref(obj);
+   }
 }
 
-typedef struct {
-     Eina_List *success;
-     Eina_List *failure;
+typedef struct
+{
+   Eina_List *success;
+   Eina_List *failure;
 } FilterResult;
 
 static FilterResult
@@ -110,13 +116,13 @@ _accessible_list_split_with_filter(Eina_List *list, Eina_Each_Cb cb, void *user_
    AtspiAccessible *obj;
 
    EINA_LIST_FOREACH_SAFE(list, l, ln, obj)
-     {
-        Eina_Bool res = cb(NULL, user_data, obj);
-        if (res)
-          eina_list_move_list(&ret.success, &list, l);
-        else
-          eina_list_move_list(&ret.failure, &list, l);
-     }
+   {
+      Eina_Bool res = cb(NULL, user_data, obj);
+      if (res)
+         eina_list_move_list(&ret.success, &list, l);
+      else
+         eina_list_move_list(&ret.failure, &list, l);
+   }
 
    return ret;
 }
@@ -132,17 +138,17 @@ _filter_state_cb(const void *container, void *data, void *fdata)
    AtspiStateSet *ss = atspi_accessible_get_state_set(obj);
 
    if (atspi_accessible_get_role(obj, NULL) == ATSPI_ROLE_LIST_ITEM)
-     return EINA_TRUE;
+      return EINA_TRUE;
 
    while (*state != ATSPI_STATE_LAST_DEFINED)
-     {
-        if (!atspi_state_set_contains(ss, *state))
-          {
-             ret = EINA_FALSE;
-             break;
-          }
-        state++;
-     }
+      {
+         if (!atspi_state_set_contains(ss, *state))
+            {
+               ret = EINA_FALSE;
+               break;
+            }
+         state++;
+      }
 
    g_object_unref(ss);
    return ret;
@@ -156,14 +162,14 @@ _filter_role_cb(const void *container, void *data, void *fdata)
    AtspiAccessible *obj = fdata;
 
    while (*role != ATSPI_ROLE_LAST_DEFINED)
-     {
-        if (atspi_accessible_get_role(obj, NULL) == *role)
-          {
-             ret = EINA_TRUE;
-             break;
-          }
-        role++;
-     }
+      {
+         if (atspi_accessible_get_role(obj, NULL) == *role)
+            {
+               ret = EINA_TRUE;
+               break;
+            }
+         role++;
+      }
    return ret;
 }
 
@@ -175,10 +181,10 @@ _filter_viewport_cb(const void *container, void *data, void *fdata)
 
    oc = object_cache_get(obj);
    if (!oc || !oc->bounds || (oc->bounds->height < 0) || (oc->bounds->width < 0))
-     return EINA_FALSE;
+      return EINA_FALSE;
 
    if (((oc->bounds->x + oc->bounds->width) < 0) || ((oc->bounds->y + oc->bounds->height) < 0))
-     return EINA_FALSE;
+      return EINA_FALSE;
 
    return EINA_TRUE;
 }
@@ -199,15 +205,15 @@ _flat_review_candidates_get(AtspiAccessible *root)
 
    const ObjectCache *oc = object_cache_get(root);
    if (!oc || !oc->bounds || (oc->bounds->height < 0) || (oc->bounds->width < 0))
-     {
-        ERROR("Invalid root object bounds. Unable to filter descendants by position");
-        fr0.success = desc;
-     }
+      {
+         ERROR("Invalid root object bounds. Unable to filter descendants by position");
+         fr0.success = desc;
+      }
    else
-     {
-        fr0 = _accessible_list_split_with_filter(desc, _filter_viewport_cb, (void*)oc);
-        _accessible_list_free(fr0.failure);
-     }
+      {
+         fr0 = _accessible_list_split_with_filter(desc, _filter_viewport_cb, (void*)oc);
+         _accessible_list_free(fr0.failure);
+      }
 
    // remove objects without required states
    FilterResult fr1 = _accessible_list_split_with_filter(fr0.success, _filter_state_cb, (void*)required_states);
@@ -219,8 +225,9 @@ _flat_review_candidates_get(AtspiAccessible *root)
    _accessible_list_free(fr2.failure);
 
    DEBUG("Candidates after filters count: %d", eina_list_count(ret));
-   EINA_LIST_FOREACH_SAFE(ret, l, ln, obj) {
-     DEBUG("Name:[%s] Role:[%s]", atspi_accessible_get_name(obj, NULL), atspi_accessible_get_role_name(obj, NULL));
+   EINA_LIST_FOREACH_SAFE(ret, l, ln, obj)
+   {
+      DEBUG("Name:[%s] Role:[%s]", atspi_accessible_get_name(obj, NULL), atspi_accessible_get_role_name(obj, NULL));
    }
 
    return ret;
@@ -235,21 +242,21 @@ debug(FlatNaviContext *ctx)
 
    DEBUG("===============================");
    EINA_LIST_FOREACH(ctx->lines, l1, line)
-     {
-        i = 0;
-        DEBUG("==== Line %d ====", l);
-        EINA_LIST_FOREACH(line, l2, obj)
-          {
-             char *name = atspi_accessible_get_name(obj, NULL);
-             char *role = atspi_accessible_get_role_name(obj, NULL);
-             const ObjectCache *oc = object_cache_get(obj);
-             DEBUG("%d %s %s, (%d %d %d %d)", i++, name, role,
-                   oc->bounds->x, oc->bounds->y, oc->bounds->width, oc->bounds->height);
-             if (name) g_free(name);
-             if (role) g_free(role);
-          }
-        l++;
-     }
+   {
+      i = 0;
+      DEBUG("==== Line %d ====", l);
+      EINA_LIST_FOREACH(line, l2, obj)
+      {
+         char *name = atspi_accessible_get_name(obj, NULL);
+         char *role = atspi_accessible_get_role_name(obj, NULL);
+         const ObjectCache *oc = object_cache_get(obj);
+         DEBUG("%d %s %s, (%d %d %d %d)", i++, name, role,
+               oc->bounds->x, oc->bounds->y, oc->bounds->width, oc->bounds->height);
+         if (name) g_free(name);
+         if (role) g_free(role);
+      }
+      l++;
+   }
    DEBUG("===============================");
 }
 
@@ -262,7 +269,7 @@ FlatNaviContext *flat_navi_context_create(AtspiAccessible *root)
 
    ret->root = root;
    ret->candidates = _flat_review_candidates_get(root);
-   ret->lines = position_sort(ret->candidates); 
+   ret->lines = position_sort(ret->candidates);
    ret->current_line = ret->lines;
    ret->current = eina_list_data_get(ret->current_line);
 
@@ -275,7 +282,9 @@ void flat_navi_context_free(FlatNaviContext *ctx)
 {
    Eina_List *l;
    EINA_LIST_FREE(ctx->lines, l)
+   {
       eina_list_free(l);
+   }
    _accessible_list_free(ctx->candidates);
    free(ctx);
 }
@@ -296,20 +305,22 @@ Eina_Bool flat_navi_context_current_set(FlatNaviContext *ctx, AtspiAccessible *t
    Eina_Bool found = EINA_FALSE;
 
    EINA_LIST_FOREACH(ctx->lines, l, line)
-     {
-        EINA_LIST_FOREACH(line, l2, obj)
-           if (obj == target)
-             {
-                found = EINA_TRUE;
-                break;
-             }
-        if (found)
-          {
-             ctx->current_line = l;
-             ctx->current = l2;
-             break;
-          }
-     }
+   {
+      EINA_LIST_FOREACH(line, l2, obj)
+      {
+         if (obj == target)
+            {
+               found = EINA_TRUE;
+               break;
+            }
+      }
+      if (found)
+         {
+            ctx->current_line = l;
+            ctx->current = l2;
+            break;
+         }
+   }
 
    return found;
 }
@@ -321,10 +332,10 @@ AtspiAccessible *flat_navi_context_next(FlatNaviContext *ctx)
    Eina_List *ret = eina_list_next(ctx->current);
 
    if (ret)
-     {
-        ctx->current = ret;
-        return eina_list_data_get(ctx->current);
-     }
+      {
+         ctx->current = ret;
+         return eina_list_data_get(ctx->current);
+      }
    return NULL;
 }
 
@@ -335,10 +346,10 @@ AtspiAccessible *flat_navi_context_prev(FlatNaviContext *ctx)
    Eina_List *ret = eina_list_prev(ctx->current);
 
    if (ret)
-     {
-        ctx->current = ret;
-        return eina_list_data_get(ctx->current);
-     }
+      {
+         ctx->current = ret;
+         return eina_list_data_get(ctx->current);
+      }
    return NULL;
 }
 
@@ -349,10 +360,10 @@ AtspiAccessible *flat_navi_context_first(FlatNaviContext *ctx)
    Eina_List *ret = eina_list_data_get(ctx->current_line);
 
    if (ret)
-     {
-        ctx->current = ret;
-        return eina_list_data_get(ctx->current);
-     }
+      {
+         ctx->current = ret;
+         return eina_list_data_get(ctx->current);
+      }
    return NULL;
 }
 
@@ -363,10 +374,10 @@ AtspiAccessible *flat_navi_context_last(FlatNaviContext *ctx)
    Eina_List *ret = eina_list_last(ctx->current);
 
    if (ret)
-     {
-        ctx->current = ret;
-        return eina_list_data_get(ctx->current);
-     }
+      {
+         ctx->current = ret;
+         return eina_list_data_get(ctx->current);
+      }
    return NULL;
 }
 

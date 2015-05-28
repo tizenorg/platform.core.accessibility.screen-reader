@@ -18,58 +18,58 @@
 
 typedef struct
 {
-	char *language;
-	int voice_type;
+   char *language;
+   int voice_type;
 } Voice_Info;
 
 
 typedef enum
 {
-	read_as_xml,
-	read_as_plain,
-	dont_read
+   read_as_xml,
+   read_as_plain,
+   dont_read
 } Wrong_Validation_Reacction;
 
 typedef struct _Service_Data
 {
-	//Set by vconf
-	int information_level;
-	bool run_service;
-	char language[LAN_NAME];
-	int voice_type;
-	int reading_speed;
-	char *tracking_signal_name;
+   //Set by vconf
+   int information_level;
+   bool run_service;
+   char language[LAN_NAME];
+   int voice_type;
+   int reading_speed;
+   char *tracking_signal_name;
 
-	//Set by tts
-	tts_h tts;
-	Eina_List *available_languages;
+   //Set by tts
+   tts_h tts;
+   Eina_List *available_languages;
 
-	char *text_to_say_info;
-	char *current_value;
-	char *current_char;
+   char *text_to_say_info;
+   char *current_value;
+   char *current_char;
 
-	//Actions to do when tts state is 'ready'
-	int _dbus_txt_readed;
-	bool say_text;
-	bool update_language_list;
+   //Actions to do when tts state is 'ready'
+   int _dbus_txt_readed;
+   bool say_text;
+   bool update_language_list;
 
-	//Set by spi
-	AtspiEventListener *state_changed_listener;
-	AtspiEventListener *value_changed_listener;
-	AtspiEventListener *caret_moved_listener;
-	AtspiEventListener *spi_listener;
+   //Set by spi
+   AtspiEventListener *state_changed_listener;
+   AtspiEventListener *value_changed_listener;
+   AtspiEventListener *caret_moved_listener;
+   AtspiEventListener *spi_listener;
 
-	AtspiAccessible  *currently_focused;
-	AtspiAccessible  *mouse_down_widget;
-	AtspiAccessible  *clicked_widget;
+   AtspiAccessible  *currently_focused;
+   AtspiAccessible  *mouse_down_widget;
+   AtspiAccessible  *clicked_widget;
 
-	//Set by dbus
-	Eldbus_Proxy *proxy;
-	char **last_tokens;
-	char *available_requests;
-	char **available_apps;
+   //Set by dbus
+   Eldbus_Proxy *proxy;
+   char **last_tokens;
+   char *available_requests;
+   char **available_apps;
 
-	const char *text_from_dbus;
+   const char *text_from_dbus;
 } Service_Data;
 
 Service_Data *get_pointer_to_service_data_struct();

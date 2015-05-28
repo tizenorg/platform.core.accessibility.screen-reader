@@ -22,12 +22,12 @@ static void device_system_cb(device_callback_e type, void *value, void *user_dat
  */
 void system_notifications_init(void)
 {
-    // BATTERY LOW/FULL
-    device_add_callback(DEVICE_CALLBACK_BATTERY_LEVEL, device_system_cb, NULL);
-    // BATTERY CHARGING/NOT-CHARGING
-    device_add_callback(DEVICE_CALLBACK_BATTERY_CHARGING, device_system_cb, NULL);
-    // SCREEN OFF/ON
-    device_add_callback(DEVICE_CALLBACK_DISPLAY_STATE, device_system_cb, NULL);
+   // BATTERY LOW/FULL
+   device_add_callback(DEVICE_CALLBACK_BATTERY_LEVEL, device_system_cb, NULL);
+   // BATTERY CHARGING/NOT-CHARGING
+   device_add_callback(DEVICE_CALLBACK_BATTERY_CHARGING, device_system_cb, NULL);
+   // SCREEN OFF/ON
+   device_add_callback(DEVICE_CALLBACK_DISPLAY_STATE, device_system_cb, NULL);
 }
 
 /**
@@ -36,12 +36,12 @@ void system_notifications_init(void)
  */
 void system_notifications_shutdown(void)
 {
-    // BATTERY LOW/FULL
-    device_remove_callback(DEVICE_CALLBACK_BATTERY_LEVEL, device_system_cb);
-    // BATTERY CHARGING/NOT-CHARGING
-    device_remove_callback(DEVICE_CALLBACK_BATTERY_CHARGING, device_system_cb);
-    // SCREEN OFF/ON
-    device_remove_callback(DEVICE_CALLBACK_DISPLAY_STATE, device_system_cb);
+   // BATTERY LOW/FULL
+   device_remove_callback(DEVICE_CALLBACK_BATTERY_LEVEL, device_system_cb);
+   // BATTERY CHARGING/NOT-CHARGING
+   device_remove_callback(DEVICE_CALLBACK_BATTERY_CHARGING, device_system_cb);
+   // SCREEN OFF/ON
+   device_remove_callback(DEVICE_CALLBACK_DISPLAY_STATE, device_system_cb);
 }
 
 /**
@@ -53,62 +53,62 @@ void system_notifications_shutdown(void)
  */
 static void device_system_cb(device_callback_e type, void *value, void *user_data)
 {
-    if(type == DEVICE_CALLBACK_BATTERY_LEVEL)
+   if(type == DEVICE_CALLBACK_BATTERY_LEVEL)
       {
          device_battery_level_e status;
          if(device_battery_get_level_status(&status))
-           {
-              ERROR("Cannot get battery level status");
-              return;
-           }
+            {
+               ERROR("Cannot get battery level status");
+               return;
+            }
 
          if(status == DEVICE_BATTERY_LEVEL_LOW)
-           {
-              tts_speak(BATTERY_LOW, EINA_TRUE);
-           }
+            {
+               tts_speak(BATTERY_LOW, EINA_TRUE);
+            }
          else if(status == DEVICE_BATTERY_LEVEL_CRITICAL)
-           {
-              tts_speak(BATTERY_CRITICAL, EINA_TRUE);
-           }
+            {
+               tts_speak(BATTERY_CRITICAL, EINA_TRUE);
+            }
          else if(status == DEVICE_BATTERY_LEVEL_FULL)
-           {
-              tts_speak(BATTERY_FULL, EINA_TRUE);
-           }
+            {
+               tts_speak(BATTERY_FULL, EINA_TRUE);
+            }
       }
-    else if(type == DEVICE_CALLBACK_BATTERY_CHARGING)
+   else if(type == DEVICE_CALLBACK_BATTERY_CHARGING)
       {
          bool charging;
          if(device_battery_is_charging(&charging))
-           {
-              ERROR("Cannot check if battery is charging");
-              return;
-           }
+            {
+               ERROR("Cannot check if battery is charging");
+               return;
+            }
 
          if(charging)
-           {
-              tts_speak(CHARGING, EINA_FALSE);
-           }
+            {
+               tts_speak(CHARGING, EINA_FALSE);
+            }
          else
-           {
-              tts_speak(NOT_CHARGING, EINA_FALSE);
-           }
+            {
+               tts_speak(NOT_CHARGING, EINA_FALSE);
+            }
       }
-    else if(type == DEVICE_CALLBACK_DISPLAY_STATE)
+   else if(type == DEVICE_CALLBACK_DISPLAY_STATE)
       {
          display_state_e state;
          if(device_display_get_state(&state))
-           {
-              ERROR("Cannot check if battery is charging");
-              return;
-           }
+            {
+               ERROR("Cannot check if battery is charging");
+               return;
+            }
 
          if(state == DISPLAY_STATE_NORMAL)
-           {
-              tts_speak(SCREEN_ON, EINA_FALSE);
-           }
+            {
+               tts_speak(SCREEN_ON, EINA_FALSE);
+            }
          else if(state == DISPLAY_STATE_SCREEN_OFF)
-           {
-              tts_speak(SCREEN_OFF, EINA_FALSE);
-           }
+            {
+               tts_speak(SCREEN_OFF, EINA_FALSE);
+            }
       }
 }

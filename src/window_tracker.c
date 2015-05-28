@@ -26,18 +26,21 @@ _get_window_object_from_given(AtspiAccessible *obj)
 
    desktop_childs = atspi_accessible_get_child_count(obj, NULL);
 
-   for (i=0; i < desktop_childs; i++) {
-      app = atspi_accessible_get_child_at_index(obj, i, NULL);
-      if (atspi_accessible_get_role(app, NULL) == ATSPI_ROLE_APPLICATION) {
-         app_childs = atspi_accessible_get_child_count(app, NULL);
-         for (j=0; j < app_childs; j++) {
-            win = atspi_accessible_get_child_at_index(app, j, NULL);
-            st = atspi_accessible_get_state_set (win);
-            if (atspi_state_set_contains(st, ATSPI_STATE_ACTIVE))
-               ret = win;
-         }
+   for (i=0; i < desktop_childs; i++)
+      {
+         app = atspi_accessible_get_child_at_index(obj, i, NULL);
+         if (atspi_accessible_get_role(app, NULL) == ATSPI_ROLE_APPLICATION)
+            {
+               app_childs = atspi_accessible_get_child_count(app, NULL);
+               for (j=0; j < app_childs; j++)
+                  {
+                     win = atspi_accessible_get_child_at_index(app, j, NULL);
+                     st = atspi_accessible_get_state_set (win);
+                     if (atspi_state_set_contains(st, ATSPI_STATE_ACTIVE))
+                        ret = win;
+                  }
+            }
       }
-   }
 
    return ret;
 }
@@ -46,22 +49,25 @@ static void
 _on_atspi_window_cb(const AtspiEvent *event)
 {
    if (!strcmp(event->type, "window:restore") ||
-       !strcmp(event->type, "window:activate"))
-     {
-       if (user_cb) user_cb(user_data, event->source);
+         !strcmp(event->type, "window:activate"))
+      {
+         if (user_cb) user_cb(user_data, event->source);
          last_active_win = event->source;
-     }
-   else {
-      AtspiAccessible *obj = NULL;
-      obj = _get_window_object_from_given(event->source);
-
-      if (obj) {
-        if (!strcmp(event->type, "object:children-changed:add")) {
-            if (user_cb) user_cb(user_data, obj);
-               last_active_win = obj;
-        }
       }
-   }
+   else
+      {
+         AtspiAccessible *obj = NULL;
+         obj = _get_window_object_from_given(event->source);
+
+         if (obj)
+            {
+               if (!strcmp(event->type, "object:children-changed:add"))
+                  {
+                     if (user_cb) user_cb(user_data, obj);
+                     last_active_win = obj;
+                  }
+            }
+      }
 }
 
 static AtspiAccessible*
@@ -72,24 +78,26 @@ _get_active_win(void)
    last_active_win = NULL;
    AtspiAccessible *desktop = atspi_get_desktop(0);
    if (!desktop)
-       ERROR("DESKTOP NOT FOUND");
+      ERROR("DESKTOP NOT FOUND");
 
-   for (i = 0; i < atspi_accessible_get_child_count(desktop, NULL); i++) {
-       AtspiAccessible *app = atspi_accessible_get_child_at_index(desktop, i, NULL);
-       for (j = 0; j < atspi_accessible_get_child_count(app, NULL); j++) {
-          AtspiAccessible *win = atspi_accessible_get_child_at_index(app, j, NULL);
-          AtspiStateSet *states = atspi_accessible_get_state_set(win);
-          AtspiRole role = atspi_accessible_get_role(win, NULL);
-
-          if ((atspi_state_set_contains(states, ATSPI_STATE_ACTIVE)) && (role == ATSPI_ROLE_WINDOW))
+   for (i = 0; i < atspi_accessible_get_child_count(desktop, NULL); i++)
+      {
+         AtspiAccessible *app = atspi_accessible_get_child_at_index(desktop, i, NULL);
+         for (j = 0; j < atspi_accessible_get_child_count(app, NULL); j++)
             {
+               AtspiAccessible *win = atspi_accessible_get_child_at_index(app, j, NULL);
+               AtspiStateSet *states = atspi_accessible_get_state_set(win);
+               AtspiRole role = atspi_accessible_get_role(win, NULL);
+
+               if ((atspi_state_set_contains(states, ATSPI_STATE_ACTIVE)) && (role == ATSPI_ROLE_WINDOW))
+                  {
+                     g_object_unref(states);
+                     last_active_win = win;
+                     break;
+                  }
                g_object_unref(states);
-               last_active_win = win;
-               break;
             }
-          g_object_unref(states);
-       }
-   }
+      }
    DEBUG("END");
    return last_active_win;
 }

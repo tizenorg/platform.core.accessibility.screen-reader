@@ -3,10 +3,11 @@
 
 #include <atspi/atspi.h>
 
-typedef struct {
-    // Boundaries of object taken from atspi_component_get_extents function.
-    // NULL if object do not implemetn AtspiComponent interface
-    AtspiRect *bounds;
+typedef struct
+{
+   // Boundaries of object taken from atspi_component_get_extents function.
+   // NULL if object do not implemetn AtspiComponent interface
+   AtspiRect *bounds;
 } ObjectCache;
 
 typedef void (*ObjectCacheReadyCb)(void *data);

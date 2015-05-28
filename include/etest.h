@@ -6,8 +6,9 @@
 #include <Elementary.h>
 #include <Evas.h>
 
-struct appdata {
-	Evas_Object *win;
+struct appdata
+{
+   Evas_Object *win;
 };
 
-#endif 
+#endif

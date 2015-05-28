@@ -27,21 +27,21 @@ static void _smart_notification_realized_items(int start_idx, int end_idx);
  */
 void smart_notification(Notification_Type nt, int start_index, int end_index)
 {
-    DEBUG("START");
-    if(!status)
-        return;
+   DEBUG("START");
+   if(!status)
+      return;
 
-    switch(nt)
-    {
-        case FOCUS_CHAIN_END_NOTIFICATION_EVENT:
-            _smart_notification_focus_chain_end();
-            break;
-        case REALIZED_ITEMS_NOTIFICATION_EVENT:
-            _smart_notification_realized_items(start_index, end_index);
-            break;
-        default:
-            DEBUG("Gesture type %d not handled in switch", nt);
-    }
+   switch(nt)
+      {
+      case FOCUS_CHAIN_END_NOTIFICATION_EVENT:
+         _smart_notification_focus_chain_end();
+         break;
+      case REALIZED_ITEMS_NOTIFICATION_EVENT:
+         _smart_notification_realized_items(start_index, end_index);
+         break;
+      default:
+         DEBUG("Gesture type %d not handled in switch", nt);
+      }
 }
 
 /**
@@ -53,35 +53,35 @@ void smart_notification(Notification_Type nt, int start_index, int end_index)
  */
 void get_realized_items_count(AtspiAccessible *scrollable_object, int *start_idx, int *end_idx)
 {
-    DEBUG("START");
-    int count_child, jdx;
-    AtspiAccessible *child_iter;
-    AtspiStateType state =  ATSPI_STATE_SHOWING;
+   DEBUG("START");
+   int count_child, jdx;
+   AtspiAccessible *child_iter;
+   AtspiStateType state =  ATSPI_STATE_SHOWING;
 
-    if(!scrollable_object)
+   if(!scrollable_object)
       {
          DEBUG("No scrollable object");
          return;
       }
 
-    count_child = atspi_accessible_get_child_count(scrollable_object, NULL);
+   count_child = atspi_accessible_get_child_count(scrollable_object, NULL);
 
-    for(jdx = 0; jdx < count_child; jdx++)
-    {
-        child_iter = atspi_accessible_get_child_at_index(scrollable_object, jdx, NULL);
+   for(jdx = 0; jdx < count_child; jdx++)
+      {
+         child_iter = atspi_accessible_get_child_at_index(scrollable_object, jdx, NULL);
 
-        AtspiStateSet* state_set = atspi_accessible_get_state_set(child_iter);
+         AtspiStateSet* state_set = atspi_accessible_get_state_set(child_iter);
 
-        gboolean is_visible = atspi_state_set_contains(state_set, state);
-        if(is_visible)
-        {
-            *start_idx = jdx;
-            DEBUG("Item with index %d is visible", jdx);
-        }
-        else
+         gboolean is_visible = atspi_state_set_contains(state_set, state);
+         if(is_visible)
+            {
+               *start_idx = jdx;
+               DEBUG("Item with index %d is visible", jdx);
+            }
+         else
             DEBUG("Item with index %d is NOT visible", jdx);
-    }
-    *end_idx = *start_idx + 8;
+      }
+   *end_idx = *start_idx + 8;
 }
 
 /**
@@ -95,7 +95,7 @@ static void
 _scroll_event_cb(AtspiEvent *event, gpointer user_data)
 {
    if(!status)
-        return;
+      return;
 
    int start_index, end_index;
    start_index = 0;
@@ -105,17 +105,17 @@ _scroll_event_cb(AtspiEvent *event, gpointer user_data)
            atspi_accessible_get_role_name(event->source, NULL));
 
    if (!strcmp(event->type, "object:scroll-start"))
-     {
-        DEBUG("Scrolling started");
-        tts_speak("Scrolling started", EINA_TRUE);
-     }
+      {
+         DEBUG("Scrolling started");
+         tts_speak("Scrolling started", EINA_TRUE);
+      }
    else if (!strcmp(event->type, "object:scroll-end"))
-     {
-        DEBUG("Scrolling finished");
-        tts_speak("Scrolling finished", EINA_FALSE);
-        get_realized_items_count((AtspiAccessible *)event->source, &start_index, &end_index);
-        _smart_notification_realized_items(start_index, end_index);
-     }
+      {
+         DEBUG("Scrolling finished");
+         tts_speak("Scrolling finished", EINA_FALSE);
+         get_realized_items_count((AtspiAccessible *)event->source, &start_index, &end_index);
+         _smart_notification_realized_items(start_index, end_index);
+      }
 }
 
 /**
@@ -125,17 +125,17 @@ _scroll_event_cb(AtspiEvent *event, gpointer user_data)
  */
 void smart_notification_init(void)
 {
-    DEBUG("Smart Notification init!");
+   DEBUG("Smart Notification init!");
 
-    AtspiEventListener *listener;
+   AtspiEventListener *listener;
 
-    listener = atspi_event_listener_new(_scroll_event_cb, NULL, NULL);
-    atspi_event_listener_register(listener, "object:scroll-start", NULL);
-    atspi_event_listener_register(listener, "object:scroll-end", NULL);
+   listener = atspi_event_listener_new(_scroll_event_cb, NULL, NULL);
+   atspi_event_listener_register(listener, "object:scroll-start", NULL);
+   atspi_event_listener_register(listener, "object:scroll-end", NULL);
 
-    haptic_module_init();
+   haptic_module_init();
 
-    status = EINA_TRUE;
+   status = EINA_TRUE;
 }
 
 /**
@@ -144,7 +144,7 @@ void smart_notification_init(void)
  */
 void smart_notification_shutdown(void)
 {
-    status = EINA_FALSE;
+   status = EINA_FALSE;
 }
 
 /**
@@ -153,13 +153,13 @@ void smart_notification_shutdown(void)
  */
 static void _smart_notification_focus_chain_end(void)
 {
-    if(!status)
-       return;
+   if(!status)
+      return;
 
-    DEBUG(RED"Smart notification - FOCUS CHAIN END"RESET);
+   DEBUG(RED"Smart notification - FOCUS CHAIN END"RESET);
 
-    tone_player_stop(0);
-    tone_player_start(TONE_TYPE_SUP_CONFIRM, SOUND_TYPE_MEDIA, 200, NULL);
+   tone_player_stop(0);
+   tone_player_start(TONE_TYPE_SUP_CONFIRM, SOUND_TYPE_MEDIA, 200, NULL);
 }
 
 /**
@@ -168,17 +168,17 @@ static void _smart_notification_focus_chain_end(void)
  */
 static void _smart_notification_realized_items(int start_idx, int end_idx)
 {
-    if(!status)
-       return;
+   if(!status)
+      return;
 
-    if(start_idx == end_idx)
-       return;
+   if(start_idx == end_idx)
+      return;
 
-    DEBUG(RED"Smart notification - Visible items notification"RESET);
+   DEBUG(RED"Smart notification - Visible items notification"RESET);
 
-    char buf[256];
+   char buf[256];
 
-    snprintf(buf, sizeof(buf), ITEMS_NOTIFICATION, start_idx, end_idx);
+   snprintf(buf, sizeof(buf), ITEMS_NOTIFICATION, start_idx, end_idx);
 
-    tts_speak(strdup(buf), EINA_FALSE);
+   tts_speak(strdup(buf), EINA_FALSE);
 }

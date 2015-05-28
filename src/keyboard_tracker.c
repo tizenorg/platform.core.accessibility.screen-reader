@@ -9,20 +9,20 @@ static void *user_data;
 
 static gboolean device_cb(const AtspiDeviceEvent *stroke, void *data)
 {
-  Key k;
-  if (!strcmp(stroke->event_string, "KP_Up"))
+   Key k;
+   if (!strcmp(stroke->event_string, "KP_Up"))
       k = KEY_UP;
-  else if (!strcmp(stroke->event_string, "KP_Down"))
+   else if (!strcmp(stroke->event_string, "KP_Down"))
       k = KEY_DOWN;
-  else if (!strcmp(stroke->event_string, "KP_Left"))
+   else if (!strcmp(stroke->event_string, "KP_Left"))
       k = KEY_LEFT;
-  else if (!strcmp(stroke->event_string, "KP_Right"))
+   else if (!strcmp(stroke->event_string, "KP_Right"))
       k = KEY_RIGHT;
-  else
+   else
       return FALSE;
 
-    if(user_cb)
-         user_cb(user_data, k);
+   if(user_cb)
+      user_cb(user_data, k);
 
    return TRUE;
 }
