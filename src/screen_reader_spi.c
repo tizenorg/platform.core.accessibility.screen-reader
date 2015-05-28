@@ -146,7 +146,7 @@ static char *spi_on_caret_move_get_text(AtspiEvent *event, void *user_data)
     sd->currently_focused = event->source;
     char *return_text;
 
-    AtspiText *text_interface = atspi_accessible_get_text(sd->currently_focused);
+    AtspiText *text_interface = atspi_accessible_get_text_iface(sd->currently_focused);
     if(text_interface)
         {
           DEBUG("->->->->->-> WIDGET CARET MOVED: %s <-<-<-<-<-<-<-",
@@ -196,7 +196,7 @@ static char *spi_on_value_changed_get_text(AtspiEvent *event, void *user_data)
 
     sd->currently_focused = event->source;
 
-    AtspiValue *value_interface = atspi_accessible_get_value(sd->currently_focused);
+    AtspiValue *value_interface = atspi_accessible_get_value_iface(sd->currently_focused);
     if(value_interface)
     {
       DEBUG("->->->->->-> WIDGET VALUE CHANGED: %s <-<-<-<-<-<-<-",

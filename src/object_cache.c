@@ -113,7 +113,7 @@ _cache_item_construct(AtspiAccessible *obj)
         return NULL;
      }
 
-   comp = atspi_accessible_get_component(obj);
+   comp = atspi_accessible_get_component_iface(obj);
    if (!comp) {
      ERROR("Cached Object do not implement Component interface");
    }

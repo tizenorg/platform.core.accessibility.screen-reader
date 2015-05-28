@@ -274,7 +274,7 @@ _current_highlight_object_set(AtspiAccessible *obj)
     if (obj && ATSPI_IS_COMPONENT(obj))
       {
          DEBUG("OBJ WITH COMPONENT");
-         AtspiComponent *comp = atspi_accessible_get_component(obj);
+         AtspiComponent *comp = atspi_accessible_get_component_iface(obj);
          if (!comp)
            {
              GError *err = NULL;
@@ -497,7 +497,7 @@ static void _focus_widget(Gesture_Info *info)
     AtspiComponent *window_component;
     GError *err = NULL;
 
-    window_component = atspi_accessible_get_component(top_window);
+    window_component = atspi_accessible_get_component_iface(top_window);
     if(!window_component)
         return;
     if ((last_focus.x == info->x_begin) && (last_focus.y == info->y_begin))
@@ -597,7 +597,7 @@ static void _value_inc_widget(void)
     GERROR_CHECK(err)
     if(!strcmp(role, "entry"))
     {
-        text_interface = atspi_accessible_get_text(current_widget);
+        text_interface = atspi_accessible_get_text_iface(current_widget);
         if(text_interface)
         {
             current_offset = atspi_text_get_caret_offset(text_interface, &err);
@@ -619,7 +619,7 @@ static void _value_inc_widget(void)
         return;
     }
     g_free(role);
-    AtspiValue *value_interface = atspi_accessible_get_value(current_widget);
+    AtspiValue *value_interface = atspi_accessible_get_value_iface(current_widget);
     if(value_interface)
     {
         ERROR("Value interface supported!\n");
@@ -653,7 +653,7 @@ static void _value_dec_widget(void)
     GERROR_CHECK(err)
     if(!strcmp(role, "entry"))
     {
-        text_interface = atspi_accessible_get_text(current_widget);
+        text_interface = atspi_accessible_get_text_iface(current_widget);
         if(text_interface)
         {
             current_offset = atspi_text_get_caret_offset(text_interface, &err);
@@ -676,7 +676,7 @@ static void _value_dec_widget(void)
     }
     g_free(role);
 
-    AtspiValue *value_interface = atspi_accessible_get_value(current_widget);
+    AtspiValue *value_interface = atspi_accessible_get_value_iface(current_widget);
     if(value_interface)
     {
         ERROR("Value interface supported!\n");
@@ -726,12 +726,11 @@ static void _activate_widget(void)
 
     display_info_about_object(current_widget);
 
-
     edit = atspi_accessible_get_editable_text (current_widget);
     if (edit)
       {
          DEBUG("Activated object has editable Interface");
-         focus_component = atspi_accessible_get_component(current_widget);
+         focus_component = atspi_accessible_get_component_iface(current_widget);
          if (focus_component)
             {
             if (atspi_component_grab_focus(focus_component, &err) == TRUE){
@@ -744,7 +743,7 @@ static void _activate_widget(void)
       return;
     }
 
-    action = atspi_accessible_get_action(current_widget);
+    action = atspi_accessible_get_action_iface(current_widget);
     if (action) {
        number = atspi_action_get_n_actions(action, &err);
        DEBUG("Number of available action = %d\n", number);
@@ -1138,7 +1137,7 @@ void navigator_shutdown(void)
   GError *err = NULL;
    if (current_obj)
      {
-       AtspiComponent *comp = atspi_accessible_get_component(current_obj);
+       AtspiComponent *comp = atspi_accessible_get_component_iface(current_obj);
        if (comp)
          {
            atspi_component_clear_highlight(comp, &err);

@@ -60,7 +60,7 @@ _get_zones(const Eina_List *objs)
 
    EINA_LIST_FOREACH(objs, l, obj)
      {
-        if ((comp = atspi_accessible_get_component(obj)) != NULL)
+        if ((comp = atspi_accessible_get_component_iface(obj)) != NULL)
           {
              oc = object_cache_get(obj);
 

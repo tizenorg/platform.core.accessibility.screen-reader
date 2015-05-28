@@ -85,7 +85,7 @@ gchar * atspi_accessible_get_description (AtspiAccessible *obj, GError **error)
     return strdup(obj->description);
 }
 
-AtspiText * atspi_accessible_get_text (AtspiAccessible *obj)
+AtspiText * atspi_accessible_get_text_iface (AtspiAccessible *obj)
 {
     if(!obj) return NULL;
     return text;
@@ -109,7 +109,7 @@ gchar * atspi_text_get_text (AtspiText *obj, gint start_offset, gint end_offset,
     return "AtspiText text";
 }
 
-AtspiValue * atspi_accessible_get_value (AtspiAccessible *obj)
+AtspiValue * atspi_accessible_get_value_iface (AtspiAccessible *obj)
 {
     if(!obj) return NULL;
     return value;
@@ -223,7 +223,7 @@ AtspiAccessible * atspi_accessible_get_child_at_index (AtspiAccessible *obj, gin
     return g_object_ref(g_list_nth_data(obj->children, child_index));
 }
 
-AtspiComponent * atspi_accessible_get_component (AtspiAccessible *obj)
+AtspiComponent * atspi_accessible_get_component_iface (AtspiAccessible *obj)
 {
     if(!obj) return NULL;
     AtspiComponent *component = g_object_new(ATSPI_COMPONENT_OBJECT_TYPE, 0);
@@ -376,7 +376,7 @@ static void atspi_component_init(AtspiComponent* obj)
     obj->role = (AtspiRole*)malloc(sizeof(AtspiRole));
 }
 
-AtspiEditableText * atspi_accessible_get_editable_text (AtspiAccessible *obj)
+AtspiEditableText * atspi_accessible_get_editable_text_iface (AtspiAccessible *obj)
 {
     return editable_text;
 }
