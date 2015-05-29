@@ -37,6 +37,7 @@ typedef struct
    int x,y;
 } last_focus_t;
 
+static last_focus_t last_focus = {-1,-1};
 static AtspiAccessible *current_obj;
 static AtspiAccessible *top_window;
 //static AtspiScrollable *scrolled_obj;
@@ -497,40 +498,32 @@ static AtspiAccessible *get_nearest_widget(AtspiAccessible* app_obj, gint x_cord
 }
 #endif
 
-#if 0
 static void _focus_widget(Gesture_Info *info)
 {
    DEBUG("START");
-   AtspiAccessible *target_widget;
-   AtspiComponent *window_component;
-   GError *err = NULL;
 
-   window_component = atspi_accessible_get_component_iface(top_window);
-   if(!window_component)
-      return;
-   if ((last_focus.x == info->x_begin) && (last_focus.y == info->y_begin))
+   if ((last_focus.x == info->x_beg) && (last_focus.y == info->y_beg))
       return;
 
-   target_widget = atspi_component_get_accessible_at_point(window_component, info->x_begin, info->y_begin, ATSPI_COORD_TYPE_WINDOW, &err);
-   GERROR_CHECK(err)
-   if (target_widget)
+   AtspiAccessible *obj;
+
+   if (flat_navi_context_current_at_x_y_set(context, info->x_beg, info->y_beg, &obj))
       {
-         DEBUG("WIDGET FOUND:%s", atspi_accessible_get_name(target_widget, NULL));
-         if (flat_navi_context_current_set(context, target_widget))
+         if (obj == current_obj)
             {
-               _current_highlight_object_set(target_widget);
-               last_focus.x = info->x_begin;
-               last_focus.y = info->y_begin;
+               DEBUG("The same object");
+               return;
             }
-         else
-            ERROR("Hoveed object not found in window context[%dx%d][%s]", info->x_begin, info->y_begin, atspi_accessible_get_role_name(top_window, &err));
+         last_focus.x = info->x_beg;
+         last_focus.y = info->y_beg;
+         _current_highlight_object_set(obj);
       }
    else
-      DEBUG("NO widget under (%d, %d) found",
-            info->x_begin, info->y_begin);
+      DEBUG("NO widget under (%d, %d) found or the same widget under hover",
+            info->x_beg, info->y_beg);
+
    DEBUG("END");
 }
-#endif
 
 static void _focus_next(void)
 {
@@ -558,6 +551,7 @@ static void _focus_next(void)
       DEBUG("Next widget not found. Abort");
    DEBUG("END");
 }
+
 
 static void _focus_prev(void)
 {
@@ -1034,7 +1028,7 @@ static void on_gesture_detected(void *data, Gesture_Info *info)
    switch(info->type)
       {
       case ONE_FINGER_HOVER:
-         //_focus_widget(info);
+         _focus_widget(info);
          break;
       case TWO_FINGERS_HOVER:
 //          _widget_scroll(info);
@@ -1052,7 +1046,7 @@ static void on_gesture_detected(void *data, Gesture_Info *info)
          _value_dec_widget();
          break;
       case ONE_FINGER_SINGLE_TAP:
-         //_focus_widget(info);
+         _focus_widget(info);
          break;
       case ONE_FINGER_DOUBLE_TAP:
          _activate_widget();

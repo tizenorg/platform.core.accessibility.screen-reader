@@ -146,4 +146,21 @@ AtspiAccessible *flat_navi_context_line_first(FlatNaviContext *ctx);
  */
 AtspiAccessible *flat_navi_context_line_last(FlatNaviContext *ctx);
 
+/**
+ * Set current context at given position.
+ *
+ * @param ctx FlatNaviContext
+ *
+ * @param x_cord gint X coordinate
+ *
+ * @param y_cord gint Y coordinate
+ *
+ * @param obj AtspiAccessible Reference to object on point
+ *
+ * @return Eina_Bool true on success
+ *
+ * @note current element will be first of line.
+ */
+Eina_Bool flat_navi_context_current_at_x_y_set( FlatNaviContext *ctx, gint x_cord, gint y_cord , AtspiAccessible **obj);
+
 #endif /* end of include guard: FLAT_NAVI_H_ */

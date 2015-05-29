@@ -260,6 +260,56 @@ debug(FlatNaviContext *ctx)
    DEBUG("===============================");
 }
 
+static Eina_Bool
+_contains(AtspiAccessible *obj, gint x, gint y)
+{
+   const ObjectCache *oc = object_cache_get(obj);
+
+   if (x >= oc->bounds->x && x <= oc->bounds->x + oc->bounds->width
+         && y >= oc->bounds->y && y <= oc->bounds->y + oc->bounds->height)
+      {
+         DEBUG("INSIDE");
+         return EINA_TRUE;
+      }
+
+   return EINA_FALSE;
+
+}
+
+Eina_Bool flat_navi_context_current_at_x_y_set( FlatNaviContext *ctx, gint x_cord, gint y_cord , AtspiAccessible **target)
+{
+   if(!ctx || !target) return EINA_FALSE;
+
+   AtspiAccessible *current = flat_navi_context_current_get(ctx);
+   if (current && _contains(current, x_cord, y_cord))
+      {
+         *target = current;
+         return EINA_TRUE;
+      }
+
+   Eina_List *l, *l2, *line;
+   Eina_Bool found = EINA_FALSE;
+   AtspiAccessible *obj;
+   EINA_LIST_FOREACH(ctx->lines, l, line)
+   {
+      EINA_LIST_FOREACH(line, l2, obj)
+      if (_contains(obj, x_cord, y_cord))
+         {
+            found = EINA_TRUE;
+            break;
+         }
+      if (found)
+         {
+            *target = obj;
+            ctx->current_line = l;
+            ctx->current = l2;
+            break;
+         }
+   }
+
+   return found;
+}
+
 FlatNaviContext *flat_navi_context_create(AtspiAccessible *root)
 {
    FlatNaviContext *ret;

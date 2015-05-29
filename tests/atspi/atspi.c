@@ -185,6 +185,11 @@ gboolean atspi_component_clear_highlight (AtspiComponent *obj, GError **error)
    return FALSE;
 }
 
+gboolean atspi_component_contains (AtspiComponent *obj, gint x, gint y, AtspiCoordType ctype, GError **error)
+{
+   return TRUE;
+}
+
 GArray *atspi_state_set_get_states (AtspiStateSet *set)
 {
    gint i = 0;
