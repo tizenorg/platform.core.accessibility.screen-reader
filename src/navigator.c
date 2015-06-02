@@ -37,6 +37,7 @@ typedef struct
    int x,y;
 } last_focus_t;
 
+static last_focus_t gesture_start_p = {-1,-1};
 static last_focus_t last_focus = {-1,-1};
 static AtspiAccessible *current_obj;
 static AtspiAccessible *top_window;
@@ -552,6 +553,66 @@ static void _focus_next(void)
    DEBUG("END");
 }
 
+static void _focus_next_visible(void)
+{
+   DEBUG("START");
+   AtspiAccessible *obj;
+   AtspiStateSet *ss = NULL;
+   Eina_Bool visible = EINA_FALSE;
+   if (!context)
+      {
+         ERROR("No navigation context created");
+         return;
+      }
+
+   do
+      {
+         obj = flat_navi_context_next(context);
+         // try next line
+         if (!obj)
+            obj = flat_navi_context_line_next(context);
+         // try 'cycle' objects in context
+         ss = atspi_accessible_get_state_set(obj);
+         visible = atspi_state_set_contains(ss, ATSPI_STATE_SHOWING);
+         g_object_unref(ss);
+      }
+   while (obj && !visible);
+
+   if (obj)
+      _current_highlight_object_set(obj);
+   else
+      DEBUG("Next widget not found. Abort");
+   DEBUG("END");
+}
+
+static void _focus_prev_visible(void)
+{
+   AtspiAccessible *obj;
+   AtspiStateSet *ss = NULL;
+   Eina_Bool visible = EINA_FALSE;
+   if (!context)
+      {
+         ERROR("No navigation context created");
+         return;
+      }
+   do
+      {
+         obj = flat_navi_context_prev(context);
+         // try next line
+         if (!obj)
+            obj = flat_navi_context_line_prev(context);
+         // try 'cycle' objects in context
+         ss = atspi_accessible_get_state_set(obj);
+         visible = atspi_state_set_contains(ss, ATSPI_STATE_SHOWING);
+         g_object_unref(ss);
+      }
+   while (obj && !visible);
+
+   if (obj)
+      _current_highlight_object_set(obj);
+   else
+      DEBUG("Previous widget not found. Abort");
+}
 
 static void _focus_prev(void)
 {
@@ -1004,25 +1065,58 @@ static void _escape_children_widget(void)
       DEBUG("Unable to find hihglightable parent widget");
 }
 #endif
-/*
+
 static void _widget_scroll(Gesture_Info *gi)
 {
-   switch (gi->state)
-     {
-      case 0:
-         _widget_scroll_begin(gi);
-         break;
-      case 1:
-         _widget_scroll_continue(gi);
-         break;
-      case 2:
-         _widget_scroll_end(gi);
-         break;
-      default:
-         ERROR("Unrecognized gesture state: %d", gi->state);
-     }
+   DEBUG("Recognized gesture state: %d", gi->state);
+
+   if (gi->state == 0)
+      {
+         DEBUG("save coordinates %d %d", gesture_start_p.x, gesture_start_p.y);
+         gesture_start_p.x = gi->x_beg;
+         gesture_start_p.y = gi->y_beg;
+      }
+
+   if (gi->state != 2)
+      {
+         DEBUG("Scroll not finished yet");
+         return;
+      }
+
+   AtspiAccessible *obj = NULL;
+   obj = flat_navi_context_current_get(context);
+   if (!obj) {
+      ERROR("No context");
+      return;
+   }
+
+   AtspiStateSet *ss = atspi_accessible_get_state_set(obj);
+   if (!ss) {
+      ERROR("no stetes");
+      return;
+   }
+
+   if (!atspi_state_set_contains(ss, ATSPI_STATE_SHOWING))
+      {
+         DEBUG("current context do not have visible state, swith to next/prev");
+         if (gesture_start_p.y > gi->y_end ||
+               gesture_start_p.x > gi->x_end)
+            {
+               DEBUG("NEXT");
+               _focus_next_visible();
+            }
+         else if (gesture_start_p.y < gi->y_end ||
+                  gesture_start_p.x < gi->x_end)
+            {
+               DEBUG("PREVIOUS");
+               _focus_prev_visible();
+            }
+      }
+   DEBUG("end");
+   g_object_unref(ss);
+   g_object_unref(obj);
 }
-*/
+
 static void on_gesture_detected(void *data, Gesture_Info *info)
 {
    switch(info->type)
@@ -1031,7 +1125,7 @@ static void on_gesture_detected(void *data, Gesture_Info *info)
          _focus_widget(info);
          break;
       case TWO_FINGERS_HOVER:
-//          _widget_scroll(info);
+         _widget_scroll(info);
          break;
       case ONE_FINGER_FLICK_LEFT:
          _focus_prev();
