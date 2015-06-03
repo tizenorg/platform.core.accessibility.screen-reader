@@ -1117,6 +1117,40 @@ static void _widget_scroll(Gesture_Info *gi)
    g_object_unref(obj);
 }
 
+static void
+_direct_scroll_back(void)
+{
+   DEBUG("ONE_FINGER_FLICK_LEFT_RETURN");
+}
+
+static void
+_direct_scroll_forward(void)
+{
+   DEBUG("ONE_FINGER_FLICK_RIGHT_RETURN");
+}
+
+static void
+_direct_scroll_to_first(void)
+{
+   AtspiAccessible *obj = NULL;
+   DEBUG("ONE_FINGER_FLICK_UP_RETURN");
+   flat_navi_context_line_first(context);
+   obj = flat_navi_context_first(context);
+   if (flat_navi_context_current_set(context, obj))
+      _current_highlight_object_set(obj);
+}
+
+static void
+_direct_scroll_to_last(void)
+{
+   DEBUG("ONE_FINGER_FLICK_DOWN_RETURN");
+   AtspiAccessible *obj = NULL;
+   flat_navi_context_line_last(context);
+   obj = flat_navi_context_last(context);
+   if (flat_navi_context_current_set(context, obj))
+      _current_highlight_object_set(obj);
+}
+
 static void on_gesture_detected(void *data, Gesture_Info *info)
 {
    switch(info->type)
@@ -1150,6 +1184,18 @@ static void on_gesture_detected(void *data, Gesture_Info *info)
          break;
       case THREE_FINGERS_FLICK_UP:
          _quickpanel_change_state(QUICKPANEL_UP);
+         break;
+      case ONE_FINGER_FLICK_LEFT_RETURN:
+         _direct_scroll_back();
+         break;
+      case ONE_FINGER_FLICK_RIGHT_RETURN:
+         _direct_scroll_forward();
+         break;
+      case ONE_FINGER_FLICK_UP_RETURN:
+         _direct_scroll_to_first();
+         break;
+      case ONE_FINGER_FLICK_DOWN_RETURN:
+         _direct_scroll_to_last();
          break;
       default:
          DEBUG("Gesture type %d not handled in switch", info->type);
