@@ -1134,10 +1134,10 @@ static void on_gesture_detected(void *data, Gesture_Info *info)
          _focus_next();
          break;
       case ONE_FINGER_FLICK_UP:
-         _value_inc_widget();
+         _focus_prev();
          break;
       case ONE_FINGER_FLICK_DOWN:
-         _value_dec_widget();
+         _focus_next();
          break;
       case ONE_FINGER_SINGLE_TAP:
          _focus_widget(info);
