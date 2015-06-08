@@ -1008,20 +1008,29 @@ _tap_gestures_mouse_up(Ecore_Event_Mouse_Button *ev, Cover *cov)
 static void
 _tap_gestures_move(Ecore_Event_Mouse_Move *ev, Cover *cov)
 {
-#if 0
-   if(_tap_gesture_finger_check(cov, ev->root.x, ev->root.y) == -1)
-      {
-         ERROR("Abort gesture");
-         cov->tap_gesture_data.started = EINA_FALSE;
-         ecore_timer_del(cov->tap_gesture_data.timer);
-         cov->tap_gesture_data.timer = NULL;
-         cov->tap_gesture_data.tap_type = ONE_FINGER_GESTURE;
-         cov->tap_gesture_data.finger[0] = -1;
-         cov->tap_gesture_data.finger[1] = -1;
-         cov->tap_gesture_data.finger[2] = -1;
-         return;
-      }
-#endif
+   int i;
+   for (i = 0; i < sizeof(cov->tap_gesture_data.finger)/sizeof(cov->tap_gesture_data.finger[0]); i++)
+     {
+        if (ev->multi.device == cov->tap_gesture_data.finger[i])
+          {
+               int dx = ev->root.x - cov->tap_gesture_data.x_org[i];
+               int dy = ev->root.y - cov->tap_gesture_data.y_org[i];
+
+               if((dx * dx + dy * dy) > _e_mod_config->one_finger_tap_radius *
+                     _e_mod_config->one_finger_tap_radius)
+                  {
+                     DEBUG("abort tap gesutre");
+                     cov->tap_gesture_data.started = EINA_FALSE;
+                     ecore_timer_del(cov->tap_gesture_data.timer);
+                     cov->tap_gesture_data.timer = NULL;
+                     cov->tap_gesture_data.tap_type = ONE_FINGER_GESTURE;
+                     cov->tap_gesture_data.finger[0] = -1;
+                     cov->tap_gesture_data.finger[1] = -1;
+                     cov->tap_gesture_data.finger[2] = -1;
+                  }
+             break;
+          }
+     }
 }
 
 static Eina_Bool
