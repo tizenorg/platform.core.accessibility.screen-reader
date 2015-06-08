@@ -163,4 +163,13 @@ AtspiAccessible *flat_navi_context_line_last(FlatNaviContext *ctx);
  */
 Eina_Bool flat_navi_context_current_at_x_y_set( FlatNaviContext *ctx, gint x_cord, gint y_cord , AtspiAccessible **obj);
 
+/**
+ * Give the number of visible items in context.
+ *
+ * @param ctx FlatNaviContext
+ *
+ * @return int number of visible items in context
+ */
+int flat_navi_context_current_children_count_visible_get( FlatNaviContext *ctx);
+
 #endif /* end of include guard: FLAT_NAVI_H_ */

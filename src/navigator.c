@@ -650,6 +650,7 @@ static void _focus_prev(void)
       DEBUG("Previous widget not found. Abort");
 }
 
+#if 0
 static void _value_inc_widget(void)
 {
    AtspiAccessible* current_widget = NULL;
@@ -775,6 +776,7 @@ static void _value_dec_widget(void)
    else
       ERROR("No value interface supported!\n");
 }
+#endif
 
 static void _activate_widget(void)
 {
@@ -1109,16 +1111,18 @@ static void _widget_scroll(Gesture_Info *gi)
 
    AtspiAccessible *obj = NULL;
    obj = flat_navi_context_current_get(context);
-   if (!obj) {
-      ERROR("No context");
-      return;
-   }
+   if (!obj)
+      {
+         ERROR("No context");
+         return;
+      }
 
    AtspiStateSet *ss = atspi_accessible_get_state_set(obj);
-   if (!ss) {
-      ERROR("no stetes");
-      return;
-   }
+   if (!ss)
+      {
+         ERROR("no stetes");
+         return;
+      }
 
    if (!atspi_state_set_contains(ss, ATSPI_STATE_SHOWING))
       {
@@ -1145,12 +1149,139 @@ static void
 _direct_scroll_back(void)
 {
    DEBUG("ONE_FINGER_FLICK_LEFT_RETURN");
+   if (!context)
+      {
+         ERROR("No navigation context created");
+         return;
+      }
+
+   int visi = 0;
+   AtspiAccessible *obj = NULL;
+   AtspiAccessible *current = NULL;
+   AtspiAccessible *parent = NULL;
+   gchar *role = NULL;
+
+   current = flat_navi_context_current_get(context);
+   parent = atspi_accessible_get_parent (current, NULL);
+   role = atspi_accessible_get_role_name(parent, NULL);
+
+   if (strcmp(role, "list"))
+      {
+         DEBUG("That operation can be done only on list, it is:%s", role);
+         g_free(role);
+         return;
+      }
+
+   g_free(role);
+   visi = flat_navi_context_current_children_count_visible_get(context);
+   DEBUG("There is %d elements visible", visi);
+
+   int index = atspi_accessible_get_index_in_parent(current, NULL);
+   int children_count = atspi_accessible_get_child_count(parent, NULL);
+
+   if (visi <=0 || children_count <=0)
+      {
+         ERROR("NO visible element on list");
+         return;
+      }
+
+   DEBUG("start from element with index:%d/%d", index, children_count);
+
+   int target = index - visi;
+
+   if (target <=0)
+      {
+         DEBUG("first element");
+         obj = atspi_accessible_get_child_at_index (parent, 0, NULL);
+         smart_notification(FOCUS_CHAIN_END_NOTIFICATION_EVENT, 0, 0);
+      }
+
+   else
+      {
+         DEBUG("go back to %d element", target);
+         obj = atspi_accessible_get_child_at_index (parent, target, NULL);
+      }
+
+
+   if (obj)
+      {
+         DEBUG("Will set highlight and context");
+         if (flat_navi_context_current_set(context, obj))
+            {
+               DEBUG("current obj set");
+            }
+         _current_highlight_object_set(obj);
+      }
 }
 
 static void
 _direct_scroll_forward(void)
 {
    DEBUG("ONE_FINGER_FLICK_RIGHT_RETURN");
+
+   if (!context)
+      {
+         ERROR("No navigation context created");
+         return;
+      }
+
+   int visi = 0;
+   AtspiAccessible *obj = NULL;
+   AtspiAccessible *current = NULL;
+   AtspiAccessible *parent = NULL;
+   gchar *role = NULL;
+
+   current = flat_navi_context_current_get(context);
+   parent = atspi_accessible_get_parent (current, NULL);
+   role = atspi_accessible_get_role_name(parent, NULL);
+
+   if (strcmp(role, "list"))
+      {
+         DEBUG("That operation can be done only on list, it is:%s", role);
+         g_free(role);
+         return;
+      }
+
+   g_free(role);
+   visi = flat_navi_context_current_children_count_visible_get(context);
+   DEBUG("There is %d elements visible", visi);
+
+   int index = atspi_accessible_get_index_in_parent(current, NULL);
+   int children_count = atspi_accessible_get_child_count(parent, NULL);
+
+   if (visi <=0 || children_count <=0)
+      {
+         ERROR("NO visible element on list");
+         return;
+      }
+
+   DEBUG("start from element with index:%d/%d", index, children_count);
+
+   int target = index + visi;
+
+   if (target >= children_count)
+      {
+         DEBUG("last element");
+         obj = atspi_accessible_get_child_at_index (parent, children_count-1, NULL);
+         smart_notification(FOCUS_CHAIN_END_NOTIFICATION_EVENT, 0, 0);
+      }
+
+   else
+      {
+         DEBUG("go back to %d element", target);
+         obj = atspi_accessible_get_child_at_index (parent, target, NULL);
+      }
+
+
+   if (obj)
+      {
+         DEBUG("Will set highlight and context");
+         if (flat_navi_context_current_set(context, obj))
+            {
+               DEBUG("current obj set");
+            }
+         _current_highlight_object_set(obj);
+      }
 }
 
 static void

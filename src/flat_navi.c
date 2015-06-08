@@ -310,6 +310,32 @@ Eina_Bool flat_navi_context_current_at_x_y_set( FlatNaviContext *ctx, gint x_cor
    return found;
 }
 
+int flat_navi_context_current_children_count_visible_get( FlatNaviContext *ctx)
+{
+   if(!ctx) return -1;
+
+   int count = 0;
+   AtspiAccessible *obj = NULL;
+   AtspiStateSet *ss = NULL;
+
+   Eina_List *l, *l2, *line;
+   AtspiAccessible *current = flat_navi_context_current_get(ctx);
+   AtspiAccessible *parent = atspi_accessible_get_parent (current, NULL);
+
+   EINA_LIST_FOREACH(ctx->lines, l, line)
+   {
+      EINA_LIST_FOREACH(line, l2, obj)
+      {
+         ss = atspi_accessible_get_state_set(obj);
+         if (atspi_state_set_contains(ss, ATSPI_STATE_SHOWING) && parent == atspi_accessible_get_parent(obj, NULL))
+            count++;
+         g_object_unref(ss);
+      }
+   }
+   return count;
+
+}
+
 FlatNaviContext *flat_navi_context_create(AtspiAccessible *root)
 {
    FlatNaviContext *ret;
