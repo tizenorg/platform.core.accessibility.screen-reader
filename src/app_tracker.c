@@ -72,13 +72,17 @@ static void
 _on_atspi_event_cb(const AtspiEvent *event)
 {
    DEBUG("START");
-   DEBUG("signal:%s", event->type);
-   if (!event->source)
-      ERROR("empty event source");
    GList *l;
    SubTreeRootData *std;
 
-   if (!event || !event->source) return;
+   if (!event) return;
+   if (!event->source)
+      {
+         ERROR("empty event source");
+         return;
+      }
+
+   DEBUG("signal:%s", event->type);
 
    for (l = _roots; l != NULL; l = l->next)
       {
