@@ -134,12 +134,31 @@ _filter_state_cb(const void *container, void *data, void *fdata)
 
    Eina_Bool ret = EINA_TRUE;
    AtspiAccessible *obj = fdata;
+   AtspiAccessible *parent = atspi_accessible_get_parent(obj, NULL);
+   AtspiStateSet *ss_parent = NULL;
+   AtspiStateSet *ss = NULL;
 
-   AtspiStateSet *ss = atspi_accessible_get_state_set(obj);
+   if (parent)
+      {
+         if (atspi_accessible_get_role(obj, NULL) == ATSPI_ROLE_LIST_ITEM)
+            {
+               ss_parent = atspi_accessible_get_state_set(parent);
+               if (ss_parent)
+                  {
+                     if (atspi_state_set_contains(ss_parent, ATSPI_STATE_SHOWING)
+                           && atspi_state_set_contains(ss_parent, ATSPI_STATE_VISIBLE))
+                        {
+                           g_object_unref(parent);
+                           g_object_unref(ss_parent);
+                           return EINA_TRUE;
+                        }
+                     g_object_unref(ss_parent);
+                  }
+            }
+         g_object_unref(parent);
+      }
 
-   if (atspi_accessible_get_role(obj, NULL) == ATSPI_ROLE_LIST_ITEM)
-      return EINA_TRUE;
-
+   ss = atspi_accessible_get_state_set(obj);
    while (*state != ATSPI_STATE_LAST_DEFINED)
       {
          if (!atspi_state_set_contains(ss, *state))
@@ -149,8 +168,8 @@ _filter_state_cb(const void *container, void *data, void *fdata)
             }
          state++;
       }
-
-   g_object_unref(ss);
+   if (ss)
+      g_object_unref(ss);
    return ret;
 }
 
@@ -339,7 +358,6 @@ int flat_navi_context_current_children_count_visible_get( FlatNaviContext *ctx)
 FlatNaviContext *flat_navi_context_create(AtspiAccessible *root)
 {
    FlatNaviContext *ret;
-
    ret = calloc(1, sizeof(FlatNaviContext));
    if (!ret) return NULL;
 
@@ -356,6 +374,7 @@ FlatNaviContext *flat_navi_context_create(AtspiAccessible *root)
 
 void flat_navi_context_free(FlatNaviContext *ctx)
 {
+   if (!ctx) return;
    Eina_List *l;
    EINA_LIST_FREE(ctx->lines, l)
    {
