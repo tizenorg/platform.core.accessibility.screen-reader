@@ -84,7 +84,7 @@ char *generate_description_for_subtree(AtspiAccessible *obj)
          child = atspi_accessible_get_child_at_index(obj, i, NULL);
          name = atspi_accessible_get_name(child, NULL);
          DEBUG("%d child name:%s", i, name);
-         if (strncmp(name, "\0", 1))
+         if (name && strncmp(name, "\0", 1))
             {
                strncat(ret, name, sizeof(ret) - strlen(ret) - 1);
             }
@@ -120,9 +120,9 @@ static char *spi_on_state_changed_get_text(AtspiEvent *event, void *user_data)
    DEBUG("->->->->->-> WIDGET GAINED HIGHLIGHT: %s <-<-<-<-<-<-<-", name);
    DEBUG("->->->->->-> FROM SUBTREE HAS NAME:  %s <-<-<-<-<-<-<-", other);
 
-   if (strncmp(name, "\0", 1))
+   if (name && strncmp(name, "\0", 1))
       names = strdup(name);
-   else if (strncmp(other, "\0", 1))
+   else if (other && strncmp(other, "\0", 1))
       names = strdup(other);
 
    if (names)
@@ -131,12 +131,18 @@ static char *spi_on_state_changed_get_text(AtspiEvent *event, void *user_data)
          strncat(ret, ", ", 2);
       }
 
-   strncat(ret, role_name, sizeof(ret) - strlen(ret) - 1);
-   if (strncmp(description, "\0", 1))
-      strncat(ret, ", ", 2);
-   strncat(ret, description, sizeof(ret) - strlen(ret) - 1);
+   if (role_name)
+      strncat(ret, role_name, sizeof(ret) - strlen(ret) - 1);
+
+   if (description)
+      {
+         if (strncmp(description, "\0", 1))
+            strncat(ret, ", ", 2);
+         strncat(ret, description, sizeof(ret) - strlen(ret) - 1);
+      }
 
    free(name);
+   free(names);
    free(description);
    free(role_name);
    free(other);
@@ -196,7 +202,7 @@ static char *spi_on_caret_move_get_text(AtspiEvent *event, void *user_data)
 static char *spi_on_value_changed_get_text(AtspiEvent *event, void *user_data)
 {
    Service_Data *sd = (Service_Data*)user_data;
-   char *text_to_read;
+   char *text_to_read = NULL;
 
    sd->currently_focused = event->source;
 

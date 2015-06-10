@@ -34,6 +34,7 @@ _pivot_with_state_top_down_find(AtspiAccessible *parent, AtspiStateType type)
                if (ret) break;
             }
       }
+
    g_object_unref(states);
 
    return ret;

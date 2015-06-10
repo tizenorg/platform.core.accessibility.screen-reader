@@ -15,6 +15,12 @@ _sort_vertically(const void *a, const void *b)
    cA = object_cache_get(objA);
    cB = object_cache_get(objB);
 
+   if (!cA || !cB)
+      {
+         ERROR("Cache is not ready yet");
+         return 0;
+      }
+
    if (cA->bounds->y == cB->bounds->y)
       return 0;
    else if (cA->bounds->y > cB->bounds->y)
@@ -34,6 +40,12 @@ _sort_horizontally(const void *a, const void *b)
 
    cA = object_cache_get(objA);
    cB = object_cache_get(objB);
+
+   if (!cA || !cB)
+      {
+         ERROR("Cache is not ready yet");
+         return 0;
+      }
 
    if (cA->bounds->x == cB->bounds->x)
       {
@@ -64,6 +76,11 @@ _get_zones(const Eina_List *objs)
          {
             oc = object_cache_get(obj);
 
+            if (!oc)
+               {
+                  ERROR("Cache is not ready yet");
+                  continue;
+               }
             // some objects may implement AtspiCompoment interface, however
             // they do not have valid sizes.
             if (!oc->bounds || (oc->bounds->width < 0) || oc->bounds->height < 0)

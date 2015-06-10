@@ -78,6 +78,11 @@ bool get_supported_voices_cb(tts_h tts, const char* language, int voice_type, vo
 
    Service_Data *sd = user_data;
    Voice_Info *vi = calloc(1, sizeof(Voice_Info));
+   if(!vi)
+      {
+         ERROR(MEMORY_ERROR);
+         return  ECORE_CALLBACK_CANCEL;
+      }
 
    if(asprintf(&vi->language, "%s",language) < 0)
       {

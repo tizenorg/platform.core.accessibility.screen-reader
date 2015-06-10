@@ -164,7 +164,7 @@ display_info_about_object(AtspiAccessible *obj)
    DEBUG("STATES:");
    int a;
    AtspiStateType stat;
-   for (a = 0; a < states->len; ++a)
+   for (a = 0; states && (a < states->len); ++a)
       {
          stat = g_array_index (states, AtspiStateType, a);
          state_name = state_to_char(stat);
@@ -198,7 +198,7 @@ generate_description_for_subtrees(AtspiAccessible *obj)
          child = atspi_accessible_get_child_at_index(obj, i, NULL);
          name = atspi_accessible_get_name(child, NULL);
          DEBUG("%d child name:%s", i, name);
-         if (strncmp(name, "\0", 1))
+         if (name && strncmp(name, "\0", 1))
             {
                strncat(ret, name, sizeof(ret) - strlen(ret) - 1);
             }
@@ -209,6 +209,7 @@ generate_description_for_subtrees(AtspiAccessible *obj)
             {
                strncat(ret, below, sizeof(ret) - strlen(ret) - 1);
             }
+
          g_object_unref(child);
          free(below);
          free(name);
@@ -236,9 +237,9 @@ generate_what_to_read(AtspiAccessible *obj)
 
    display_info_about_object(obj);
 
-   if (strncmp(name, "\0", 1))
+   if (name && strncmp(name, "\0", 1))
       names = strdup(name);
-   else if (strncmp(other, "\0", 1))
+   else if (other && strncmp(other, "\0", 1))
       names = strdup(other);
 
    if (names)
@@ -247,12 +248,18 @@ generate_what_to_read(AtspiAccessible *obj)
          strncat(ret, ", ", 2);
       }
 
-   strncat(ret, role_name, sizeof(ret) - strlen(ret) - 1);
-   if (strncmp(description, "\0", 1))
-      strncat(ret, ", ", 2);
-   strncat(ret, description, sizeof(ret) - strlen(ret) - 1);
+   if (role_name)
+      strncat(ret, role_name, sizeof(ret) - strlen(ret) - 1);
+
+   if (description)
+      {
+         if (strncmp(description, "\0", 1))
+            strncat(ret, ", ", 2);
+         strncat(ret, description, sizeof(ret) - strlen(ret) - 1);
+      }
 
    free(name);
+   free(names);
    free(description);
    free(role_name);
    free(other);
@@ -658,7 +665,13 @@ static void _value_inc_widget(void)
    current_widget = current_obj;
 
    role = atspi_accessible_get_role_name(current_widget, &err);
+   if (!role)
+      {
+         ERROR("The role is null");
+         return;
+      }
    GERROR_CHECK(err)
+
    if(!strcmp(role, "entry"))
       {
          text_interface = atspi_accessible_get_text_iface(current_widget);
@@ -714,7 +727,13 @@ static void _value_dec_widget(void)
    current_widget = current_obj;
 
    role = atspi_accessible_get_role_name(current_widget, &err);
+   if (!role)
+      {
+         ERROR("The role is null");
+         return;
+      }
    GERROR_CHECK(err)
+
    if(!strcmp(role, "entry"))
       {
          text_interface = atspi_accessible_get_text_iface(current_widget);
@@ -785,6 +804,11 @@ static void _activate_widget(void)
    current_widget = current_obj;
 
    roleName = atspi_accessible_get_role_name(current_widget, &err);
+   if (!roleName)
+      {
+         ERROR("The role name is null");
+         return;
+      }
    GERROR_CHECK(err)
    DEBUG("Widget role prev: %s\n", roleName);
 

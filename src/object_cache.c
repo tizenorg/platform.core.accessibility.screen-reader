@@ -58,16 +58,15 @@ static Eina_List*
 _cache_candidates_list_prepare(AtspiAccessible *root)
 {
    DEBUG("START");
+
+   if (!root) return NULL;
    AtspiAccessible *r = atspi_accessible_get_parent(root, NULL);
    if (r)
       DEBUG("From application:%s [%s]", atspi_accessible_get_name(r, NULL), atspi_accessible_get_role_name(r, NULL));
    DEBUG("Preparing candidates from root window: %s [%s]", atspi_accessible_get_name(root, NULL), atspi_accessible_get_role_name(root, NULL));
 
-
    Eina_List *toprocess = NULL, *ret = NULL;
    int n, i;
-
-   if (!root) return NULL;
 
    // Keep ref counter +1 on every object in returned list
    g_object_ref(root);
