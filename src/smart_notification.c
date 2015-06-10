@@ -101,8 +101,11 @@ _scroll_event_cb(AtspiEvent *event, gpointer user_data)
    start_index = 0;
    end_index = 0;
 
-   fprintf(stderr, "Event: %s: %d, obj: %p: role: %s\n", event->type, event->detail1, event->source,
-           atspi_accessible_get_role_name(event->source, NULL));
+   gchar *role_name = atspi_accessible_get_role_name(event->source, NULL);
+   fprintf(stderr, "Event: %s: %d, obj: %p: role: %s\n",
+           event->type, event->detail1, event->source,
+           role_name);
+   g_free(role_name);
 
    if (!strcmp(event->type, "object:scroll-start"))
       {

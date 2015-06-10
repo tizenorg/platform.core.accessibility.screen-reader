@@ -95,6 +95,7 @@ void language_cb(keynode_t *node, void *user_data)
 
    int voice_type;
 
+   /* FIXME: this is a callback of 'db/setting/accessibility/language' */
    vconf_get_int("db/setting/accessibility/voice", (int*)(&voice_type));
    set_langauge(sd, node->value.s, voice_type);
 
@@ -108,7 +109,12 @@ void voice_cb(keynode_t *node, void *user_data)
 
    Service_Data *sd = user_data;
 
+   /* FIXME: this is a callback of 'db/setting/accessibility/voice' */
    const char *lang = vconf_get_str("db/setting/accessibility/language");
+   if(!lang)
+      {
+         DEBUG("FAILED TO GET LANGUAGE");
+      }
    set_langauge(sd, lang, (int)node->value.i);
 
    DEBUG("END");
@@ -133,9 +139,10 @@ int get_key_values(Service_Data *sd)
 
    char *language = vconf_get_str("db/setting/accessibility/language");
 
-   if(sd->language == NULL)
+   if(!language)
       {
-         DEBUG("FAILED TO SET LANGUAGE");
+         /*FIXME: need to handle to_ret from here */
+         DEBUG("FAILED TO GET LANGUAGE");
       }
 
    int ret = -1;
@@ -150,7 +157,8 @@ int get_key_values(Service_Data *sd)
          DEBUG("FAILED TO SET VOICE TYPE: %d", ret);
       }
 
-   set_langauge(sd, language, voice);
+   if(language)
+      set_langauge(sd, language, voice);
 
    ret = vconf_get_int("db/setting/accessibility/speech_rate", &sd->reading_speed);
    if(ret != 0)

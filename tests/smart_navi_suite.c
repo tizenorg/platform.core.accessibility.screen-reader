@@ -130,8 +130,10 @@ START_TEST(spi_on_state_change_role)
    accessible.description = NULL;
    event.source = &accessible;
    char *return_value = spi_event_get_text_to_read(&event, sd);
-   fail_if(!return_value || strcmp(return_value, atspi_accessible_get_role_name(&accessible, NULL)));
+   char *role_name = atspi_accessible_get_role_name(&accessible, NULL);
+   fail_if(!return_value || (role_name && strcmp(return_value, role_name)));
    free(return_value);
+   free(role_name);
 }
 END_TEST
 

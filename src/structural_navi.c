@@ -136,6 +136,7 @@ _navi_app_chain_next(AtspiAccessible *current, AtspiRelationType search_type)
    int i;
 
    relations = atspi_accessible_get_relation_set(current, NULL);
+   if (!relations) return ret;
 
    for (i = 0; i < relations->len; i++)
       {

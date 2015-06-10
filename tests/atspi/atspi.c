@@ -312,7 +312,7 @@ AtspiAccessible *atspi_create_accessible()
       ATSPI_STATE_LAST_DEFINED
    };
    int i;
-   for (i=0; i<sizeof(s); i++)
+   for (i=0; i<(int)(sizeof(s)/sizeof(s[0])); i++)
       g_array_append_val (states, s[i]);
    obj->states = atspi_state_set_new(states);
 
