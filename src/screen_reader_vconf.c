@@ -23,6 +23,9 @@ bool set_langauge(Service_Data *sd, const char *new_language, int new_voice)
    Eina_List *l;
    Voice_Info *vi;
 
+   if (!sd->language || !new_language)
+      return false;
+
    if(strncmp(sd->language, new_language, LAN_NAME - 1) == 0 && sd->voice_type == new_voice)
       {
          DEBUG("No need to change accessibility language: %s(%d) -> %s(%d)",
