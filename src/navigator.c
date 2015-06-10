@@ -1149,6 +1149,15 @@ static void _widget_scroll(Gesture_Info *gi)
    g_object_unref(obj);
 }
 
+static void _read_quickpanel(void )
+{
+   DEBUG("START");
+
+
+
+   DEBUG("END");
+}
+
 static void
 _direct_scroll_back(void)
 {
@@ -1337,6 +1346,9 @@ static void on_gesture_detected(void *data, Gesture_Info *info)
          break;
       case ONE_FINGER_DOUBLE_TAP:
          _activate_widget();
+         break;
+      case THREE_FINGERS_SINGLE_TAP:
+         _read_quickpanel();
          break;
       case THREE_FINGERS_FLICK_DOWN:
          _quickpanel_change_state(QUICKPANEL_DOWN);
