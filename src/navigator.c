@@ -1359,8 +1359,13 @@ static void _read_quickpanel(void )
 {
    DEBUG("START");
 
+   device_time_get();
+   device_battery_get();
+   device_bluetooth_get();
+   device_signal_strenght_get();
 
-
+   device_date_get();
+   device_missed_events_get();
    DEBUG("END");
 }
 
@@ -1591,7 +1596,7 @@ static void on_gesture_detected(void *data, Gesture_Info *info)
       case ONE_FINGER_DOUBLE_TAP:
          _activate_widget();
          break;
-      case THREE_FINGERS_SINGLE_TAP:
+      case TWO_FINGERS_TRIPLE_TAP:
          _read_quickpanel();
          break;
       case THREE_FINGERS_FLICK_DOWN:

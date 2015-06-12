@@ -23,6 +23,10 @@ pkg_check_modules(pkgs REQUIRED
 	tts
 	capi-media-tone-player
 	capi-system-device
+	capi-network-bluetooth
+	tapi
+	notification
+	capi-network-wifi
 )
 
 FOREACH(flag ${pkgs_CFLAGS})

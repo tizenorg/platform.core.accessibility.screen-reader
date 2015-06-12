@@ -30,6 +30,13 @@
        <smack request="deviced" type="rwx" />
        <smack request="sensord" type="rwx" />
        <smack request="media-server" type="rwx" />
+       <smack request="notification::db" type="rw" />
+       <smack request="data-provider-master::notification" type="rw" />
+       <smack request="data-provider-master::notification.client" type="rw" />
+       <smack request="tizen::vconf::public::r" type="rwx" />
+       <smack request="tizen::vconf::public::r::platform::rw" type="rwx" />
+       <smack request="tizen::vconf::setting::admin" type="rwx" />
+       <smack request="tizen::vconf::display" type="rwx" />
     </request>
  </define>
 

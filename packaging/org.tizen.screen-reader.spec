@@ -24,6 +24,10 @@ BuildRequires:  tts
 BuildRequires:  tts-devel
 BuildRequires:  vconf
 BuildRequires:  pkgconfig(check)
+BuildRequires:  pkgconfig(capi-network-bluetooth)
+BuildRequires:  pkgconfig(tapi)
+BuildRequires:  pkgconfig(notification)
+BuildRequires:  pkgconfig(capi-network-wifi)
 
 %description
 An utility library for developers of the menu screen.
