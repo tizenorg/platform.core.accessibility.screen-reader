@@ -61,6 +61,83 @@ _sort_horizontally(const void *a, const void *b)
       return -1;
 }
 
+static int
+_sort_index(const void *a, const void *b)
+{
+   AtspiAccessible *objA, *objB;
+   int ia, ib;
+
+   objA = (AtspiAccessible*)a;
+   objB = (AtspiAccessible*)b;
+
+   DEBUG("objA:%s objB:%s", atspi_accessible_get_name(objA, NULL), atspi_accessible_get_name(objB, NULL));
+
+   AtspiComponent *comp1;
+   AtspiComponent *comp2;
+   comp1 = atspi_accessible_get_component_iface(objA);
+   comp2 = atspi_accessible_get_component_iface(objB);
+
+   ia = atspi_component_get_highlight_index(comp1, NULL);
+   ib = atspi_component_get_highlight_index(comp2, NULL);
+
+   DEBUG("ia:%d ib:%d", ia, ib);
+
+   if (ia == ib)
+      return 0;
+   else if (ia > ib)
+      return 1;
+   else
+      return -1;
+}
+
+static Eina_List*
+_get_rest(const Eina_List *objs)
+{
+   Eina_List *candidates = NULL;
+   const Eina_List *l;
+   AtspiAccessible *obj;
+   AtspiComponent *comp;
+
+   EINA_LIST_FOREACH(objs, l, obj)
+   {
+      if ((comp = atspi_accessible_get_component_iface(obj)) != NULL)
+         {
+            if (atspi_component_get_highlight_index(comp, NULL) == 0)
+               candidates = eina_list_append(candidates, obj);
+         }
+      else
+         DEBUG("No component interface: skipping %s %s",
+               atspi_accessible_get_name(obj, NULL),
+               atspi_accessible_get_role_name(obj, NULL));
+   }
+
+   return candidates;
+}
+
+static Eina_List*
+_get_priorities(const Eina_List *objs)
+{
+   Eina_List *candidates = NULL;
+   const Eina_List *l;
+   AtspiAccessible *obj;
+   AtspiComponent *comp;
+
+   EINA_LIST_FOREACH(objs, l, obj)
+   {
+      if ((comp = atspi_accessible_get_component_iface(obj)) != NULL)
+         {
+            if (atspi_component_get_highlight_index(comp, NULL) > 0)
+               candidates = eina_list_append(candidates, obj);
+         }
+      else
+         DEBUG("No component interface: skipping %s %s",
+               atspi_accessible_get_name(obj, NULL),
+               atspi_accessible_get_role_name(obj, NULL));
+   }
+
+   return eina_list_sort(candidates, 0, _sort_index);
+}
+
 static Eina_List*
 _get_zones(const Eina_List *objs)
 {
@@ -148,12 +225,18 @@ _get_lines(const Eina_List *objs)
 
 Eina_List *position_sort(const Eina_List *objs)
 {
-   Eina_List *l, *line, *zones, *lines = NULL;
+   Eina_List *l, *line, *zones, *priority, *lines = NULL;
+   Eina_List *candidates = NULL;
    int i = 0;
 
+   priority = _get_priorities(objs);
+   DEBUG("With positive index it is: %d", eina_list_count(priority));
+
+   candidates = _get_rest(objs);
+
    // Get list of objects occupying place on the screen
-   DEBUG("PositionSort: Candidates; %d", eina_list_count(objs));
-   zones = _get_zones(objs);
+   DEBUG("PositionSort: Candidates; %d", eina_list_count(candidates));
+   zones = _get_zones(candidates);
 
    // Cluster all zones into lines - verticaly
    DEBUG("PositionSort: Zones; %d", eina_list_count(zones));
@@ -167,6 +250,9 @@ Eina_List *position_sort(const Eina_List *objs)
       line = eina_list_sort(line, 0, _sort_horizontally);
       eina_list_data_set(l, line);
    }
+
+   if (eina_list_count(priority) > 0)
+      lines = eina_list_prepend(lines, priority);
 
    if (zones) eina_list_free(zones);
 

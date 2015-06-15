@@ -156,11 +156,13 @@ display_info_about_object(AtspiAccessible *obj)
    char *state_name = NULL;
    AtspiStateSet *st = atspi_accessible_get_state_set (obj);
    GArray *states = atspi_state_set_get_states (st);
+   AtspiComponent *comp = atspi_accessible_get_component_iface(obj);
 
    DEBUG("NAME:%s", name);
    DEBUG("ROLE:%s", role)
    DEBUG("DESCRIPTION:%s", description);
    DEBUG("CHILDS:%d", atspi_accessible_get_child_count(obj, NULL));
+   DEBUG("HIGHLIGHT_INDEX:%d", atspi_component_get_highlight_index(comp, NULL));
    DEBUG("STATES:");
    int a;
    AtspiStateType stat;
@@ -490,6 +492,7 @@ static void find_objects(AtspiAccessible* parent, gint x, gint y, gint radius, d
       }
 }
 
+
 static AtspiAccessible *get_nearest_widget(AtspiAccessible* app_obj, gint x_cord, gint y_cord, gint radius)
 {
    int xn = 0, yn = 0;
@@ -542,6 +545,7 @@ static void _focus_next(void)
          ERROR("No navigation context created");
          return;
       }
+
    obj = flat_navi_context_next(context);
    // try next line
    if (!obj)
@@ -629,6 +633,7 @@ static void _focus_prev(void)
          ERROR("No navigation context created");
          return;
       }
+
    obj = flat_navi_context_prev(context);
    // try previous line
    if (!obj)

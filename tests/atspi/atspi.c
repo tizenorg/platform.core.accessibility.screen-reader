@@ -413,6 +413,11 @@ AtspiAccessible * atspi_accessible_get_parent (AtspiAccessible *obj, GError **er
    return obj->accessible_parent;
 }
 
+int atspi_component_get_highlight_index(AtspiComponent *obj, GError **error)
+{
+   return 0;
+}
+
 int atspi_exit(void)
 {
    return 1;
