@@ -21,6 +21,7 @@
 #define QUICKPANEL_UP FALSE
 
 #define DISTANCE_NB 8
+#define TTS_MAX_TEXT_SIZE  2000
 
 #define DEBUG_MODE
 
@@ -193,7 +194,7 @@ generate_description_for_subtrees(AtspiAccessible *obj)
    int i;
    char *name = NULL;
    char *below = NULL;
-   char ret[256] = "\0";
+   char ret[TTS_MAX_TEXT_SIZE] = "\0";
    AtspiAccessible *child = NULL;
    for (i=0; i < child_count; i++)
       {
@@ -204,7 +205,7 @@ generate_description_for_subtrees(AtspiAccessible *obj)
             {
                strncat(ret, name, sizeof(ret) - strlen(ret) - 1);
             }
-         strncat(ret, " ", 1);
+         strncat(ret, " ", sizeof(ret) - strlen(ret) - 1);
          below = generate_description_for_subtrees(child);
          DEBUG("%s from below", below);
          if (strncmp(below, "\0", 1))
@@ -227,7 +228,7 @@ generate_what_to_read(AtspiAccessible *obj)
    char *description;
    char *role_name;
    char *other;
-   char ret[256] = "\0";
+   char ret[TTS_MAX_TEXT_SIZE] = "\0";
 
    description = atspi_accessible_get_description(obj, NULL);
    name = atspi_accessible_get_name(obj, NULL);
@@ -247,7 +248,7 @@ generate_what_to_read(AtspiAccessible *obj)
    if (names)
       {
          strncat(ret, names, sizeof(ret) - strlen(ret) - 1);
-         strncat(ret, ", ", 2);
+         strncat(ret, ", ", sizeof(ret) - strlen(ret) - 1);
       }
 
    if (role_name)
@@ -256,7 +257,7 @@ generate_what_to_read(AtspiAccessible *obj)
    if (description)
       {
          if (strncmp(description, "\0", 1))
-            strncat(ret, ", ", 2);
+            strncat(ret, ", ", sizeof(ret) - strlen(ret) - 1);
          strncat(ret, description, sizeof(ret) - strlen(ret) - 1);
       }
 
