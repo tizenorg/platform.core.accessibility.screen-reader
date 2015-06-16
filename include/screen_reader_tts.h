@@ -14,4 +14,7 @@ void state_changed_cb(tts_h tts, tts_state_e previous, tts_state_e current, void
 Eina_Bool tts_speak(char *text_to_speak, Eina_Bool flush_switch);
 void spi_stop(void *data);
 
+Eina_Bool tts_pause_get(void);
+Eina_Bool tts_pause_set(Eina_Bool pause_switch);
+
 #endif /* SCREEN_READER_TTS_H_ */

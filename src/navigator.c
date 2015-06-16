@@ -1369,6 +1369,21 @@ static void _read_quickpanel(void )
    DEBUG("END");
 }
 
+static void _set_pause(void )
+{
+   DEBUG("START");
+
+   Eina_Bool res = EINA_FALSE;
+   bool pause = tts_pause_get();
+   res = tts_pause_set(!pause);
+   if(!res)
+      {
+         ERROR("Failed to set pause state");
+      }
+
+   DEBUG("END");
+}
+
 static void
 _direct_scroll_back(void)
 {
@@ -1595,6 +1610,9 @@ static void on_gesture_detected(void *data, Gesture_Info *info)
          break;
       case ONE_FINGER_DOUBLE_TAP:
          _activate_widget();
+         break;
+      case TWO_FINGERS_SINGLE_TAP:
+         _set_pause();
          break;
       case TWO_FINGERS_TRIPLE_TAP:
          _read_quickpanel();

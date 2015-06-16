@@ -114,6 +114,13 @@ static void __tts_test_utt_completed_cb(tts_h tts, int utt_id, void* user_data)
          if(flush_flag)
             flush_flag = EINA_FALSE;
       }
+
+   if(last_utt_id == utt_id)
+      {
+         DEBUG("LAST UTTERANCE");
+         pause_state = EINA_FALSE;
+      }
+
    return;
 }
 
@@ -140,6 +147,13 @@ bool tts_init(void *data)
    return true;
 }
 
+Eina_Bool tts_pause_get(void)
+{
+   DEBUG( "PAUSE STATE: %d", pause_state);
+   return pause_state;
+}
+
+
 Eina_Bool tts_pause_set(Eina_Bool pause_switch)
 {
    Service_Data *sd = get_pointer_to_service_data_struct();
@@ -148,17 +162,23 @@ Eina_Bool tts_pause_set(Eina_Bool pause_switch)
 
    if(pause_switch)
       {
-         if(!tts_pause(sd->tts))
-            pause_state = EINA_TRUE;
-         else
-            return EINA_FALSE;
+         pause_state = EINA_TRUE;
+
+         if(tts_pause(sd->tts))
+            {
+               pause_state = EINA_FALSE;
+               return EINA_FALSE;
+            }
       }
    else if(!pause_switch)
       {
-         if(!tts_play(sd->tts))
-            pause_state = EINA_FALSE;
-         else
-            return EINA_FALSE;
+         pause_state = EINA_FALSE;
+
+         if(tts_play(sd->tts))
+            {
+               pause_state = EINA_TRUE;
+               return EINA_FALSE;
+            }
       }
    return EINA_TRUE;
 }
