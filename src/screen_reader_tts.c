@@ -12,6 +12,8 @@ static int last_utt_id;
 static Eina_Bool pause_state = EINA_FALSE;
 static Eina_Bool flush_flag = EINA_FALSE;
 
+static void(*on_utterance_end)(void);
+
 static char * get_tts_error( int r )
 {
    switch( r )
@@ -72,6 +74,12 @@ static char * get_tts_state( tts_state_e r )
 
 //-------------------------------------------------------------------------------------------------
 
+void set_utterance_cb( void(*uter_cb)(void))
+{
+   on_utterance_end = uter_cb;
+}
+
+
 bool get_supported_voices_cb(tts_h tts, const char* language, int voice_type, void* user_data)
 {
    DEBUG("LANG: %s; TYPE: %d", language, voice_type);
@@ -119,6 +127,8 @@ static void __tts_test_utt_completed_cb(tts_h tts, int utt_id, void* user_data)
       {
          DEBUG("LAST UTTERANCE");
          pause_state = EINA_FALSE;
+         on_utterance_end();
+
       }
 
    return;
@@ -141,7 +151,7 @@ bool tts_init(void *data)
    tts_set_state_changed_cb(sd->tts, state_changed_cb, sd);
 
    tts_set_utterance_started_cb(sd->tts, __tts_test_utt_started_cb, sd);
-   tts_set_utterance_completed_cb( sd->tts,  __tts_test_utt_completed_cb,  sd);
+   tts_set_utterance_completed_cb(sd->tts,  __tts_test_utt_completed_cb,  sd);
 
    DEBUG( "---------------------- TTS_init END ----------------------\n\n");
    return true;

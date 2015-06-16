@@ -17,4 +17,6 @@ void spi_stop(void *data);
 Eina_Bool tts_pause_get(void);
 Eina_Bool tts_pause_set(Eina_Bool pause_switch);
 
+void set_utterance_cb( void(*utter_cb)(void));
+
 #endif /* SCREEN_READER_TTS_H_ */

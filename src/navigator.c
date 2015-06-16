@@ -52,6 +52,16 @@ static AtspiAccessible *top_window;
 static Eina_Bool _window_cache_builded;
 static FlatNaviContext *context;
 
+static struct
+{
+   AtspiAccessible *focused_object;
+   bool auto_review_on;
+} s_auto_review =
+{
+   .focused_object = NULL,
+   .auto_review_on = false
+};
+
 char *
 state_to_char(AtspiStateType state)
 {
@@ -1384,6 +1394,61 @@ static void _set_pause(void )
    DEBUG("END");
 }
 
+void auto_review_highlight_set(void)
+{
+   AtspiAccessible *obj = flat_navi_context_next(context);
+
+   DEBUG("START");
+
+   if(!obj)
+      {
+         obj = flat_navi_context_line_next(context);
+         DEBUG(">>> NEW LINE <<<");
+      }
+
+   if(!obj)
+      {
+         s_auto_review.auto_review_on = false;
+         return;
+      }
+
+   _current_highlight_object_set(obj);
+
+   DEBUG("END");
+}
+
+
+static void _on_auto_review_stop(void)
+{
+   DEBUG("START");
+   s_auto_review.auto_review_on = false;
+   DEBUG("END");
+}
+
+static void _on_utterance(void)
+{
+   DEBUG("START");
+   DEBUG("s_auto_review.auto_review_on == %d", s_auto_review.auto_review_on);
+
+   if(s_auto_review.auto_review_on)
+      {
+         auto_review_highlight_set();
+      }
+   DEBUG("END");
+}
+
+
+static void _review_from_current(void)
+{
+   DEBUG("START");
+
+   s_auto_review.focused_object = flat_navi_context_current_get(context);
+   s_auto_review.auto_review_on = true;
+   auto_review_highlight_set();
+
+   DEBUG("END");
+}
+
 static void
 _direct_scroll_back(void)
 {
@@ -1578,6 +1643,7 @@ _is_active_entry(void)
 static void on_gesture_detected(void *data, Gesture_Info *info)
 {
    dbus_gesture_adapter_emit(info);
+   _on_auto_review_stop();
 
    switch(info->type)
       {
@@ -1616,6 +1682,9 @@ static void on_gesture_detected(void *data, Gesture_Info *info)
          break;
       case TWO_FINGERS_TRIPLE_TAP:
          _read_quickpanel();
+         break;
+      case THREE_FINGERS_DOUBLE_TAP:
+          _review_from_current();
          break;
       case THREE_FINGERS_FLICK_DOWN:
          _quickpanel_change_state(QUICKPANEL_DOWN);
@@ -1717,6 +1786,9 @@ void kb_tracker (void *data, Key k)
 void navigator_init(void)
 {
    DEBUG("START");
+
+   set_utterance_cb(_on_utterance);
+
    screen_reader_gestures_tracker_register(on_gesture_detected, NULL);
    // register on active_window
    dbus_gesture_adapter_init();
