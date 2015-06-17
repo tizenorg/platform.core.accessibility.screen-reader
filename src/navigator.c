@@ -23,6 +23,9 @@
 #define DISTANCE_NB 8
 #define TTS_MAX_TEXT_SIZE  2000
 
+#define TEXT_EDIT "Double tap to edit"
+#define TEXT_EDIT_FOCUSED "Editing, flick up and down to adjust position."
+
 #define DEBUG_MODE
 
 #define GERROR_CHECK(error)\
@@ -220,6 +223,34 @@ generate_description_for_subtrees(AtspiAccessible *obj)
    return strdup(ret);
 }
 
+char *
+generate_trait(AtspiAccessible *obj)
+{
+   if (!obj)
+      return strdup("");
+
+   char *role = atspi_accessible_get_role_name(obj, NULL);
+   char ret[TTS_MAX_TEXT_SIZE] = "\0";
+   if (!strncmp(role, "entry", strlen(role)))
+      {
+         AtspiStateSet* state_set = atspi_accessible_get_state_set (obj);
+         strncat(ret, role, sizeof(ret) - strlen(ret) - 1);
+         strncat(ret, ", ", sizeof(ret) - strlen(ret) - 1);
+         if (atspi_state_set_contains(state_set, ATSPI_STATE_FOCUSED))
+            strncat(ret, TEXT_EDIT_FOCUSED, sizeof(ret) - strlen(ret) - 1);
+         else
+            strncat(ret, TEXT_EDIT, sizeof(ret) - strlen(ret) - 1);
+         if (state_set) g_object_unref(state_set);
+      }
+   else
+      {
+         strncat(ret, role, sizeof(ret) - strlen(ret) - 1);
+      }
+
+   free(role);
+   return strdup(ret);
+}
+
 static char *
 generate_what_to_read(AtspiAccessible *obj)
 {
@@ -232,7 +263,7 @@ generate_what_to_read(AtspiAccessible *obj)
 
    description = atspi_accessible_get_description(obj, NULL);
    name = atspi_accessible_get_name(obj, NULL);
-   role_name = atspi_accessible_get_role_name(obj, NULL);
+   role_name = generate_trait(obj);
    other = generate_description_for_subtrees(obj);
 
    DEBUG("->->->->->-> WIDGET GAINED HIGHLIGHT: %s <-<-<-<-<-<-<-", name);
@@ -831,8 +862,17 @@ static void _activate_widget(void)
             {
                if (atspi_component_grab_focus(focus_component, &err) == TRUE)
                   {
-                     DEBUG("Entry activated\n");
                      GERROR_CHECK(err)
+
+                     DEBUG("Entry activated\n");
+
+                     char *text_to_speak = NULL;
+                     text_to_speak = generate_what_to_read(current_widget);
+
+                     DEBUG("SPEAK:%s", text_to_speak);
+
+                     tts_speak(text_to_speak, EINA_TRUE);
+                     g_free(text_to_speak);
                      g_object_unref(focus_component);
                   }
             }
