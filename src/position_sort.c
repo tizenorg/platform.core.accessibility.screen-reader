@@ -97,13 +97,21 @@ _get_rest(const Eina_List *objs)
    const Eina_List *l;
    AtspiAccessible *obj;
    AtspiComponent *comp;
+   int index = 0;
 
    EINA_LIST_FOREACH(objs, l, obj)
    {
       if ((comp = atspi_accessible_get_component_iface(obj)) != NULL)
          {
-            if (atspi_component_get_highlight_index(comp, NULL) == 0)
+            index = atspi_component_get_highlight_index(comp, NULL);
+            if (index == 0)
                candidates = eina_list_append(candidates, obj);
+            else if (index < 0)
+               {
+                  DEBUG("Element [%s] [%s] has negative highlight index, will be skipped",
+                        atspi_accessible_get_name(obj, NULL),
+                        atspi_accessible_get_role_name(obj, NULL));
+               }
          }
       else
          DEBUG("No component interface: skipping %s %s",
