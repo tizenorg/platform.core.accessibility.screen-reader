@@ -19,12 +19,6 @@
        <smack request="pkgmgr::db" type="rwx" />
        <smack request="device::app_logging" type="rwx" />
        <smack request="ail::db" type="rwx" />
-       <smack request="system::vconf" type="rwx" />
-       <smack request="system::vconf_setting" type="rwx" />
-       <smack request="system::vconf_system" type="rwx" />
-       <smack request="system::vconf_inhouse" type="rwx" />
-       <smack request="system::vconf_multimedia" type="rwx" />
-       <smack request="system::vconf_misc" type="rwx" />
        <smack request="isf" type="rwx" />
        <smack request="system::homedir" type="rwx" />
        <smack request="system::tmpdir" type="rwx" />
