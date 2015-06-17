@@ -857,25 +857,23 @@ static void _activate_widget(void)
                   }
                else
                   {
-                     g_free(actionName);
                      i++;
                   }
+               g_free(actionName);
             }
          if (activate_found)
             {
-               DEBUG("PERFORMING ATSPI ACTION NO.%d and name:%s", i, actionName);
+               DEBUG("PERFORMING ATSPI ACTION NO.%d", i);
                atspi_action_do_action(action, i, &err);
             }
          else if (number > 0)
             {
-               DEBUG("NUMBER:%d", number);
-               DEBUG("PERFORMING ATSPI DEFAULT ACTION: %s", actionName);
+               DEBUG("PERFORMING ATSPI DEFAULT ACTION");
                atspi_action_do_action(action, 0, &err);
             }
          else
             ERROR("There is no actions inside Action interface");
-         if (actionName) g_free(actionName);
-         g_object_unref(action);
+         if (action) g_object_unref(action);
          GERROR_CHECK(err)
          return;
       }
