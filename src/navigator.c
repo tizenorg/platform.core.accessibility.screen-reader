@@ -687,6 +687,94 @@ static void _focus_prev(void)
       DEBUG("Previous widget not found. Abort");
 }
 
+static void _caret_move_forward(void)
+{
+   AtspiAccessible* current_widget = NULL;
+   AtspiText *text_interface;
+   gint current_offset;
+   gboolean ret;
+   int offset_pos;
+   gchar *text;
+   GError *err = NULL;
+   if(!current_obj)
+      return;
+
+   current_widget = current_obj;
+
+   text_interface = atspi_accessible_get_text_iface(current_widget);
+   if(text_interface)
+      {
+         current_offset = atspi_text_get_caret_offset(text_interface, &err);
+         GERROR_CHECK(err)
+         ret = atspi_text_set_caret_offset(text_interface, current_offset + 1, &err);
+         GERROR_CHECK(err)
+         if(ret)
+            {
+               offset_pos = atspi_text_get_caret_offset(text_interface, NULL);
+               text = atspi_text_get_text(text_interface, offset_pos, offset_pos+1, NULL);
+               DEBUG("Caret position increment done");
+               DEBUG("Current caret position:%d", offset_pos);
+               DEBUG("SPEAK:%s", text);
+               tts_speak(text, EINA_TRUE);
+               g_free(text);
+            }
+         else
+            {
+               ERROR("Caret position increment error");
+            }
+         g_object_unref(text_interface);
+      }
+   else
+      ERROR("No text interface supported!");
+   return;
+
+}
+
+static void _caret_move_backward(void)
+{
+   AtspiAccessible* current_widget = NULL;
+   AtspiText *text_interface;
+   gint current_offset;
+   int offset_pos;
+   gchar *text;
+   GError *err = NULL;
+   gboolean ret;
+
+   if(!current_obj)
+      return;
+
+   current_widget = current_obj;
+
+   GERROR_CHECK(err)
+
+   text_interface = atspi_accessible_get_text_iface(current_widget);
+   if(text_interface)
+      {
+         current_offset = atspi_text_get_caret_offset(text_interface, &err);
+         GERROR_CHECK(err)
+         ret = atspi_text_set_caret_offset(text_interface, current_offset - 1, &err);
+         GERROR_CHECK(err)
+         if(ret)
+            {
+               offset_pos = atspi_text_get_caret_offset(text_interface, NULL);
+               text = atspi_text_get_text(text_interface, offset_pos, offset_pos+1, NULL);
+               DEBUG("Caret position decrement done");
+               DEBUG("Current caret position:%d", offset_pos);
+               DEBUG("SPEAK:%s", text);
+               tts_speak(text, EINA_TRUE);
+               g_free(text);
+            }
+         else
+            {
+               ERROR("Caret position decrement error");
+            }
+         g_object_unref(text_interface);
+      }
+   else
+      ERROR("No text interface supported!");
+   return;
+}
+
 #if 0
 static void _value_inc_widget(void)
 {
@@ -1359,6 +1447,42 @@ _direct_scroll_to_last(void)
       _current_highlight_object_set(obj);
 }
 
+static Eina_Bool
+_is_active_entry(void)
+{
+   DEBUG("START");
+
+   if (!context)
+      {
+         ERROR("No navigation context created");
+         return EINA_FALSE;
+      }
+   AtspiAccessible *obj = NULL;
+   obj = flat_navi_context_current_get(context);
+
+   if (!obj)
+      return EINA_FALSE;
+
+   char *role = atspi_accessible_get_role_name(obj, NULL);
+   if (!strncmp(role, "entry", strlen(role)))
+      {
+         AtspiStateSet* state_set = atspi_accessible_get_state_set (obj);
+         if (atspi_state_set_contains(state_set, ATSPI_STATE_FOCUSED))
+            {
+               g_object_unref(state_set);
+               g_free(role);
+               return EINA_TRUE;
+            }
+         g_object_unref(state_set);
+         g_free(role);
+         return EINA_FALSE;
+      }
+   g_free(role);
+   return EINA_FALSE;
+
+   DEBUG("END");
+}
+
 static void on_gesture_detected(void *data, Gesture_Info *info)
 {
    switch(info->type)
@@ -1376,10 +1500,16 @@ static void on_gesture_detected(void *data, Gesture_Info *info)
          _focus_next();
          break;
       case ONE_FINGER_FLICK_UP:
-         _focus_prev();
+         if (_is_active_entry())
+            _caret_move_backward();
+         else
+            _focus_prev();
          break;
       case ONE_FINGER_FLICK_DOWN:
-         _focus_next();
+         if (_is_active_entry())
+            _caret_move_forward();
+         else
+            _focus_next();
          break;
       case ONE_FINGER_SINGLE_TAP:
          _focus_widget(info);
