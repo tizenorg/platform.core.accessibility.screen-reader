@@ -172,4 +172,11 @@ Eina_Bool flat_navi_context_current_at_x_y_set( FlatNaviContext *ctx, gint x_cor
  */
 int flat_navi_context_current_children_count_visible_get( FlatNaviContext *ctx);
 
+/**
+ * Returns the first item in context;
+ * @param ctx FlatNaviContext
+ * @return Pointer to the first item in context
+ */
+AtspiAccessible *flat_navi_context_first_get(FlatNaviContext *ctx);
+
 #endif /* end of include guard: FLAT_NAVI_H_ */

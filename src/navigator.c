@@ -1417,6 +1417,29 @@ void auto_review_highlight_set(void)
    DEBUG("END");
 }
 
+void auto_review_highlight_top(void)
+{
+   DEBUG("START");
+   char *text_to_speak = NULL;
+   AtspiAccessible *first = flat_navi_context_first_get(context);
+   AtspiAccessible *obj = flat_navi_context_current_get(context);
+
+   if(first != obj)
+      {
+         obj = flat_navi_context_line_first(context);
+         _current_highlight_object_set(obj);
+      }
+   else
+      {
+         text_to_speak = generate_what_to_read(obj);
+         DEBUG("Text to speak: %s", text_to_speak);
+         tts_speak(text_to_speak, EINA_TRUE);
+         free(text_to_speak);
+      }
+
+   DEBUG("END");
+}
+
 
 static void _on_auto_review_stop(void)
 {
@@ -1445,6 +1468,17 @@ static void _review_from_current(void)
    s_auto_review.focused_object = flat_navi_context_current_get(context);
    s_auto_review.auto_review_on = true;
    auto_review_highlight_set();
+
+   DEBUG("END");
+}
+
+static void _review_from_top()
+{
+   DEBUG("START");
+
+   s_auto_review.focused_object = flat_navi_context_current_get(context);
+   s_auto_review.auto_review_on = true;
+   auto_review_highlight_top();
 
    DEBUG("END");
 }
@@ -1683,8 +1717,11 @@ static void on_gesture_detected(void *data, Gesture_Info *info)
       case TWO_FINGERS_TRIPLE_TAP:
          _read_quickpanel();
          break;
+      case THREE_FINGERS_SINGLE_TAP:
+         _review_from_top();
+         break;
       case THREE_FINGERS_DOUBLE_TAP:
-          _review_from_current();
+         _review_from_current();
          break;
       case THREE_FINGERS_FLICK_DOWN:
          _quickpanel_change_state(QUICKPANEL_DOWN);

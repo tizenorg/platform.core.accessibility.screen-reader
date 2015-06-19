@@ -530,3 +530,12 @@ AtspiAccessible *flat_navi_context_line_last(FlatNaviContext *ctx)
 
    return eina_list_data_get(ctx->current);
 }
+
+AtspiAccessible *flat_navi_context_first_get(FlatNaviContext *ctx)
+{
+   if(!ctx) return NULL;
+   Eina_List *current = eina_list_data_get(ctx->lines);
+
+
+   return eina_list_data_get(current);
+}
