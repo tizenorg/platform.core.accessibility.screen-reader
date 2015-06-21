@@ -200,6 +200,9 @@ _filter_viewport_cb(const void *container, void *data, void *fdata)
    const ObjectCache *oc = data;
    AtspiAccessible *obj = fdata;
 
+   if (atspi_accessible_get_role(obj, NULL) == ATSPI_ROLE_LIST_ITEM)
+      return EINA_TRUE;
+
    oc = object_cache_get(obj);
    if (!oc || !oc->bounds || (oc->bounds->height < 0) || (oc->bounds->width < 0))
       return EINA_FALSE;
