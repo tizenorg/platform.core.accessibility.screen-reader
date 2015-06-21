@@ -689,6 +689,71 @@ static void _focus_prev(void)
       DEBUG("Previous widget not found. Abort");
 }
 
+static void _caret_move_beg(void)
+{
+   AtspiAccessible* current_widget = NULL;
+   AtspiText *text_interface;
+   gboolean ret;
+   GError *err = NULL;
+
+   if(!current_obj)
+      return;
+
+   current_widget = current_obj;
+
+   text_interface = atspi_accessible_get_text_iface(current_widget);
+   if(text_interface)
+      {
+         ret = atspi_text_set_caret_offset(text_interface, 0, &err);
+         GERROR_CHECK(err)
+         if(ret)
+            {
+               DEBUG("Caret position increment done");
+               gchar *text = atspi_text_get_text(text_interface, 0, 1, NULL);
+               DEBUG("SPEAK:%s", text);
+               tts_speak(text, EINA_TRUE);
+               tts_speak(TEXT_BEGIN, EINA_FALSE);
+               g_free(text);
+            }
+         else
+            {
+               ERROR("Caret position increment error");
+            }
+         g_object_unref(text_interface);
+      }
+   else
+      ERROR("No text interface supported!");
+}
+
+static void _caret_move_end(void)
+{
+   AtspiAccessible* current_widget = NULL;
+   AtspiText *text_interface;
+   gboolean ret;
+   GError *err = NULL;
+
+   if(!current_obj)
+      return;
+
+   current_widget = current_obj;
+
+   text_interface = atspi_accessible_get_text_iface(current_widget);
+   if(text_interface)
+      {
+         int len = atspi_text_get_character_count (text_interface, NULL);
+         ret = atspi_text_set_caret_offset(text_interface, len, &err);
+         if (ret)
+            {
+               DEBUG("Caret position increment done");
+               DEBUG("SPEAK:%s", TEXT_END);
+               tts_speak(TEXT_END, EINA_TRUE);
+            }
+         else
+            ERROR("Caret position to end error");
+         g_object_unref(text_interface);
+      }
+}
+
 static void _caret_move_forward(void)
 {
    AtspiAccessible* current_widget = NULL;
@@ -1549,10 +1614,16 @@ static void on_gesture_detected(void *data, Gesture_Info *info)
          _direct_scroll_forward();
          break;
       case ONE_FINGER_FLICK_UP_RETURN:
-         _direct_scroll_to_first();
+         if (_is_active_entry())
+            _caret_move_beg();
+         else
+            _direct_scroll_to_first();
          break;
       case ONE_FINGER_FLICK_DOWN_RETURN:
-         _direct_scroll_to_last();
+         if (_is_active_entry())
+            _caret_move_end();
+         else
+            _direct_scroll_to_last();
          break;
       default:
          DEBUG("Gesture type %d not handled in switch", info->type);
