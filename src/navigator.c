@@ -25,6 +25,8 @@
 
 #define TEXT_EDIT "Double tap to edit"
 #define TEXT_EDIT_FOCUSED "Editing, flick up and down to adjust position."
+#define TEXT_BEGIN "Cursor is at the begining of text"
+#define TEXT_END "Cursor is at the end of text"
 
 #define DEBUG_MODE
 
@@ -714,8 +716,17 @@ static void _caret_move_forward(void)
                text = atspi_text_get_text(text_interface, offset_pos, offset_pos+1, NULL);
                DEBUG("Caret position increment done");
                DEBUG("Current caret position:%d", offset_pos);
-               DEBUG("SPEAK:%s", text);
-               tts_speak(text, EINA_TRUE);
+               DEBUG("Current caret offset:%d", current_offset);
+               if (offset_pos == atspi_text_get_character_count (text_interface, NULL))
+                  {
+                     DEBUG("SPEAK:%s", TEXT_END);
+                     tts_speak(TEXT_END, EINA_FALSE);
+                  }
+               else
+                  {
+                     DEBUG("SPEAK:%s", text);
+                     tts_speak(text, EINA_TRUE);
+                  }
                g_free(text);
             }
          else
@@ -763,6 +774,11 @@ static void _caret_move_backward(void)
                DEBUG("SPEAK:%s", text);
                tts_speak(text, EINA_TRUE);
                g_free(text);
+               if (offset_pos == 0)
+                  {
+                     DEBUG("SPEAK:%s", TEXT_BEGIN);
+                     tts_speak(TEXT_BEGIN, EINA_FALSE);
+                  }
             }
          else
             {
