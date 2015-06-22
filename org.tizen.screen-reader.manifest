@@ -18,7 +18,6 @@
        <smack request="pulseaudio" type="rwxat" />
        <smack request="pkgmgr::db" type="rwx" />
        <smack request="device::app_logging" type="rwx" />
-       <smack request="ail::db" type="rwx" />
        <smack request="isf" type="rwx" />
        <smack request="system::homedir" type="rwx" />
        <smack request="system::tmpdir" type="rwx" />
