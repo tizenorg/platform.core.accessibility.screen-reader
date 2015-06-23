@@ -35,6 +35,9 @@ _get_window_object_from_given(AtspiAccessible *obj)
                for (j=0; j < app_childs; j++)
                   {
                      win = atspi_accessible_get_child_at_index(app, j, NULL);
+                     if (!win)
+                        continue;
+
                      st = atspi_accessible_get_state_set (win);
                      if (atspi_state_set_contains(st, ATSPI_STATE_ACTIVE))
                         ret = win;

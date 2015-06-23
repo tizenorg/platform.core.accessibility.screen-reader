@@ -289,8 +289,8 @@ _contains(AtspiAccessible *obj, gint x, gint y)
 {
    const ObjectCache *oc = object_cache_get(obj);
 
-   if (x >= oc->bounds->x && x <= oc->bounds->x + oc->bounds->width
-         && y >= oc->bounds->y && y <= oc->bounds->y + oc->bounds->height)
+   if (oc && x >= oc->bounds->x && x <= oc->bounds->x + oc->bounds->width
+          && y >= oc->bounds->y && y <= oc->bounds->y + oc->bounds->height)
       {
          DEBUG("INSIDE");
          return EINA_TRUE;

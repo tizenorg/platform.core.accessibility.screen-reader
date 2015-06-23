@@ -617,9 +617,12 @@ static void _focus_next_visible(void)
          if (!obj)
             obj = flat_navi_context_line_next(context);
          // try 'cycle' objects in context
-         ss = atspi_accessible_get_state_set(obj);
-         visible = atspi_state_set_contains(ss, ATSPI_STATE_SHOWING);
-         g_object_unref(ss);
+         if (obj)
+            {
+               ss = atspi_accessible_get_state_set(obj);
+               visible = atspi_state_set_contains(ss, ATSPI_STATE_SHOWING);
+               g_object_unref(ss);
+            }
       }
    while (obj && !visible);
 
@@ -647,9 +650,12 @@ static void _focus_prev_visible(void)
          if (!obj)
             obj = flat_navi_context_line_prev(context);
          // try 'cycle' objects in context
-         ss = atspi_accessible_get_state_set(obj);
-         visible = atspi_state_set_contains(ss, ATSPI_STATE_SHOWING);
-         g_object_unref(ss);
+         if (obj)
+            {
+               ss = atspi_accessible_get_state_set(obj);
+               visible = atspi_state_set_contains(ss, ATSPI_STATE_SHOWING);
+               g_object_unref(ss);
+            }
       }
    while (obj && !visible);
 

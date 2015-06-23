@@ -69,6 +69,7 @@ void get_realized_items_count(AtspiAccessible *scrollable_object, int *start_idx
    for(jdx = 0; jdx < count_child; jdx++)
       {
          child_iter = atspi_accessible_get_child_at_index(scrollable_object, jdx, NULL);
+         if (!child_iter) continue;
 
          AtspiStateSet* state_set = atspi_accessible_get_state_set(child_iter);
 
