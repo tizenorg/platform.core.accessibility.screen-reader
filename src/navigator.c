@@ -16,6 +16,7 @@
 #include "screen_reader_haptic.h"
 #include "screen_reader_tts.h"
 #include "screen_reader_gestures.h"
+#include "dbus_gesture_adapter.h"
 
 #define QUICKPANEL_DOWN TRUE
 #define QUICKPANEL_UP FALSE
@@ -1572,6 +1573,8 @@ _is_active_entry(void)
 
 static void on_gesture_detected(void *data, Gesture_Info *info)
 {
+   dbus_gesture_adapter_emit(info);
+
    switch(info->type)
       {
       case ONE_FINGER_HOVER:
@@ -1709,6 +1712,7 @@ void navigator_init(void)
    DEBUG("START");
    screen_reader_gestures_tracker_register(on_gesture_detected, NULL);
    // register on active_window
+   dbus_gesture_adapter_init();
    window_tracker_init();
    window_tracker_register(on_window_activate, NULL);
    window_tracker_active_window_request();
@@ -1736,6 +1740,7 @@ void navigator_shutdown(void)
          flat_navi_context_free(context);
          context = NULL;
       }
+   dbus_gesture_adapter_shutdown();
    object_cache_shutdown();
    app_tracker_shutdown();
    window_tracker_shutdown();

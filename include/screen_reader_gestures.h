@@ -1,5 +1,5 @@
 #ifndef SCREEN_READER_GESTURES_H_
-#define SCREEN_READER_GESTURES_H
+#define SCREEN_READER_GESTURES_H_
 
 #include <Ecore.h>
 #include <Ecore_X.h>
