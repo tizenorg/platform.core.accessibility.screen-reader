@@ -1,7 +1,7 @@
 #ifndef LOGGER_H_
 #define LOGGER_H_
 
-#include <eina_log.h>
+#include <Eina.h>
 
 extern int _eina_log_dom;
 
