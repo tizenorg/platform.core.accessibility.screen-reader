@@ -33,8 +33,8 @@ typedef struct
 static void display_info(const AtspiEvent *event)
 {
    AtspiAccessible  *source = event->source;
-   gchar *name= atspi_accessible_get_name(source, NULL);
-   gchar *role= atspi_accessible_get_role_name(source, NULL);
+   gchar *name = atspi_accessible_get_name(source, NULL);
+   gchar *role = atspi_accessible_get_role_name(source, NULL);
    gchar *toolkit = atspi_accessible_get_toolkit_name(source, NULL);
 
    DEBUG("--------------------------------------------------------");

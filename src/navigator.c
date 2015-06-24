@@ -158,7 +158,7 @@ display_info_about_object(AtspiAccessible *obj)
    DEBUG("START");
    DEBUG("------------------------");
    const char *name = atspi_accessible_get_name(obj, NULL);
-   const char *role = atspi_accessible_get_role_name(obj, NULL);
+   const char *role = atspi_accessible_get_localized_role_name(obj, NULL);
    const char *description = atspi_accessible_get_description(obj, NULL);
    char *state_name = NULL;
    AtspiStateSet *st = atspi_accessible_get_state_set (obj);
@@ -180,7 +180,7 @@ display_info_about_object(AtspiAccessible *obj)
          DEBUG("   %s", state_name);
          free(state_name);
       }
-
+   DEBUG("LOCALE:%s", atspi_accessible_get_object_locale(obj, NULL));
    DEBUG("------------------------");
    DEBUG("END");
 }
@@ -232,7 +232,7 @@ generate_trait(AtspiAccessible *obj)
    if (!obj)
       return strdup("");
 
-   char *role = atspi_accessible_get_role_name(obj, NULL);
+   char *role = atspi_accessible_get_localized_role_name(obj, NULL);
    char ret[TTS_MAX_TEXT_SIZE] = "\0";
    if (!strncmp(role, "entry", strlen(role)))
       {
@@ -1006,7 +1006,6 @@ static void _activate_widget(void)
    AtspiEditableText *edit = NULL;
 
    GError *err = NULL;
-   gchar *roleName = NULL;
    gchar *actionName = NULL;
    gint number = 0;
    gint i = 0;
@@ -1017,15 +1016,6 @@ static void _activate_widget(void)
       return;
 
    current_widget = current_obj;
-
-   roleName = atspi_accessible_get_role_name(current_widget, &err);
-   if (!roleName)
-      {
-         ERROR("The role name is null");
-         return;
-      }
-   GERROR_CHECK(err)
-   DEBUG("Widget role prev: %s\n", roleName);
 
    display_info_about_object(current_widget);
 
@@ -1388,20 +1378,18 @@ _direct_scroll_back(void)
    AtspiAccessible *obj = NULL;
    AtspiAccessible *current = NULL;
    AtspiAccessible *parent = NULL;
-   gchar *role = NULL;
+   AtspiRole role;
 
    current = flat_navi_context_current_get(context);
    parent = atspi_accessible_get_parent (current, NULL);
-   role = atspi_accessible_get_role_name(parent, NULL);
+   role = atspi_accessible_get_role(parent, NULL);
 
-   if (strcmp(role, "list"))
+   if (role != ATSPI_ROLE_LIST)
       {
-         DEBUG("That operation can be done only on list, it is:%s", role);
-         g_free(role);
+         DEBUG("That operation can be done only on list, it is:%s", atspi_accessible_get_role_name(parent, NULL));
          return;
       }
 
-   g_free(role);
    visi = flat_navi_context_current_children_count_visible_get(context);
    DEBUG("There is %d elements visible", visi);
 
@@ -1458,20 +1446,18 @@ _direct_scroll_forward(void)
    AtspiAccessible *obj = NULL;
    AtspiAccessible *current = NULL;
    AtspiAccessible *parent = NULL;
-   gchar *role = NULL;
+   AtspiRole role;
 
    current = flat_navi_context_current_get(context);
    parent = atspi_accessible_get_parent (current, NULL);
-   role = atspi_accessible_get_role_name(parent, NULL);
+   role = atspi_accessible_get_role(parent, NULL);
 
-   if (strcmp(role, "list"))
+   if (role != ATSPI_ROLE_LIST)
       {
-         DEBUG("That operation can be done only on list, it is:%s", role);
-         g_free(role);
+         DEBUG("That operation can be done only on list, it is:%s", atspi_accessible_get_role_name(parent, NULL));
          return;
       }
 
-   g_free(role);
    visi = flat_navi_context_current_children_count_visible_get(context);
    DEBUG("There is %d elements visible", visi);
 
@@ -1546,26 +1532,24 @@ _is_active_entry(void)
          return EINA_FALSE;
       }
    AtspiAccessible *obj = NULL;
+   AtspiRole role;
    obj = flat_navi_context_current_get(context);
 
    if (!obj)
       return EINA_FALSE;
 
-   char *role = atspi_accessible_get_role_name(obj, NULL);
-   if (!strncmp(role, "entry", strlen(role)))
+   role = atspi_accessible_get_role(obj, NULL);
+   if (role == ATSPI_ROLE_ENTRY)
       {
          AtspiStateSet* state_set = atspi_accessible_get_state_set (obj);
          if (atspi_state_set_contains(state_set, ATSPI_STATE_FOCUSED))
             {
                g_object_unref(state_set);
-               g_free(role);
                return EINA_TRUE;
             }
          g_object_unref(state_set);
-         g_free(role);
          return EINA_FALSE;
       }
-   g_free(role);
    return EINA_FALSE;
 
    DEBUG("END");
@@ -1661,7 +1645,7 @@ _on_cache_builded(void *data)
 }
 
 static void
-_view_content_changed(AppTrackerEventType type, void *user_data)
+_view_content_changed(void *user_data)
 {
    DEBUG("START");
    _window_cache_builded = EINA_FALSE;
@@ -1674,12 +1658,12 @@ static void on_window_activate(void *data, AtspiAccessible *window)
 {
    DEBUG("START");
 
-   app_tracker_callback_unregister(top_window, APP_TRACKER_EVENT_VIEW_CHANGED, _view_content_changed, NULL);
+   app_tracker_callback_unregister(top_window, _view_content_changed, NULL);
 
    if(window)
       {
          DEBUG("Window name: %s", atspi_accessible_get_name(window, NULL));
-         app_tracker_callback_register(window, APP_TRACKER_EVENT_VIEW_CHANGED, _view_content_changed, NULL);
+         app_tracker_callback_register(window, _view_content_changed, NULL);
          _window_cache_builded = EINA_FALSE;
          object_cache_build_async(window, 5, _on_cache_builded, NULL);
       }

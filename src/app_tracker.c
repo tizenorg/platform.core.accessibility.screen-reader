@@ -10,7 +10,6 @@ typedef struct
 
 typedef struct
 {
-   AppTrackerEventType type;
    AppTrackerEventCB func;
    void *user_data;
 } EventCallbackData;
@@ -38,7 +37,7 @@ _is_descendant(AtspiAccessible *ancestor, AtspiAccessible *descendant)
 }
 
 static void
-_subtree_callbacks_call(AppTrackerEventType event, SubTreeRootData *std)
+_subtree_callbacks_call(SubTreeRootData *std)
 {
    DEBUG("START");
    GList *l;
@@ -47,10 +46,7 @@ _subtree_callbacks_call(AppTrackerEventType event, SubTreeRootData *std)
    for (l = std->callbacks; l != NULL; l = l->next)
       {
          ecd = l->data;
-         if (ecd->type == event)
-            {
-               ecd->func(event, ecd->user_data);
-            }
+         ecd->func(ecd->user_data);
       }
    DEBUG("END");
 }
@@ -61,7 +57,7 @@ _on_timeout_cb(gpointer user_data)
    DEBUG("START");
    SubTreeRootData *std = user_data;
 
-   _subtree_callbacks_call(APP_TRACKER_EVENT_VIEW_CHANGED, std);
+   _subtree_callbacks_call(std);
 
    std->timer = 0;
    DEBUG("END");
@@ -92,7 +88,7 @@ _on_atspi_event_cb(const AtspiEvent *event)
                if (std->timer)
                   g_source_remove(std->timer);
                else
-                  _subtree_callbacks_call(APP_TRACKER_EVENT_VIEW_CHANGE_STARTED, std);
+                  _subtree_callbacks_call(std);
 
                std->timer = g_timeout_add(APP_TRACKER_INVACTIVITY_TIMEOUT, _on_timeout_cb, std);
             }
@@ -107,7 +103,6 @@ _app_tracker_init_internal(void)
 
    atspi_event_listener_register(_listener, "object:state-changed:showing", NULL);
    atspi_event_listener_register(_listener, "object:state-changed:visible", NULL);
-   atspi_event_listener_register(_listener, "object:children-changed", NULL);
    atspi_event_listener_register(_listener, "object:bounds-changed", NULL);
    atspi_event_listener_register(_listener, "object:visible-data-changed", NULL);
 
@@ -135,7 +130,6 @@ _app_tracker_shutdown_internal(void)
 {
    atspi_event_listener_deregister(_listener, "object:state-changed:showing", NULL);
    atspi_event_listener_deregister(_listener, "object:state-changed:visible", NULL);
-   atspi_event_listener_deregister(_listener, "object:children-changed", NULL);
    atspi_event_listener_deregister(_listener, "object:bounds-changed", NULL);
    atspi_event_listener_deregister(_listener, "object:visible-data-changed", NULL);
 
@@ -161,7 +155,7 @@ void app_tracker_shutdown(void)
    if (--_init_count < 0) _init_count = 0;
 }
 
-void app_tracker_callback_register(AtspiAccessible *app, AppTrackerEventType event, AppTrackerEventCB cb, void *user_data)
+void app_tracker_callback_register(AtspiAccessible *app, AppTrackerEventCB cb, void *user_data)
 {
    DEBUG("START");
    SubTreeRootData *rd = NULL;
@@ -191,7 +185,6 @@ void app_tracker_callback_register(AtspiAccessible *app, AppTrackerEventType eve
       }
 
    cd = g_new(EventCallbackData, 1);
-   cd->type = event;
    cd->func = cb;
    cd->user_data = user_data;
 
@@ -199,7 +192,7 @@ void app_tracker_callback_register(AtspiAccessible *app, AppTrackerEventType eve
    DEBUG("END");
 }
 
-void app_tracker_callback_unregister(AtspiAccessible *app, AppTrackerEventType event, AppTrackerEventCB cb, void *user_data)
+void app_tracker_callback_unregister(AtspiAccessible *app, AppTrackerEventCB cb, void *user_data)
 {
    DEBUG("START");
    GList *l;
