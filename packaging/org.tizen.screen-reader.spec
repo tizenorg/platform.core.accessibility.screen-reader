@@ -4,7 +4,7 @@
 
 Name:       org.tizen.screen-reader
 Summary:    Screen Reader Assistive Technology
-Version:    0.0.2
+Version:    0.0.3
 Release:    1
 License:    Apache-2.0
 Source0:    %{name}-%{version}.tar.gz
