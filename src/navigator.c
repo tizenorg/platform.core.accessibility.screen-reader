@@ -25,6 +25,7 @@
 #define MENU_ITEM_TAB_INDEX_SIZE 16
 #define HOVERSEL_TRAIT_SIZE 70
 #define TTS_MAX_TEXT_SIZE  2000
+#define GESTURE_LIMIT 10
 
 #define HOVERSEL_TRAIT "Dropdown list. Showing %d items. Double tap to open the menu."
 #define GROUP_INDEX_TRAIT "group index"
@@ -60,6 +61,8 @@ static AtspiAccessible *top_window;
 static Eina_Bool _window_cache_builded;
 static Eina_Bool _window_top_changed;
 static FlatNaviContext *context;
+static bool prepared = false;
+static int counter=0;
 
 static struct
 {
@@ -183,12 +186,19 @@ display_info_about_object(AtspiAccessible *obj)
    AtspiStateSet *st = atspi_accessible_get_state_set (obj);
    GArray *states = atspi_state_set_get_states (st);
    AtspiComponent *comp = atspi_accessible_get_component_iface(obj);
+   AtspiValue *value = atspi_accessible_get_value_iface(obj);
 
    DEBUG("NAME:%s", name);
    DEBUG("ROLE:%s", role)
    DEBUG("DESCRIPTION:%s", description);
    DEBUG("CHILDS:%d", atspi_accessible_get_child_count(obj, NULL));
    DEBUG("HIGHLIGHT_INDEX:%d", atspi_component_get_highlight_index(comp, NULL));
+   if (value)
+      {
+         DEBUG("VALUE:%f", atspi_value_get_current_value (value, NULL));
+         DEBUG("VALUE MAX:%f", atspi_value_get_maximum_value (value, NULL));
+         DEBUG("VALUE MIN:%f", atspi_value_get_minimum_value (value, NULL));
+      }
    DEBUG("STATES:");
    int a;
    AtspiStateType stat;
@@ -921,133 +931,79 @@ static void _caret_move_backward(void)
    return;
 }
 
-#if 0
-static void _value_inc_widget(void)
+static void _read_value( AtspiValue *value)
+{
+   if (!value)
+      return;
+
+   gdouble current_val = atspi_value_get_current_value(value, NULL);
+   gdouble max_val = atspi_value_get_maximum_value (value, NULL);
+   gdouble min_val = atspi_value_get_minimum_value (value, NULL);
+
+   int proc = (current_val/fabs(max_val-min_val)) * 100;
+
+   char buf[256] = "\0";
+   snprintf(buf, sizeof(buf), "%d percent", proc);
+   DEBUG("has value %s", buf);
+   tts_speak(strdup(buf), EINA_TRUE);
+}
+
+static void _value_inc(void)
 {
    AtspiAccessible* current_widget = NULL;
-   AtspiText *text_interface;
-   gint current_offset;
-   gboolean ret;
    GError *err = NULL;
-   gchar *role;
 
    if(!current_obj)
       return;
 
    current_widget = current_obj;
 
-   role = atspi_accessible_get_role_name(current_widget, &err);
-   if (!role)
-      {
-         ERROR("The role is null");
-         return;
-      }
-   GERROR_CHECK(err)
-
-   if(!strcmp(role, "entry"))
-      {
-         text_interface = atspi_accessible_get_text_iface(current_widget);
-         if(text_interface)
-            {
-               current_offset = atspi_text_get_caret_offset(text_interface, &err);
-               GERROR_CHECK(err)
-               ret = atspi_text_set_caret_offset(text_interface, current_offset + 1, &err);
-               GERROR_CHECK(err)
-               if(ret)
-                  {
-                     ERROR("Caret position increment done");
-                  }
-               else
-                  {
-                     ERROR("Caret position increment error");
-                  }
-            }
-         else
-            ERROR("No text interface supported!");
-         g_free(role);
-         return;
-      }
-   g_free(role);
    AtspiValue *value_interface = atspi_accessible_get_value_iface(current_widget);
    if(value_interface)
       {
-         ERROR("Value interface supported!\n");
+         DEBUG("Value interface supported!\n");
          gdouble current_val = atspi_value_get_current_value(value_interface, &err);
          GERROR_CHECK(err)
-         ERROR("Current value: %f\n ", (double)current_val);
+         DEBUG("Current value: %f\n ", (double)current_val);
          gdouble minimum_inc = atspi_value_get_minimum_increment(value_interface, &err);
-         ERROR("Minimum increment: %f\n ", (double)minimum_inc);
+         DEBUG("Minimum increment: %f\n ", (double)minimum_inc);
          GERROR_CHECK(err)
          atspi_value_set_current_value(value_interface, current_val + minimum_inc, &err);
          GERROR_CHECK(err)
+         _read_value(value_interface);
+         g_object_unref(value_interface);
+         return;
       }
-   else
-      ERROR("No value interface supported!\n");
+   ERROR("No value interface supported!\n");
 }
 
-static void _value_dec_widget(void)
+static void _value_dec(void)
 {
    AtspiAccessible* current_widget = NULL;
-   AtspiText *text_interface;
-   gint current_offset;
    GError *err = NULL;
-   gboolean ret;
-   gchar *role;
 
    if(!current_obj)
       return;
    current_widget = current_obj;
 
-   role = atspi_accessible_get_role_name(current_widget, &err);
-   if (!role)
-      {
-         ERROR("The role is null");
-         return;
-      }
-   GERROR_CHECK(err)
-
-   if(!strcmp(role, "entry"))
-      {
-         text_interface = atspi_accessible_get_text_iface(current_widget);
-         if(text_interface)
-            {
-               current_offset = atspi_text_get_caret_offset(text_interface, &err);
-               GERROR_CHECK(err)
-               ret = atspi_text_set_caret_offset(text_interface, current_offset - 1, &err);
-               GERROR_CHECK(err)
-               if(ret)
-                  {
-                     ERROR("Caret position decrement done");
-                  }
-               else
-                  {
-                     ERROR("Caret position decrement error");
-                  }
-            }
-         else
-            ERROR("No text interface supported!");
-         g_free(role);
-         return;
-      }
-   g_free(role);
-
    AtspiValue *value_interface = atspi_accessible_get_value_iface(current_widget);
    if(value_interface)
       {
-         ERROR("Value interface supported!\n");
+         DEBUG("Value interface supported!\n");
          gdouble current_val = atspi_value_get_current_value(value_interface, &err);
          GERROR_CHECK(err)
-         ERROR("Current value: %f\n ", (double)current_val);
+         DEBUG("Current value: %f\n ", (double)current_val);
          gdouble minimum_inc = atspi_value_get_minimum_increment(value_interface, &err);
          GERROR_CHECK(err)
-         ERROR("Minimum increment: %f\n ", (double)minimum_inc);
+         DEBUG("Minimum increment: %f\n ", (double)minimum_inc);
          atspi_value_set_current_value(value_interface, current_val - minimum_inc, &err);
          GERROR_CHECK(err)
+         _read_value(value_interface);
+         g_object_unref(value_interface);
+         return;
       }
-   else
-      ERROR("No value interface supported!\n");
+   ERROR("No value interface supported!\n");
 }
-#endif
 
 static bool
 _check_if_widget_is_enabled(AtspiAccessible *obj)
@@ -1708,6 +1664,31 @@ _direct_scroll_to_last(void)
 }
 
 static Eina_Bool
+_has_value(void)
+{
+   DEBUG("START");
+   AtspiAccessible *obj = NULL;
+
+   if(!current_obj)
+      return EINA_FALSE;
+
+   obj = current_obj;
+
+   if (!obj)
+      return EINA_FALSE;
+
+   AtspiValue *value = atspi_accessible_get_value_iface(obj);
+
+   if (value)
+      {
+         g_object_unref(value);
+         return EINA_TRUE;
+      }
+
+   return EINA_TRUE;
+}
+
+static Eina_Bool
 _is_active_entry(void)
 {
    DEBUG("START");
@@ -1741,15 +1722,131 @@ _is_active_entry(void)
    DEBUG("END");
 }
 
+static Eina_Bool
+_is_slider(AtspiAccessible *obj)
+{
+   DEBUG("START");
+
+   if (!obj)
+      return EINA_FALSE;
+
+   AtspiRole role;
+
+   role = atspi_accessible_get_role(obj, NULL);
+   if (role == ATSPI_ROLE_SLIDER)
+      {
+         return EINA_TRUE;
+      }
+   return EINA_FALSE;
+}
+
+static void
+_move_slider(Gesture_Info *gi)
+{
+   DEBUG("ONE FINGER DOUBLE TAP AND HOLD");
+
+   if (!context)
+      {
+         ERROR("No navigation context created");
+         return;
+      }
+
+   AtspiAccessible *obj = NULL;
+   AtspiValue *value = NULL;
+   AtspiComponent *comp = NULL;
+   AtspiRect *rect = NULL;
+   int click_point_x = 0;
+   int click_point_y = 0;
+
+   obj = current_obj;
+
+   if (!obj)
+      {
+         DEBUG("no object");
+         return;
+      }
+
+   if (!_is_slider(obj))
+      {
+         ERROR("Object is not a slider");
+         return;
+      }
+
+   if (gi->state == 0)
+      {
+         comp = atspi_accessible_get_component_iface(obj);
+         if (!comp)
+            {
+               ERROR("that slider do not have component interface");
+               return;
+            }
+
+         rect = atspi_component_get_extents(comp, ATSPI_COORD_TYPE_SCREEN, NULL);
+
+         DEBUG("Current object is in:%d %d", rect->x, rect->y);
+         DEBUG("Current object has size:%d %d", rect->width, rect->height);
+
+         click_point_x = rect->x+rect->width/2;
+         click_point_y = rect->y+rect->height/2;
+         DEBUG("Click on point %d %d", click_point_x, click_point_y);
+         start_scroll(click_point_x, click_point_y);
+      }
+
+   if (gi->state == 1)
+      {
+         counter ++;
+         DEBUG("SCROLLING but not meet counter:%d", counter)
+         if (counter >= GESTURE_LIMIT)
+            {
+               counter = 0;
+               DEBUG("Scroll on point %d %d", gi->x_end, gi->y_end);
+               continue_scroll(gi->x_end, gi->y_end);
+            }
+      }
+
+   if (gi->state == 2)
+      {
+         DEBUG("state == 2");
+         end_scroll(gi->x_end, gi->y_end);
+         prepared = false;
+         value = atspi_accessible_get_value_iface(obj);
+         if (value)
+            {
+               _read_value(value);
+               g_object_unref(value);
+            }
+         else
+            {
+               ERROR("There is not value interface in slider");
+            }
+      }
+   DEBUG("END");
+}
+
 static void on_gesture_detected(void *data, Gesture_Info *info)
 {
    dbus_gesture_adapter_emit(info);
    _on_auto_review_stop();
 
+   if (info->type == ONE_FINGER_SINGLE_TAP && info->state == 3)
+      {
+         DEBUG("One finger single tap aborted");
+         prepared = true;
+      }
+
    switch(info->type)
       {
       case ONE_FINGER_HOVER:
-         _focus_widget(info);
+         if (prepared)
+            {
+               DEBUG("Prepare to move slider");
+               _move_slider(info);
+            }
+         else
+            {
+               DEBUG("Will focus on object, slider is not ready");
+               _focus_widget(info);
+            }
          break;
       case TWO_FINGERS_HOVER:
          _widget_scroll(info);
@@ -1763,17 +1860,22 @@ static void on_gesture_detected(void *data, Gesture_Info *info)
       case ONE_FINGER_FLICK_UP:
          if (_is_active_entry())
             _caret_move_backward();
+         else if (_has_value())
+            _value_inc();
          else
             _focus_prev();
          break;
       case ONE_FINGER_FLICK_DOWN:
          if (_is_active_entry())
             _caret_move_forward();
+         else if(_has_value())
+            _value_dec();
          else
             _focus_next();
          break;
       case ONE_FINGER_SINGLE_TAP:
-         _focus_widget(info);
+         if (!prepared)
+            _focus_widget(info);
          break;
       case ONE_FINGER_DOUBLE_TAP:
          _activate_widget();

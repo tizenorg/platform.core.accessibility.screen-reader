@@ -55,7 +55,7 @@ typedef struct
    int x_beg, x_end;     // (x,y) coordinates when gesture begin (screen coords)
    int y_beg, y_end;     // (x,y) coordinates when gesture ends (screen coords)
    pid_t pid;            // pid of process on which gesture took place.
-   int state;            // 0 - begin, 1 - ongoing, 2 - ended
+   int state;            // 0 - begin, 1 - ongoing, 2 - ended, 3 - aborted
 } Gesture_Info;
 
 /**
@@ -78,5 +78,20 @@ typedef void (*GestureCB)(void *data, Gesture_Info *info);
  * @brief Registers callback on gestures
  */
 void screen_reader_gestures_tracker_register(GestureCB cb, void *data);
+
+/**
+ * @brief Start event emission
+ */
+void start_scroll(int x, int y);
+
+/**
+ * @brief Continue event emission
+ */
+void continue_scroll(int x, int y);
+
+/**
+ * @brief End event emit
+ */
+void end_scroll(int x, int y);
 
 #endif

@@ -609,8 +609,8 @@ static void _get_root_coords(Ecore_X_Window win, int *x, int *y)
       }
 }
 
-static void
-_start_scroll(int x, int y)
+void
+start_scroll(int x, int y)
 {
    Ecore_X_Window under = ecore_x_window_at_xy_get(x, y);
    _get_root_coords(under, &rx, &ry);
@@ -621,15 +621,15 @@ _start_scroll(int x, int y)
    scrolled_win = under;
 }
 
-static void
-_continue_scroll(int x, int y)
+void
+continue_scroll(int x, int y)
 {
    DEBUG("Send move: %d %d", x - rx, y - ry);
    ecore_x_mouse_move_send(scrolled_win, x - rx, y - ry);
 }
 
-static void
-_end_scroll(int x, int y)
+void
+end_scroll(int x, int y)
 {
    DEBUG("Send up: %d %d", x - rx, y - ry);
    ecore_x_mouse_up_send(scrolled_win, x - rx, y - ry, 1);
@@ -659,11 +659,11 @@ _hover_event_emit(Cover *cov, int state)
          INFO("TWO FINGERS HOVER");
          _event_emit(TWO_FINGERS_HOVER, ax, ay, ax, ay, state);
          if (state == 0)
-            _start_scroll(ax, ay);
+            start_scroll(ax, ay);
          else if (state == 1)
-            _continue_scroll(ax, ay);
+            continue_scroll(ax, ay);
          else if (state == 2)
-            _end_scroll(ax, ay);
+            end_scroll(ax, ay);
          break;
       default:
          break;
@@ -697,7 +697,7 @@ _hover_gesture_mouse_move(Ecore_Event_Mouse_Move *ev, Cover *cov)
 }
 
 static void
-_tap_event_emit(Cover *cov)
+_tap_event_emit(Cover *cov, int state)
 {
    switch (cov->tap_gesture_data.n_taps)
       {
@@ -708,7 +708,7 @@ _tap_event_emit(Cover *cov)
                _event_emit(ONE_FINGER_SINGLE_TAP,
                            cov->tap_gesture_data.x_org[0], cov->tap_gesture_data.y_org[0],
                            cov->tap_gesture_data.x_org[0], cov->tap_gesture_data.y_org[0],
-                           2);
+                           state);
             }
          else if(cov->tap_gesture_data.tap_type == TWO_FINGERS_GESTURE)
             {
@@ -716,7 +716,7 @@ _tap_event_emit(Cover *cov)
                _event_emit(TWO_FINGERS_SINGLE_TAP,
                            cov->tap_gesture_data.x_org[0], cov->tap_gesture_data.y_org[0],
                            cov->tap_gesture_data.x_org[1], cov->tap_gesture_data.y_org[1],
-                           2);
+                           state);
             }
          else if(cov->tap_gesture_data.tap_type == THREE_FINGERS_GESTURE)
             {
@@ -724,7 +724,7 @@ _tap_event_emit(Cover *cov)
                _event_emit(THREE_FINGERS_SINGLE_TAP,
                            cov->tap_gesture_data.x_org[0], cov->tap_gesture_data.y_org[0],
                            cov->tap_gesture_data.x_org[2], cov->tap_gesture_data.y_org[2],
-                           2);
+                           state);
             }
          else
             {
@@ -738,7 +738,7 @@ _tap_event_emit(Cover *cov)
                _event_emit(ONE_FINGER_DOUBLE_TAP,
                            cov->tap_gesture_data.x_org[0], cov->tap_gesture_data.y_org[0],
                            cov->tap_gesture_data.x_org[0], cov->tap_gesture_data.y_org[0],
-                           2);
+                           state);
             }
          else if(cov->tap_gesture_data.tap_type == TWO_FINGERS_GESTURE)
             {
@@ -746,7 +746,7 @@ _tap_event_emit(Cover *cov)
                _event_emit(TWO_FINGERS_DOUBLE_TAP,
                            cov->tap_gesture_data.x_org[0], cov->tap_gesture_data.y_org[0],
                            cov->tap_gesture_data.x_org[1], cov->tap_gesture_data.y_org[1],
-                           2);
+                           state);
             }
          else if(cov->tap_gesture_data.tap_type == THREE_FINGERS_GESTURE)
             {
@@ -754,7 +754,7 @@ _tap_event_emit(Cover *cov)
                _event_emit(THREE_FINGERS_DOUBLE_TAP,
                            cov->tap_gesture_data.x_org[0], cov->tap_gesture_data.y_org[0],
                            cov->tap_gesture_data.x_org[2], cov->tap_gesture_data.y_org[2],
-                           2);
+                           state);
             }
          else
             {
@@ -768,7 +768,7 @@ _tap_event_emit(Cover *cov)
                _event_emit(ONE_FINGER_TRIPLE_TAP,
                            cov->tap_gesture_data.x_org[0], cov->tap_gesture_data.y_org[0],
                            cov->tap_gesture_data.x_org[0], cov->tap_gesture_data.y_org[0],
-                           2);
+                           state);
             }
          else if(cov->tap_gesture_data.tap_type == TWO_FINGERS_GESTURE)
             {
@@ -776,7 +776,7 @@ _tap_event_emit(Cover *cov)
                _event_emit(TWO_FINGERS_TRIPLE_TAP,
                            cov->tap_gesture_data.x_org[0], cov->tap_gesture_data.y_org[0],
                            cov->tap_gesture_data.x_org[1], cov->tap_gesture_data.y_org[1],
-                           2);
+                           state);
             }
          else if(cov->tap_gesture_data.tap_type == THREE_FINGERS_GESTURE)
             {
@@ -784,7 +784,7 @@ _tap_event_emit(Cover *cov)
                _event_emit(THREE_FINGERS_TRIPLE_TAP,
                            cov->tap_gesture_data.x_org[0], cov->tap_gesture_data.y_org[0],
                            cov->tap_gesture_data.x_org[2], cov->tap_gesture_data.y_org[2],
-                           2);
+                           state);
             }
          else
             {
@@ -804,7 +804,9 @@ _on_tap_timer_expire(void *data)
    DEBUG("Timer expired");
 
    if (cov->tap_gesture_data.started && !cov->tap_gesture_data.pressed)
-      _tap_event_emit(cov);
+      _tap_event_emit(cov,2);
+   else
+      _tap_event_emit(cov,3);
 
    // finish gesture
    cov->tap_gesture_data.started = EINA_FALSE;
@@ -1013,9 +1015,9 @@ _tap_gestures_move(Ecore_Event_Mouse_Move *ev, Cover *cov)
 {
    int i;
    for (i = 0; i < sizeof(cov->tap_gesture_data.finger)/sizeof(cov->tap_gesture_data.finger[0]); i++)
-     {
-        if (ev->multi.device == cov->tap_gesture_data.finger[i])
-          {
+      {
+         if (ev->multi.device == cov->tap_gesture_data.finger[i])
+            {
                int dx = ev->root.x - cov->tap_gesture_data.x_org[i];
                int dy = ev->root.y - cov->tap_gesture_data.y_org[i];
 
@@ -1031,9 +1033,9 @@ _tap_gestures_move(Ecore_Event_Mouse_Move *ev, Cover *cov)
                      cov->tap_gesture_data.finger[1] = -1;
                      cov->tap_gesture_data.finger[2] = -1;
                   }
-             break;
-          }
-     }
+               break;
+            }
+      }
 }
 
 static Eina_Bool
