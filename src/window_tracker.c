@@ -35,12 +35,12 @@ _get_window_object_from_given(AtspiAccessible *obj)
                for (j=0; j < app_childs; j++)
                   {
                      win = atspi_accessible_get_child_at_index(app, j, NULL);
-                     if (!win)
-                        continue;
-
-                     st = atspi_accessible_get_state_set (win);
-                     if (atspi_state_set_contains(st, ATSPI_STATE_ACTIVE))
-                        ret = win;
+                     if (win) {
+                        st = atspi_accessible_get_state_set (win);
+                        if (atspi_state_set_contains(st, ATSPI_STATE_ACTIVE)) {
+                           return win;
+                        }
+                     }
                   }
             }
       }
@@ -51,6 +51,12 @@ _get_window_object_from_given(AtspiAccessible *obj)
 static void
 _on_atspi_window_cb(const AtspiEvent *event)
 {
+   if (event->source == last_active_win)
+      {
+         DEBUG("Window already handled");
+         return;
+      }
+
    if (!strcmp(event->type, "window:restore") ||
          !strcmp(event->type, "window:activate"))
       {
@@ -61,6 +67,11 @@ _on_atspi_window_cb(const AtspiEvent *event)
       {
          AtspiAccessible *obj = NULL;
          obj = _get_window_object_from_given(event->source);
+
+         if (obj == last_active_win) {
+            DEBUG("Window already handled");
+            return;
+         }
 
          if (obj)
             {
@@ -96,13 +107,13 @@ _get_active_win(void)
                   {
                      g_object_unref(states);
                      last_active_win = win;
-                     break;
+                     DEBUG("END");
+                     return last_active_win;
                   }
-               g_object_unref(states);
             }
       }
-   DEBUG("END");
-   return last_active_win;
+   ERROR("END");
+   return NULL;
 }
 
 void window_tracker_init(void)

@@ -25,7 +25,7 @@ _list_obj_unref_and_free(Eina_List *toprocess)
    AtspiAccessible *obj;
    EINA_LIST_FREE(toprocess, obj)
    {
-      g_object_unref(obj);
+      if (obj) g_object_unref(obj);
    }
 }
 

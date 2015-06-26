@@ -47,9 +47,11 @@ typedef struct
 static last_focus_t gesture_start_p = {-1,-1};
 static last_focus_t last_focus = {-1,-1};
 static AtspiAccessible *current_obj;
+static AtspiComponent *current_comp = NULL;
 static AtspiAccessible *top_window;
 //static AtspiScrollable *scrolled_obj;
 static Eina_Bool _window_cache_builded;
+static Eina_Bool _window_top_changed;
 static FlatNaviContext *context;
 
 static struct
@@ -320,6 +322,11 @@ _current_highlight_object_set(AtspiAccessible *obj)
 {
    DEBUG("START");
    GError *err = NULL;
+   gchar *role = NULL;
+   gchar *name = NULL;
+   if (!context)
+      return;
+
    if (!obj)
       {
          DEBUG("Clearing highlight object");
@@ -339,20 +346,21 @@ _current_highlight_object_set(AtspiAccessible *obj)
          if (!comp)
             {
                GError *err = NULL;
-               gchar *role = atspi_accessible_get_role_name(obj, &err);
+               role = atspi_accessible_get_role_name(obj, &err);
                ERROR("AtspiComponent *comp NULL, [%s]", role);
                GERROR_CHECK(err);
                g_free(role);
                return;
             }
+         if (current_comp) {
+            atspi_component_clear_highlight(current_comp, &err);
+         }
          atspi_component_grab_highlight(comp, &err);
+         current_comp = comp;
          GERROR_CHECK(err)
-         gchar *name;
-         gchar *role;
 
          current_obj = obj;
          const ObjectCache *oc = object_cache_get(obj);
-
          if (oc)
             {
                name = atspi_accessible_get_name(obj, &err);
@@ -364,6 +372,8 @@ _current_highlight_object_set(AtspiAccessible *obj)
                      role,
                      oc->bounds->x, oc->bounds->y, oc->bounds->width, oc->bounds->height);
                haptic_vibrate_start();
+               g_free(name);
+               g_free(role);
             }
          else
             {
@@ -375,13 +385,13 @@ _current_highlight_object_set(AtspiAccessible *obj)
                      name,
                      role);
                haptic_vibrate_start();
+               g_free(name);
+               g_free(role);
             }
          char *text_to_speak = NULL;
          text_to_speak = generate_what_to_read(obj);
          DEBUG("SPEAK:%s", text_to_speak);
          tts_speak(text_to_speak, EINA_TRUE);
-         g_free(role);
-         g_free(name);
          g_free(text_to_speak);
       }
    else
@@ -1758,19 +1768,26 @@ _on_cache_builded(void *data)
    DEBUG("START");
    _window_cache_builded = EINA_TRUE;
    AtspiAccessible *pivot = NULL;
-   if (context)
+   if (context && !_window_top_changed)
       {
+         DEBUG("Context exists and window as not changed");
          pivot = flat_navi_context_current_get(context);
-         flat_navi_context_free(context);
+         _current_highlight_object_set(pivot);
+         DEBUG("END");
+         return;
       }
+
+   _window_top_changed = false;
    context = flat_navi_context_create(top_window);
 
-   // try to set previous object in new context
-   if (flat_navi_context_current_set(context, pivot))
-      _current_highlight_object_set(pivot);
-   else
-      _current_highlight_object_set(flat_navi_context_current_get(context));
-   DEBUG("END");
+   if (context)
+      {
+         DEBUG("New context and current obj highlighted");
+         _current_highlight_object_set(flat_navi_context_current_get(context));
+         DEBUG("END");
+         return;
+      }
+   ERROR("No context");
 }
 
 static void
@@ -1799,9 +1816,9 @@ static void on_window_activate(void *data, AtspiAccessible *window)
    else
       {
          ERROR("No top window found!");
-//     scrolled_obj = NULL;
       }
    top_window = window;
+   _window_top_changed = true;
    DEBUG("END");
 }
 
