@@ -78,6 +78,12 @@ _on_atspi_event_cb(const AtspiEvent *event)
          return;
       }
 
+   if ((atspi_accessible_get_role(obj, NULL) == ATSPI_ROLE_DESKTOP_FRAME) ||
+         !strcmp(event->type, "object:children-changed"))
+      {
+         return;
+      }
+
    DEBUG("signal:%s", event->type);
 
    for (l = _roots; l != NULL; l = l->next)
@@ -103,6 +109,7 @@ _app_tracker_init_internal(void)
 
    atspi_event_listener_register(_listener, "object:state-changed:showing", NULL);
    atspi_event_listener_register(_listener, "object:state-changed:visible", NULL);
+   atspi_event_listener_register(_listener, "object:children-changed", NULL);
    atspi_event_listener_register(_listener, "object:bounds-changed", NULL);
    atspi_event_listener_register(_listener, "object:visible-data-changed", NULL);
 
@@ -131,6 +138,7 @@ _app_tracker_shutdown_internal(void)
    atspi_event_listener_deregister(_listener, "object:state-changed:showing", NULL);
    atspi_event_listener_deregister(_listener, "object:state-changed:visible", NULL);
    atspi_event_listener_deregister(_listener, "object:bounds-changed", NULL);
+   atspi_event_listener_deregister(_listener, "object:children-changed", NULL);
    atspi_event_listener_deregister(_listener, "object:visible-data-changed", NULL);
 
    g_object_unref(_listener);
