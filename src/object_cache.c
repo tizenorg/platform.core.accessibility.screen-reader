@@ -194,6 +194,11 @@ void
 object_cache_build_async(AtspiAccessible *root, int bulk_size, ObjectCacheReadyCb cb, void *ud)
 {
    DEBUG("START");
+   if (idler)
+      {
+         ERROR("Invalid usage. Async cache build is ongoing...");
+         return;
+      }
    _object_cache_free_internal();
 
    callback = cb;
