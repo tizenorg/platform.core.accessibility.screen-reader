@@ -143,7 +143,7 @@ _flick_gesture_mouse_down(Ecore_Event_Mouse_Button *ev, Cover *cov)
    else if (cov->flick_gesture.state == GESTURE_ONGOING)
       {
          // abort gesture if too many fingers touched screen
-         if ((cov->n_taps > 3) || (cov->flick_gesture.n_fingers > 3))
+         if ((cov->n_taps > 3) || (cov->flick_gesture.n_fingers > 2))
             {
                cov->flick_gesture.state = GESTURE_ABORTED;
                return;
