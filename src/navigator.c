@@ -22,8 +22,13 @@
 #define QUICKPANEL_UP FALSE
 
 #define DISTANCE_NB 8
+#define MENU_ITEM_TAB_INDEX_SIZE 16
 #define TTS_MAX_TEXT_SIZE  2000
 
+#define GROUP_INDEX_TRAIT "group index"
+#define MENU_ITEM_TAB_INDEX "Tab %d of %d"
+#define GROUP_INDEX_EXPANDED "Expandable list, Double tap to collapse"
+#define GROUP_INDEX_COLLAPSED "Expandable list, Double tap to expand"
 #define TEXT_EDIT "Double tap to edit"
 #define TEXT_EDIT_FOCUSED "Editing, flick up and down to adjust position."
 #define TEXT_BEGIN "Cursor is at the begining of text"
@@ -244,25 +249,47 @@ generate_trait(AtspiAccessible *obj)
    if (!obj)
       return strdup("");
 
-   char *role = atspi_accessible_get_localized_role_name(obj, NULL);
+   AtspiRole role = atspi_accessible_get_role(obj, NULL);
+   AtspiStateSet* state_set = atspi_accessible_get_state_set(obj);
    char ret[TTS_MAX_TEXT_SIZE] = "\0";
-   if (!strncmp(role, "entry", strlen(role)))
+   if (role == ATSPI_ROLE_ENTRY)
       {
-         AtspiStateSet* state_set = atspi_accessible_get_state_set (obj);
-         strncat(ret, role, sizeof(ret) - strlen(ret) - 1);
+         char *role_name = atspi_accessible_get_localized_role_name(obj, NULL);
+         strncat(ret, role_name, sizeof(ret) - strlen(ret) - 1);
          strncat(ret, ", ", sizeof(ret) - strlen(ret) - 1);
          if (atspi_state_set_contains(state_set, ATSPI_STATE_FOCUSED))
             strncat(ret, TEXT_EDIT_FOCUSED, sizeof(ret) - strlen(ret) - 1);
          else
             strncat(ret, TEXT_EDIT, sizeof(ret) - strlen(ret) - 1);
-         if (state_set) g_object_unref(state_set);
+         free(role_name);
+      }
+   else if (role == ATSPI_ROLE_MENU_ITEM)
+      {
+         AtspiAccessible *parent = atspi_accessible_get_parent(obj, NULL);
+         int children_count = atspi_accessible_get_child_count(parent, NULL);
+         int index = atspi_accessible_get_index_in_parent(obj, NULL);
+         char tab_index[MENU_ITEM_TAB_INDEX_SIZE];
+         snprintf(tab_index, MENU_ITEM_TAB_INDEX_SIZE, MENU_ITEM_TAB_INDEX, index+1, children_count);
+         strncat(ret, tab_index, sizeof(ret) - strlen(ret) - 1);
+      }
+   else if (role == ATSPI_ROLE_LIST_ITEM && atspi_state_set_contains(state_set, ATSPI_STATE_EXPANDABLE))
+      {
+         strncat(ret, GROUP_INDEX_TRAIT, sizeof(ret) - strlen(ret) - 1);
+         strncat(ret, ", ", sizeof(ret) - strlen(ret) - 1);
+         if (atspi_state_set_contains(state_set, ATSPI_STATE_EXPANDED))
+            strncat(ret, GROUP_INDEX_EXPANDED, sizeof(ret) - strlen(ret) - 1);
+         else
+            strncat(ret, GROUP_INDEX_COLLAPSED, sizeof(ret) - strlen(ret) - 1);
       }
    else
       {
-         strncat(ret, role, sizeof(ret) - strlen(ret) - 1);
+         char *role_name = atspi_accessible_get_localized_role_name(obj, NULL);
+         strncat(ret, role_name, sizeof(ret) - strlen(ret) - 1);
+         free(role_name);
       }
 
-   free(role);
+   if (state_set) g_object_unref(state_set);
+
    return strdup(ret);
 }
 
