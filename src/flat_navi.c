@@ -22,6 +22,7 @@ static const AtspiStateType required_states[] =
 
 static const AtspiRole interesting_roles[] =
 {
+   ATSPI_ROLE_CALENDAR,
    ATSPI_ROLE_CHECK_BOX,
    ATSPI_ROLE_COLOR_CHOOSER,
    ATSPI_ROLE_COMBO_BOX,
@@ -130,35 +131,71 @@ _accessible_list_split_with_filter(Eina_List *list, Eina_Each_Cb cb, void *user_
 }
 
 static Eina_Bool
+_obj_state_visible_and_showing(AtspiAccessible *obj, Eina_Bool for_parent)
+{
+   if (!obj) return EINA_FALSE;
+   Eina_Bool ret = EINA_FALSE;
+   AtspiStateSet *ss = NULL;
+   AtspiAccessible *parent = NULL;
+   if (!for_parent)
+      ss = atspi_accessible_get_state_set(obj);
+   else
+      {
+         parent = atspi_accessible_get_parent(obj, NULL);
+         if (parent)
+            ss = atspi_accessible_get_state_set(parent);
+      }
+   if (ss)
+      {
+         if (atspi_state_set_contains(ss, ATSPI_STATE_SHOWING)
+               && atspi_state_set_contains(ss, ATSPI_STATE_VISIBLE))
+            {
+               ret = EINA_TRUE;
+            }
+         g_object_unref(ss);
+      }
+   if (parent) g_object_unref(parent);
+   return ret;
+
+}
+
+static Eina_Bool
+_no_need_for_focusable_state(AtspiAccessible *obj)
+{
+   AtspiRole role = atspi_accessible_get_role(obj, NULL);
+
+   switch (role)
+      {
+      case ATSPI_ROLE_LIST_ITEM:
+         if (_obj_state_visible_and_showing(obj, EINA_TRUE))
+            return EINA_TRUE;
+         break;
+      case ATSPI_ROLE_PROGRESS_BAR:
+         if (_obj_state_visible_and_showing(obj, EINA_FALSE))
+            return EINA_TRUE;
+         break;
+      case ATSPI_ROLE_CALENDAR:
+         if (_obj_state_visible_and_showing(obj, EINA_FALSE))
+            return EINA_TRUE;
+         break;
+      default:
+         return EINA_FALSE;
+
+      }
+   return EINA_FALSE;
+}
+
+static Eina_Bool
 _filter_state_cb(const void *container, void *data, void *fdata)
 {
    AtspiStateType *state = data;
 
    Eina_Bool ret = EINA_TRUE;
    AtspiAccessible *obj = fdata;
-   AtspiAccessible *parent = atspi_accessible_get_parent(obj, NULL);
-   AtspiStateSet *ss_parent = NULL;
    AtspiStateSet *ss = NULL;
 
-   if (parent)
-      {
-         if (atspi_accessible_get_role(obj, NULL) == ATSPI_ROLE_LIST_ITEM)
-            {
-               ss_parent = atspi_accessible_get_state_set(parent);
-               if (ss_parent)
-                  {
-                     if (atspi_state_set_contains(ss_parent, ATSPI_STATE_SHOWING)
-                           && atspi_state_set_contains(ss_parent, ATSPI_STATE_VISIBLE))
-                        {
-                           g_object_unref(parent);
-                           g_object_unref(ss_parent);
-                           return EINA_TRUE;
-                        }
-                     g_object_unref(ss_parent);
-                  }
-            }
-         g_object_unref(parent);
-      }
+   if (_no_need_for_focusable_state(obj))
+      return EINA_TRUE;
 
    ss = atspi_accessible_get_state_set(obj);
    while (*state != ATSPI_STATE_LAST_DEFINED)
@@ -290,7 +327,7 @@ _contains(AtspiAccessible *obj, gint x, gint y)
    const ObjectCache *oc = object_cache_get(obj);
 
    if (oc && x >= oc->bounds->x && x <= oc->bounds->x + oc->bounds->width
-          && y >= oc->bounds->y && y <= oc->bounds->y + oc->bounds->height)
+         && y >= oc->bounds->y && y <= oc->bounds->y + oc->bounds->height)
       {
          DEBUG("INSIDE");
          return EINA_TRUE;

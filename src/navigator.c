@@ -379,9 +379,10 @@ _current_highlight_object_set(AtspiAccessible *obj)
                g_free(role);
                return;
             }
-         if (current_comp) {
-            atspi_component_clear_highlight(current_comp, &err);
-         }
+         if (current_comp)
+            {
+               atspi_component_clear_highlight(current_comp, &err);
+            }
          atspi_component_grab_highlight(comp, &err);
          current_comp = comp;
          GERROR_CHECK(err)
@@ -1038,6 +1039,19 @@ static void _value_dec_widget(void)
 }
 #endif
 
+static bool
+_check_if_widget_is_enabled(AtspiAccessible *obj)
+{
+   Eina_Bool ret = EINA_FALSE;
+   AtspiStateSet *st = atspi_accessible_get_state_set (obj);
+
+   if (atspi_state_set_contains(st, ATSPI_STATE_ENABLED))
+      ret = EINA_TRUE;
+
+   g_object_unref(st);
+   return ret;
+}
+
 static void _activate_widget(void)
 {
    //activate the widget
@@ -1061,6 +1075,12 @@ static void _activate_widget(void)
 
    if(!current_obj)
       return;
+
+   if (!_check_if_widget_is_enabled(current_obj))
+      {
+         DEBUG("Widget disable so cannot be activated");
+         return;
+      }
 
    current_widget = current_obj;
 
@@ -1821,6 +1841,7 @@ static void
 _view_content_changed(void *user_data)
 {
    DEBUG("START");
+   _window_top_changed = EINA_TRUE;
    _window_cache_builded = EINA_FALSE;
    if (top_window)
       object_cache_build_async(top_window, 5, _on_cache_builded, NULL);

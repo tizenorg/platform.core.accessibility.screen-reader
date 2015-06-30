@@ -1,6 +1,7 @@
 #ifndef APP_TRACKER_H_
 #define APP_TRACKER_H_
 
+#include <string.h>
 #include <atspi/atspi.h>
 
 /**
