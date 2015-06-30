@@ -51,11 +51,7 @@ _get_window_object_from_given(AtspiAccessible *obj)
 static void
 _on_atspi_window_cb(const AtspiEvent *event)
 {
-   if (event->source == last_active_win)
-      {
-         DEBUG("Window already handled");
-         return;
-      }
+   ERROR("Event: %s: %s", event->type, atspi_accessible_get_name(event->source, NULL));
 
    if (!strcmp(event->type, "window:restore") ||
          !strcmp(event->type, "window:activate"))
@@ -63,24 +59,13 @@ _on_atspi_window_cb(const AtspiEvent *event)
          if (user_cb) user_cb(user_data, event->source);
          last_active_win = event->source;
       }
-   else
+   if (!strcmp(event->type, "window:deactivate") ||
+         !strcmp(event->type, "window:destroy"))
       {
-         AtspiAccessible *obj = NULL;
-         obj = _get_window_object_from_given(event->source);
-
-         if (obj == last_active_win) {
-            DEBUG("Window already handled");
-            return;
-         }
-
-         if (obj)
-            {
-               if (!strcmp(event->type, "object:children-changed:add"))
-                  {
-                     if (user_cb) user_cb(user_data, obj);
-                     last_active_win = obj;
-                  }
-            }
+         if (last_active_win != event->source)
+           return;
+         if (user_cb) user_cb(user_data, NULL);
+         last_active_win = NULL;
       }
 }
 
@@ -120,8 +105,9 @@ void window_tracker_init(void)
 {
    DEBUG("START");
    listener = atspi_event_listener_new_simple(_on_atspi_window_cb, NULL);
-   atspi_event_listener_register(listener, "object:children-changed", NULL);
    atspi_event_listener_register(listener, "window:deactivate", NULL);
+   atspi_event_listener_register(listener, "window:create", NULL);
+   atspi_event_listener_register(listener, "window:destroy", NULL);
    atspi_event_listener_register(listener, "window:activate", NULL);
    atspi_event_listener_register(listener, "window:restore", NULL);
 }
@@ -129,10 +115,11 @@ void window_tracker_init(void)
 void window_tracker_shutdown(void)
 {
    DEBUG("START");
-   atspi_event_listener_deregister(listener, "object:children-changed", NULL);
    atspi_event_listener_deregister(listener, "window:deactivate", NULL);
+   atspi_event_listener_deregister(listener, "window:create", NULL);
    atspi_event_listener_deregister(listener, "window:activate", NULL);
    atspi_event_listener_deregister(listener, "window:restore", NULL);
+   atspi_event_listener_deregister(listener, "window:destroy", NULL);
    g_object_unref(listener);
    listener = NULL;
    user_cb = NULL;
