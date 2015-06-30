@@ -155,8 +155,11 @@ _flick_gesture_mouse_down(Ecore_Event_Mouse_Button *ev, Cover *cov)
          cov->flick_gesture.finger[cov->flick_gesture.n_fingers] = ev->multi.device;
          cov->flick_gesture.n_fingers++;
          cov->flick_gesture.n_fingers_left++;
-         cov->flick_gesture.finger_out[cov->flick_gesture.n_fingers] = EINA_FALSE;
-         cov->flick_gesture.return_flick[cov->flick_gesture.n_fingers] = EINA_FALSE;
+         if (cov->flick_gesture.n_fingers < 3) /* n_fingers == 3 makes out of bounds write */
+           {
+              cov->flick_gesture.finger_out[cov->flick_gesture.n_fingers] = EINA_FALSE;
+              cov->flick_gesture.return_flick[cov->flick_gesture.n_fingers] = EINA_FALSE;
+           }
       }
 }
 
