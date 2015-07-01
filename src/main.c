@@ -26,6 +26,7 @@
 #include "logger.h"
 #include "screen_reader.h"
 #include "screen_reader_gestures.h"
+#include "screen_reader_switch.h"
 
 #define MAX_STACK_FRAMES 64
 static void *stack_traces[MAX_STACK_FRAMES];
@@ -196,8 +197,8 @@ static int app_create(void *data)
    elm_init(0, NULL);
 
    logger_init();
+   screen_reader_switch_enabled_set(EINA_TRUE);
    screen_reader_create_service(data);
-
 #ifndef SCREEN_READER_TV
    screen_reader_gestures_init();
    navigator_init();
@@ -218,6 +219,8 @@ static int app_terminate(void *data)
 #endif
    DEBUG("terminate service");
    screen_reader_terminate_service(data);
+   DEBUG("clear ScreenReaderEnabled property");
+   screen_reader_switch_enabled_set(EINA_FALSE);
    DEBUG("terminate logger");
    logger_shutdown();
    DEBUG("screen reader terminated");
