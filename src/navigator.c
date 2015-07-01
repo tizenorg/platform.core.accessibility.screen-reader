@@ -23,8 +23,10 @@
 
 #define DISTANCE_NB 8
 #define MENU_ITEM_TAB_INDEX_SIZE 16
+#define HOVERSEL_TRAIT_SIZE 70
 #define TTS_MAX_TEXT_SIZE  2000
 
+#define HOVERSEL_TRAIT "Dropdown list. Showing %d items. Double tap to open the menu."
 #define GROUP_INDEX_TRAIT "group index"
 #define MENU_ITEM_TAB_INDEX "Tab %d of %d"
 #define GROUP_INDEX_EXPANDED "Expandable list, Double tap to collapse"
@@ -271,6 +273,14 @@ generate_trait(AtspiAccessible *obj)
          char tab_index[MENU_ITEM_TAB_INDEX_SIZE];
          snprintf(tab_index, MENU_ITEM_TAB_INDEX_SIZE, MENU_ITEM_TAB_INDEX, index+1, children_count);
          strncat(ret, tab_index, sizeof(ret) - strlen(ret) - 1);
+      }
+   else if (role == ATSPI_ROLE_GLASS_PANE)
+      {
+         AtspiAccessible *parent = atspi_accessible_get_parent(obj, NULL);
+         int children_count = atspi_accessible_get_child_count(parent, NULL);
+         char trait[HOVERSEL_TRAIT_SIZE];
+         snprintf(trait, HOVERSEL_TRAIT_SIZE, HOVERSEL_TRAIT, children_count);
+         strncat(ret, trait, sizeof(ret) - strlen(ret) - 1);
       }
    else if (role == ATSPI_ROLE_LIST_ITEM && atspi_state_set_contains(state_set, ATSPI_STATE_EXPANDABLE))
       {
