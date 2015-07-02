@@ -53,9 +53,11 @@ _on_atspi_window_cb(const AtspiEvent *event)
 {
    ERROR("Event: %s: %s", event->type, atspi_accessible_get_name(event->source, NULL));
 
-   if (!strcmp(event->type, "window:restore") ||
-         !strcmp(event->type, "window:activate"))
+   if ((!strcmp(event->type, "window:restore") ||
+         !strcmp(event->type, "window:activate")) &&
+         last_active_win != event->source) //if we got activate 2 times
       {
+
          if (user_cb) user_cb(user_data, event->source);
          last_active_win = event->source;
       }

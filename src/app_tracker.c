@@ -93,8 +93,6 @@ _on_atspi_event_cb(const AtspiEvent *event)
             {
                if (std->timer)
                   g_source_remove(std->timer);
-               else
-                  _subtree_callbacks_call(std);
 
                std->timer = g_timeout_add(APP_TRACKER_INVACTIVITY_TIMEOUT, _on_timeout_cb, std);
             }
