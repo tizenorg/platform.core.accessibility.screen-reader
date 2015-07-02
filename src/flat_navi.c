@@ -178,7 +178,7 @@ _no_need_for_focusable_state(AtspiAccessible *obj)
          if (_obj_state_visible_and_showing(obj, EINA_FALSE))
             return EINA_TRUE;
          break;
-      case ATSPI_ROLE_ATSPI_ROLE_LABEL:
+      case ATSPI_ROLE_LABEL:
          if (_obj_state_visible_and_showing(obj, EINA_FALSE))
             return EINA_TRUE;
          break;
