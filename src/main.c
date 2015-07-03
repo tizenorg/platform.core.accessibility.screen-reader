@@ -205,5 +205,5 @@ int main(int argc, char **argv)
    };
    ops.data = get_pointer_to_service_data_struct();
 
-   return appcore_efl_main("Smart Navigation", &argc, &argv, &ops);
+   return appcore_efl_main("screen-reader", &argc, &argv, &ops);
 }

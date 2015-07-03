@@ -20,7 +20,7 @@ SET(SLP_DEBUG_FLAGS "-g")
 SET(SLP_OPT_FLAGS "-O0")
 
 ## COMPILER FLAGS
-SET(SLP_COMPILER_FLAGS "-Wall -Wunused")
+SET(SLP_COMPILER_FLAGS "-Wall -Wunused -Wno-format -Wno-format-security")
 
 ## LINKER FLAGS
 SET(SLP_LINKER_FLAGS "")

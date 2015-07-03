@@ -23,6 +23,7 @@ BuildRequires:  pkgconfig(capi-system-device)
 BuildRequires:  tts
 BuildRequires:  tts-devel
 BuildRequires:  vconf
+BuildRequires:  gettext-tools
 BuildRequires:  pkgconfig(check)
 BuildRequires:  pkgconfig(capi-network-bluetooth)
 BuildRequires:  pkgconfig(tapi)
@@ -57,4 +58,5 @@ rm -rf %{buildroot}
 %manifest org.tizen.screen-reader.manifest
 %{AppInstallPath}/bin/screen-reader
 %{AppInstallPath}/res/icons/screen-reader.png
+%{AppInstallPath}/res/locale/*/LC_MESSAGES/*
 /opt/share/packages/%{name}.xml

@@ -2,6 +2,7 @@
 #define LOGGER_H_
 
 #include <Eina.h>
+#include <Elementary.h>
 
 extern int _eina_log_dom;
 

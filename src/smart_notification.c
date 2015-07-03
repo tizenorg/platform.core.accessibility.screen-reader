@@ -11,8 +11,6 @@
 #define RED  "\x1B[31m"
 #define RESET "\033[0m"
 
-#define ITEMS_NOTIFICATION "Visible items from %d to %d"
-
 static Eina_Bool status = EINA_FALSE;
 
 static void _smart_notification_focus_chain_end(void);
@@ -182,7 +180,7 @@ static void _smart_notification_realized_items(int start_idx, int end_idx)
 
    char buf[256];
 
-   snprintf(buf, sizeof(buf), ITEMS_NOTIFICATION, start_idx, end_idx);
+   snprintf(buf, sizeof(buf), _("IDS_REACHED_ITEMS_NOTIFICATION"), start_idx, end_idx);
 
    tts_speak(strdup(buf), EINA_FALSE);
 }

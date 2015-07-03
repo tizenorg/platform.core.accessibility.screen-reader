@@ -27,16 +27,6 @@
 #define TTS_MAX_TEXT_SIZE  2000
 #define GESTURE_LIMIT 10
 
-#define HOVERSEL_TRAIT "Dropdown list. Showing %d items. Double tap to open the menu."
-#define GROUP_INDEX_TRAIT "group index"
-#define MENU_ITEM_TAB_INDEX "Tab %d of %d"
-#define GROUP_INDEX_EXPANDED "Expandable list, Double tap to collapse"
-#define GROUP_INDEX_COLLAPSED "Expandable list, Double tap to expand"
-#define TEXT_EDIT "Double tap to edit"
-#define TEXT_EDIT_FOCUSED "Editing, flick up and down to adjust position."
-#define TEXT_BEGIN "Cursor is at the begining of text"
-#define TEXT_END "Cursor is at the end of text"
-
 #define DEBUG_MODE
 
 #define GERROR_CHECK(error)\
@@ -270,9 +260,9 @@ generate_trait(AtspiAccessible *obj)
          strncat(ret, role_name, sizeof(ret) - strlen(ret) - 1);
          strncat(ret, ", ", sizeof(ret) - strlen(ret) - 1);
          if (atspi_state_set_contains(state_set, ATSPI_STATE_FOCUSED))
-            strncat(ret, TEXT_EDIT_FOCUSED, sizeof(ret) - strlen(ret) - 1);
+            strncat(ret, _("IDS_TRAIT_TEXT_EDIT_FOCUSED"), sizeof(ret) - strlen(ret) - 1);
          else
-            strncat(ret, TEXT_EDIT, sizeof(ret) - strlen(ret) - 1);
+            strncat(ret, _("IDS_TRAIT_TEXT_EDIT"), sizeof(ret) - strlen(ret) - 1);
          free(role_name);
       }
    else if (role == ATSPI_ROLE_MENU_ITEM)
@@ -281,7 +271,7 @@ generate_trait(AtspiAccessible *obj)
          int children_count = atspi_accessible_get_child_count(parent, NULL);
          int index = atspi_accessible_get_index_in_parent(obj, NULL);
          char tab_index[MENU_ITEM_TAB_INDEX_SIZE];
-         snprintf(tab_index, MENU_ITEM_TAB_INDEX_SIZE, MENU_ITEM_TAB_INDEX, index+1, children_count);
+         snprintf(tab_index, MENU_ITEM_TAB_INDEX_SIZE, _("IDS_TRAIT_MENU_ITEM_TAB_INDEX"), index+1, children_count);
          strncat(ret, tab_index, sizeof(ret) - strlen(ret) - 1);
       }
    else if (role == ATSPI_ROLE_GLASS_PANE)
@@ -289,17 +279,17 @@ generate_trait(AtspiAccessible *obj)
          AtspiAccessible *parent = atspi_accessible_get_parent(obj, NULL);
          int children_count = atspi_accessible_get_child_count(parent, NULL);
          char trait[HOVERSEL_TRAIT_SIZE];
-         snprintf(trait, HOVERSEL_TRAIT_SIZE, HOVERSEL_TRAIT, children_count);
+         snprintf(trait, HOVERSEL_TRAIT_SIZE, _("IDS_TRAIT_PD_HOVERSEL"), children_count);
          strncat(ret, trait, sizeof(ret) - strlen(ret) - 1);
       }
    else if (role == ATSPI_ROLE_LIST_ITEM && atspi_state_set_contains(state_set, ATSPI_STATE_EXPANDABLE))
       {
-         strncat(ret, GROUP_INDEX_TRAIT, sizeof(ret) - strlen(ret) - 1);
+         strncat(ret, _("IDS_TRAIT_GROUP_INDEX"), sizeof(ret) - strlen(ret) - 1);
          strncat(ret, ", ", sizeof(ret) - strlen(ret) - 1);
          if (atspi_state_set_contains(state_set, ATSPI_STATE_EXPANDED))
-            strncat(ret, GROUP_INDEX_EXPANDED, sizeof(ret) - strlen(ret) - 1);
+            strncat(ret, _("IDS_TRAIT_GROUP_INDEX_EXPANDED"), sizeof(ret) - strlen(ret) - 1);
          else
-            strncat(ret, GROUP_INDEX_COLLAPSED, sizeof(ret) - strlen(ret) - 1);
+            strncat(ret, _("IDS_TRAIT_GROUP_INDEX_COLLAPSED"), sizeof(ret) - strlen(ret) - 1);
       }
    else
       {
@@ -787,7 +777,7 @@ static void _caret_move_beg(void)
                gchar *text = atspi_text_get_text(text_interface, 0, 1, NULL);
                DEBUG("SPEAK:%s", text);
                tts_speak(text, EINA_TRUE);
-               tts_speak(TEXT_BEGIN, EINA_FALSE);
+               tts_speak(_("IDS_TEXT_BEGIN"), EINA_FALSE);
                g_free(text);
             }
          else
@@ -820,8 +810,8 @@ static void _caret_move_end(void)
          if (ret)
             {
                DEBUG("Caret position increment done");
-               DEBUG("SPEAK:%s", TEXT_END);
-               tts_speak(TEXT_END, EINA_TRUE);
+               DEBUG("SPEAK:%s", _("IDS_TEXT_END"));
+               tts_speak(_("IDS_TEXT_END"), EINA_TRUE);
             }
          else
             ERROR("Caret position to end error");
@@ -859,8 +849,8 @@ static void _caret_move_forward(void)
                DEBUG("Current caret offset:%d", current_offset);
                if (offset_pos == atspi_text_get_character_count (text_interface, NULL))
                   {
-                     DEBUG("SPEAK:%s", TEXT_END);
-                     tts_speak(TEXT_END, EINA_FALSE);
+                     DEBUG("SPEAK:%s", _("IDS_TEXT_END"));
+                     tts_speak(_("IDS_TEXT_END"), EINA_FALSE);
                   }
                else
                   {
@@ -916,8 +906,8 @@ static void _caret_move_backward(void)
                g_free(text);
                if (offset_pos == 0)
                   {
-                     DEBUG("SPEAK:%s", TEXT_BEGIN);
-                     tts_speak(TEXT_BEGIN, EINA_FALSE);
+                     DEBUG("SPEAK:%s", _("IDS_TEXT_BEGIN"));
+                     tts_speak(_("IDS_TEXT_BEGIN"), EINA_FALSE);
                   }
             }
          else

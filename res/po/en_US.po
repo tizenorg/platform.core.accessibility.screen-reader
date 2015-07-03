@@ -1,0 +1,155 @@
+msgid "IDS_REACHED_MAX_VAL"
+msgstr ", maximum value reached"
+
+msgid "IDS_REACHED_MIN_VAL"
+msgstr ", minimum value reached"
+
+msgid "IDS_REACHED_MAX_POS"
+msgstr ", end of text reached"
+
+msgid "IDS_REACHED_MIN_POS"
+msgstr ", begin of text reached"
+
+msgid "IDS_NO_VALUE_INTERFACE"
+msgstr "No value interface present"
+
+msgid "IDS_NO_TEXT_INTERFACE"
+msgstr "No text interface present"
+
+msgid "IDS_REACHED_ITEMS_NOTIFICATION"
+msgstr "Visible items from %1$d to %2$d"
+
+msgid "IDS_TRAIT_PD_HOVERSEL"
+msgstr "Dropdown list. Showing %d items. Double tap to open the menu."
+
+msgid "IDS_TRAIT_GROUP_INDEX"
+msgstr "group index"
+
+msgid "IDS_TRAIT_GROUP_INDEX_EXPANDED"
+msgstr "Expandable list, Double tap to collapse"
+
+msgid "IDS_TRAIT_GROUP_INDEX_COLLAPSED"
+msgstr "Expandable list, Double tap to expand"
+
+msgid "IDS_TRAIT_MENU_ITEM_TAB_INDEX"
+msgstr "Tab %1$d of %2$d"
+
+msgid "IDS_TRAIT_TEXT_EDIT"
+msgstr "Double tap to edit"
+
+msgid "IDS_TRAIT_TEXT_EDIT_FOCUSED"
+msgstr "Editing, flick up and down to adjust position."
+
+msgid "IDS_TEXT_BEGIN"
+msgstr "Cursor is at the begining of text"
+
+msgid "IDS_TEXT_END"
+msgstr "Cursor is at the end of text"
+
+msgid "IDS_SYSTEM_CHARGING"
+msgstr "Battery charger connected"
+
+msgid "IDS_SYSTEM_NOT_CHARGING"
+msgstr "Battery charger disconnected"
+
+msgid "IDS_SYSTEM_SCREEN_ON"
+msgstr "Screen is on"
+
+msgid "IDS_SYSTEM_SCREEN_OFF"
+msgstr "Screen is off"
+
+msgid "IDS_SYSTEM_BATTERY_EMPTY"
+msgstr "Battery level is empty"
+
+msgid "IDS_SYSTEM_BATTERY_LOW"
+msgstr "Battery level is low"
+
+msgid "IDS_SYSTEM_BATTERY_HIGH"
+msgstr "Battery level is high"
+
+msgid "IDS_SYSTEM_BATTERY_FULL"
+msgstr "Battery level is full"
+
+msgid "IDS_SYSTEM_BATTERY_CRITICAL"
+msgstr "Battery level is critical"
+
+msgid "IDS_SYSTEM_BATTERY_INFO_CHARGING"
+msgstr "Charging."
+
+msgid "IDS_SYSTEM_BATTERY_INFO_BATTERY_STR"
+msgstr "Battery"
+
+msgid "IDS_SYSTEM_BATTERY_FULLY_CHARGED_STR"
+msgstr "Fully charged"
+
+msgid "IDS_SYSTEM_SIGNAL_STRENGTH"
+msgstr "Signal strength equals:"
+
+msgid "IDS_SYSTEM_SIGNAL_SIMCARD"
+msgstr "Simcard"
+
+msgid "IDS_SYSTEM_NETWORK_SERVICE_LTE"
+msgstr "LTE"
+
+msgid "IDS_SYSTEM_NETWORK_SERVICE_HSDPA"
+msgstr "HSDPA"
+
+msgid "IDS_SYSTEM_NETWORK_SERVICE_3G"
+msgstr "3G"
+
+msgid "IDS_SYSTEM_NETWORK_SERVICE_EDGE"
+msgstr "EDGE"
+
+msgid "IDS_SYSTEM_NETWORK_SERVICE_25G"
+msgstr "2.5G"
+
+msgid "IDS_SYSTEM_NETWORK_SERVICE_2G"
+msgstr "2G"
+
+msgid "IDS_SYSTEM_NETWORK_SERVICE_SEARCHING"
+msgstr "Searching..."
+
+msgid "IDS_SYSTEM_NETWORK_SERVICE_EMERGENCY"
+msgstr "Emergency"
+
+msgid "IDS_SYSTEM_NETWORK_SERVICE_NO_SERVICE"
+msgstr "No service"
+
+msgid "IDS_SYSTEM_NETWORK_SERVICE_UNKNOWN"
+msgstr "Unknown"
+
+msgid "IDS_SYSTEM_NETWORK_TYPE_WIFI"
+msgstr "Wi fi"
+
+msgid "IDS_SYSTEM_WIFI_SIGNAL_GOOD"
+msgstr "Good"
+
+msgid "IDS_SYSTEM_WIFI_SIGNAL_MEDIUM"
+msgstr "Medium"
+
+msgid "IDS_SYSTEM_WIFI_SIGNAL_WEAK"
+msgstr "Weak"
+
+msgid "IDS_SYSTEM_WIFI_SIGNAL_POOR"
+msgstr "Poor"
+
+msgid "IDS_SYSTEM_WIFI_SIGNAL_NO_SIGNAL"
+msgstr "No signal"
+
+msgid "IDS_SYSTEM_NOTIFICATIONS_UNREAD_0"
+msgstr "No event"
+
+msgid "IDS_SYSTEM_NOTIFICATIONS_UNREAD_1"
+msgstr "1 notification unread"
+
+msgid "IDS_SYSTEM_NOTIFICATIONS_UNREAD_MANY"
+msgstr "Notifications unread"
+
+msgid "IDS_SYSTEM_BT_BLUETOOTH_OFF"
+msgstr "Bluetooth off"
+
+msgid "IDS_SYSTEM_BT_NO_DEVICES_CONNECTED"
+msgstr "Nothing connected"
+
+msgid "IDS_SYSTEM_BT_DEVICES_CONNECTED_COUNT"
+msgstr "Devices connected"

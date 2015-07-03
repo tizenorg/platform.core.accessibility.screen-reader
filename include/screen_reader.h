@@ -7,11 +7,6 @@
 
 #define LANGUAGE_NAME_SIZE 6
 
-#define MAX_REACHED ", maximum value reached"
-#define MIN_REACHED ", minimum value reached"
-#define MAX_POS_REACHED ", end of text reached"
-#define MIN_POS_REACHED ", begin of text reached"
-
 #define HIGHLIGHT_CHANGED_SIG "object:state-change:highlighted"
 #define VALUE_CHANGED_SIG "object:property-change:accessible-value"
 #define CARET_MOVED_SIG "object:text-caret-moved"

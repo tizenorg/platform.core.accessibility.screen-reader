@@ -16,44 +16,8 @@
 #include "smart_notification.h"
 #include "logger.h"
 
-#define CHARGING "Battery charger connected"
-#define NOT_CHARGING "Battery charger disconnected"
-#define SCREEN_ON "Screen is on"
-#define SCREEN_OFF "Screen is off"
-#define BATTERY_EMPTY "Battery level is empty"
-#define BATTERY_LOW "Battery level is low"
-#define BATTERY_HIGH "Battery level is high"
-#define BATTERY_FULL "Battery level is full"
-#define BATTERY_CRITICAL "Battery level is critical"
 #define MAX_SIM_COUNT 2
 #define DATE_TIME_BUFFER_SIZE 26
-#define BATTERY_INFO_CHARGING "Charging."
-#define BATTERY_INFO_BATTERY_STR "Battery"
-#define BATTERY_STR_FULL_CHARGED "Full charged"
-#define SIGNAL_STR_SIGNAL_STRENGTH "Signal strength equals:"
-#define SIGNAL_STR_SIMCARD "Simcard"
-#define NETWORK_SERVICE_STR_LTE "LTE"
-#define NETWORK_SERVICE_STR_HSDPA "HSDPA"
-#define NETWORK_SERVICE_STR_3G "3G"
-#define NETWORK_SERVICE_STR_EDGE "EDGE"
-#define NETWORK_SERVICE_STR_25G "2.5G"
-#define NETWORK_SERVICE_STR_2G "2G"
-#define NETWORK_SERVICE_STR_SEARCHING "searching..."
-#define NETWORK_SERVICE_STR_EMERGENCY "emergency"
-#define NETWORK_SERVICE_STR_NO_SERVICE "no service"
-#define NETWORK_SERVICE_STR_UNKNOWN "unknown"
-#define NETWORK_TYPE_WIFI "Wi fi"
-#define WIFI_SIGNAL_GOOD "Good"
-#define WIFI_SIGNAL_MEDIUM "Medium"
-#define WIFI_SIGNAL_WEAK "Weak"
-#define WIFI_SIGNAL_POOR "Poor"
-#define WIFI_NO_SIGNAL "No signal"
-#define NOTI_NOTIFICATIONS_UNREAD_0 "No event"
-#define NOTI_NOTIFICATIONS_UNREAD_1 "1 notification unread"
-#define NOTI_NOTIFICATIONS_UNREAD_MANY "notifications unread"
-#define BT_BLUETOOTH_OFF "Bluetooth off"
-#define BT_NO_DEVICES_CONNECTED "Nothing connected"
-#define BT_DEVICES_CONNECTED_COUNT "devices connected"
 
 TapiHandle *tapi_handle[MAX_SIM_COUNT + 1] = {0, };
 
@@ -157,15 +121,15 @@ static void device_system_cb(device_callback_e type, void *value, void *user_dat
 
          if(status == DEVICE_BATTERY_LEVEL_LOW)
             {
-               tts_speak(BATTERY_LOW, EINA_TRUE);
+               tts_speak(_("IDS_SYSTEM_BATTERY_LOW"), EINA_TRUE);
             }
          else if(status == DEVICE_BATTERY_LEVEL_CRITICAL)
             {
-               tts_speak(BATTERY_CRITICAL, EINA_TRUE);
+               tts_speak(_("IDS_SYSTEM_BATTERY_CRITICAL"), EINA_TRUE);
             }
          else if(status == DEVICE_BATTERY_LEVEL_FULL)
             {
-               tts_speak(BATTERY_FULL, EINA_TRUE);
+               tts_speak(_("IDS_SYSTEM_BATTERY_FULL"), EINA_TRUE);
             }
       }
    else if(type == DEVICE_CALLBACK_BATTERY_CHARGING)
@@ -179,11 +143,11 @@ static void device_system_cb(device_callback_e type, void *value, void *user_dat
 
          if(charging)
             {
-               tts_speak(CHARGING, EINA_FALSE);
+               tts_speak(_("IDS_SYSTEM_CHARGING"), EINA_FALSE);
             }
          else
             {
-               tts_speak(NOT_CHARGING, EINA_FALSE);
+               tts_speak(_("IDS_SYSTEM_NOT_CHARGING"), EINA_FALSE);
             }
       }
    else if(type == DEVICE_CALLBACK_DISPLAY_STATE)
@@ -197,11 +161,11 @@ static void device_system_cb(device_callback_e type, void *value, void *user_dat
 
          if(state == DISPLAY_STATE_NORMAL)
             {
-               tts_speak(SCREEN_ON, EINA_FALSE);
+               tts_speak(_("IDS_SYSTEM_SCREEN_ON"), EINA_FALSE);
             }
          else if(state == DISPLAY_STATE_SCREEN_OFF)
             {
-               tts_speak(SCREEN_OFF, EINA_FALSE);
+               tts_speak(_("IDS_SYSTEM_SCREEN_OFF"), EINA_FALSE);
             }
       }
 }
@@ -299,11 +263,11 @@ char *device_error_to_string(int e)
          break;
 
       default:
-         return NETWORK_SERVICE_STR_UNKNOWN;
+         return _("IDS_SYSTEM_NETWORK_SERVICE_UNKNOWN");
          break;
       }
 
-   return NETWORK_SERVICE_STR_UNKNOWN;
+   return _("IDS_SYSTEM_NETWORK_SERVICE_UNKNOWN");
 }
 
 void device_battery_get(void)
@@ -327,7 +291,7 @@ void device_battery_get(void)
 
    if (is_charging)
       {
-         charging_text = BATTERY_INFO_CHARGING;
+         charging_text = _("IDS_SYSTEM_BATTERY_INFO_CHARGING");
       }
    else
       {
@@ -343,7 +307,7 @@ void device_battery_get(void)
 
    if(percent == 100)
       {
-         if (!asprintf(&buffer, "%s %s", charging_text, BATTERY_STR_FULL_CHARGED))
+         if (!asprintf(&buffer, "%s %s", charging_text, _("IDS_SYSTEM_BATTERY_FULLY_CHARGED_STR")))
             {
                ERROR("Buffer length == 0");
                return;
@@ -351,7 +315,7 @@ void device_battery_get(void)
       }
    else
       {
-         if (!asprintf(&buffer, "%s %d %% %s", charging_text, percent, BATTERY_INFO_BATTERY_STR))
+         if (!asprintf(&buffer, "%s %d %% %s", charging_text, percent, _("IDS_SYSTEM_BATTERY_INFO_BATTERY_STR")))
             {
                ERROR("Buffer length == 0");
                return;
@@ -399,9 +363,9 @@ static void _signal_strength_sim_get(void)
             }
 
          if (sim_card_count > 1)
-            eina_strbuf_append_printf(str_buf, "%s %d %s %d; ", SIGNAL_STR_SIMCARD, i + 1, SIGNAL_STR_SIGNAL_STRENGTH, val);
+            eina_strbuf_append_printf(str_buf, "%s %d %s %d; ", _("IDS_SYSTEM_SIGNAL_SIMCARD"), i + 1, _("IDS_SYSTEM_SIGNAL_STRENGTH"), val);
          else
-            eina_strbuf_append_printf(str_buf, "%s %d; ", SIGNAL_STR_SIGNAL_STRENGTH, val);
+            eina_strbuf_append_printf(str_buf, "%s %d; ", _("IDS_SYSTEM_SIGNAL_STRENGTH"), val);
          DEBUG("sim: %d TAPI_PROP_NETWORK_SIGNALSTRENGTH_LEVEL %d", i, val);
 
 
@@ -414,43 +378,43 @@ static void _signal_strength_sim_get(void)
          switch(service_type)
             {
             case TAPI_NETWORK_SERVICE_TYPE_UNKNOWN:
-               service_type_text = NETWORK_SERVICE_STR_UNKNOWN;
+               service_type_text = _("IDS_SYSTEM_NETWORK_SERVICE_UNKNOWN");
                break;
 
             case TAPI_NETWORK_SERVICE_TYPE_NO_SERVICE:
-               service_type_text = NETWORK_SERVICE_STR_NO_SERVICE;
+               service_type_text = _("IDS_SYSTEM_NETWORK_SERVICE_NO_SERVICE");
                break;
 
             case TAPI_NETWORK_SERVICE_TYPE_EMERGENCY:
-               service_type_text = NETWORK_SERVICE_STR_EMERGENCY;
+               service_type_text = _("IDS_SYSTEM_NETWORK_SERVICE_EMERGENCY");
                break;
 
             case TAPI_NETWORK_SERVICE_TYPE_SEARCH:
-               service_type_text = NETWORK_SERVICE_STR_SEARCHING;
+               service_type_text = _("IDS_SYSTEM_NETWORK_SERVICE_SEARCHING");
                break;
 
             case TAPI_NETWORK_SERVICE_TYPE_2G:
-               service_type_text = NETWORK_SERVICE_STR_2G;
+               service_type_text = _("IDS_SYSTEM_NETWORK_SERVICE_2G");
                break;
 
             case TAPI_NETWORK_SERVICE_TYPE_2_5G:
-               service_type_text = NETWORK_SERVICE_STR_25G;
+               service_type_text = _("IDS_SYSTEM_NETWORK_SERVICE_25G");
                break;
 
             case TAPI_NETWORK_SERVICE_TYPE_2_5G_EDGE:
-               service_type_text = NETWORK_SERVICE_STR_EDGE;
+               service_type_text = _("IDS_SYSTEM_NETWORK_SERVICE_EDGE");
                break;
 
             case TAPI_NETWORK_SERVICE_TYPE_3G:
-               service_type_text = NETWORK_SERVICE_STR_3G;
+               service_type_text = _("IDS_SYSTEM_NETWORK_SERVICE_3G");
                break;
 
             case TAPI_NETWORK_SERVICE_TYPE_HSDPA:
-               service_type_text = NETWORK_SERVICE_STR_HSDPA;
+               service_type_text = _("IDS_SYSTEM_NETWORK_SERVICE_HSDPA");
                break;
 
             case TAPI_NETWORK_SERVICE_TYPE_LTE:
-               service_type_text = NETWORK_SERVICE_STR_LTE;
+               service_type_text = _("IDS_SYSTEM_NETWORK_SERVICE_LTE");
                break;
             }
 
@@ -493,9 +457,9 @@ static void _signal_strength_wifi_get(void)
 
          if(!ap)
             {
-               DEBUG("Text to say: %s %s",NETWORK_TYPE_WIFI, "Not connected");
+               DEBUG("Text to say: %s %s",_("IDS_SYSTEM_NETWORK_TYPE_WIFI"), "Not connected");
 
-               if (!asprintf(&buffer, " %s, %s", NETWORK_TYPE_WIFI, "Not connected"))
+               if (!asprintf(&buffer, " %s, %s", _("IDS_SYSTEM_NETWORK_TYPE_WIFI"), "Not connected"))
                   {
                      ERROR("buffer length == 0");
                      return;
@@ -517,27 +481,27 @@ static void _signal_strength_wifi_get(void)
          switch(val)
             {
             case 0:
-               wifi_text = WIFI_NO_SIGNAL;
+               wifi_text = _("IDS_SYSTEM_WIFI_SIGNAL_NO_SIGNAL");
                break;
 
             case 1:
-               wifi_text = WIFI_SIGNAL_POOR;
+               wifi_text = _("IDS_SYSTEM_WIFI_SIGNAL_POOR");
                break;
 
             case 2:
-               wifi_text = WIFI_SIGNAL_WEAK;
+               wifi_text = _("IDS_SYSTEM_WIFI_SIGNAL_WEAK");
                break;
 
             case 3:
-               wifi_text = WIFI_SIGNAL_MEDIUM;
+               wifi_text = _("IDS_SYSTEM_WIFI_SIGNAL_MEDIUM");
                break;
 
             case 4:
-               wifi_text = WIFI_SIGNAL_GOOD;
+               wifi_text = _("IDS_SYSTEM_WIFI_SIGNAL_GOOD");
                break;
             }
 
-         if (!asprintf(&buffer, " %s, %s", NETWORK_TYPE_WIFI, wifi_text))
+         if (!asprintf(&buffer, " %s, %s", _("IDS_SYSTEM_NETWORK_TYPE_WIFI"), wifi_text))
             {
                ERROR("buffer length == 0");
                wifi_ap_destroy(ap);
@@ -614,19 +578,19 @@ void device_missed_events_get(void)
 
    if(noti_count == 0)
       {
-         DEBUG(NOTI_NOTIFICATIONS_UNREAD_0);
-         tts_speak(NOTI_NOTIFICATIONS_UNREAD_0, EINA_FALSE);
+         DEBUG(_("IDS_SYSTEM_NOTIFICATIONS_UNREAD_0"));
+         tts_speak(_("IDS_SYSTEM_NOTIFICATIONS_UNREAD_0"), EINA_FALSE);
       }
    else if(noti_count == 1)
       {
-         DEBUG(NOTI_NOTIFICATIONS_UNREAD_1);
-         tts_speak(NOTI_NOTIFICATIONS_UNREAD_1, EINA_FALSE);
+         DEBUG(_("IDS_SYSTEM_NOTIFICATIONS_UNREAD_1"));
+         tts_speak(_("IDS_SYSTEM_NOTIFICATIONS_UNREAD_1"), EINA_FALSE);
       }
    else
       {
-         DEBUG("%d %s", noti_count, NOTI_NOTIFICATIONS_UNREAD_MANY);
+         DEBUG("%d %s", noti_count, _("IDS_SYSTEM_NOTIFICATIONS_UNREAD_MANY"));
 
-         if (asprintf(&buffer, "%d %s", noti_count, NOTI_NOTIFICATIONS_UNREAD_MANY))
+         if (asprintf(&buffer, "%d %s", noti_count, _("IDS_SYSTEM_NOTIFICATIONS_UNREAD_MANY")))
             {
                ERROR("buffer length equals 0");
             }
@@ -729,8 +693,8 @@ void device_bluetooth_get(void)
 
    if (adapter_state == BT_ADAPTER_DISABLED)
       {
-         DEBUG("Text to say: %s", BT_BLUETOOTH_OFF);
-         tts_speak(BT_BLUETOOTH_OFF, EINA_FALSE);
+         DEBUG("Text to say: %s", _("IDS_SYSTEM_BT_BLUETOOTH_OFF"));
+         tts_speak(_("IDS_SYSTEM_BT_BLUETOOTH_OFF"), EINA_FALSE);
          return;
       }
    else
@@ -739,7 +703,7 @@ void device_bluetooth_get(void)
 
          if(device_count == 0)
             {
-               if (!asprintf(&buffer, BT_NO_DEVICES_CONNECTED))
+               if (!asprintf(&buffer, _("IDS_SYSTEM_BT_NO_DEVICES_CONNECTED")))
                   {
                      ERROR("buffer length == 0");
                   }
@@ -751,7 +715,7 @@ void device_bluetooth_get(void)
          else
             {
                if (asprintf(&buffer, "%d %s", device_count,
-                            BT_DEVICES_CONNECTED_COUNT))
+                            _("IDS_SYSTEM_BT_DEVICES_CONNECTED_COUNT")))
                   {
                      ERROR("buffer length == 0");
                   }

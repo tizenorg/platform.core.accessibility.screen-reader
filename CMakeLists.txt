@@ -4,9 +4,10 @@ ENABLE_TESTING()
 # FIND ALL SOURCE IN A SOURCE DIRECTORY
 AUX_SOURCE_DIRECTORY(${CMAKE_SOURCE_DIR}/src SRCS)
 
-#INCLUDE FILE 
+#INCLUDE FILE
 INCLUDE(CMakeLists.sub)
 SET(RESOURCE_DIR "${CMAKE_SOURCE_DIR}/res")
+SET(LOCALEDIR "/usr/apps/org.tizen.screen-reader/res/locale")
 
 INCLUDE(FindPkgConfig)
 pkg_check_modules(pkgs REQUIRED
@@ -48,6 +49,7 @@ INSTALL(DIRECTORY ${RESOURCE_DIR}/icons DESTINATION res)
 # Install Manifest File
 INSTALL(FILES org.tizen.screen-reader.xml DESTINATION /opt/share/packages)
 
+ADD_SUBDIRECTORY(${CMAKE_SOURCE_DIR}/res/po)
 ADD_SUBDIRECTORY(${CMAKE_SOURCE_DIR}/tests)
 ADD_TEST(NAME smart_navi_tests COMMAND ${CMAKE_SOURCE_DIR}/tests/smart_navi_test_suite)
 # END OF A FILE

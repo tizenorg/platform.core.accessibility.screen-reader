@@ -8,9 +8,6 @@
 #include "test_suite/test_suite.h"
 #endif
 
-#define NO_VALUE_INTERFACE "No value interface present"
-#define NO_TEXT_INTERFACE "No text interface present"
-
 #define EPS 0.000000001
 
 /** @brief Service_Data used as screen reader internal data struct*/
@@ -167,7 +164,7 @@ static char *spi_on_caret_move_get_text(AtspiEvent *event, void *user_data)
          if(!caret_pos)
             {
                DEBUG("MIN POSITION REACHED");
-               if(asprintf(&return_text, "%s %s", (char*)atspi_text_get_text(text_interface, caret_pos, caret_pos + 1, NULL), MIN_POS_REACHED) < 0)
+               if(asprintf(&return_text, "%s %s", (char*)atspi_text_get_text(text_interface, caret_pos, caret_pos + 1, NULL), _("IDS_REACHED_MIN_POS")) < 0)
                   {
                      ERROR(MEMORY_ERROR);
                      return NULL;
@@ -176,7 +173,7 @@ static char *spi_on_caret_move_get_text(AtspiEvent *event, void *user_data)
          else if(char_count == caret_pos)
             {
                DEBUG("MAX POSITION REACHED");
-               if(asprintf(&return_text, "%s %s", (char*)atspi_text_get_text(text_interface, caret_pos, caret_pos + 1, NULL), MAX_POS_REACHED) < 0)
+               if(asprintf(&return_text, "%s %s", (char*)atspi_text_get_text(text_interface, caret_pos, caret_pos + 1, NULL), _("IDS_REACHED_MAX_POS")) < 0)
                   {
                      ERROR(MEMORY_ERROR);
                      return NULL;
@@ -216,7 +213,7 @@ static char *spi_on_value_changed_get_text(AtspiEvent *event, void *user_data)
          if(abs(current_temp_value - atspi_value_get_maximum_value(value_interface, NULL)) < EPS)
             {
                DEBUG("MAX VALUE REACHED");
-               if(asprintf(&text_to_read, "%.2f %s", current_temp_value, MAX_REACHED) < 0)
+               if(asprintf(&text_to_read, "%.2f %s", current_temp_value, _("IDS_REACHED_MAX_VAL")) < 0)
                   {
                      ERROR(MEMORY_ERROR);
                      return NULL;
@@ -225,7 +222,7 @@ static char *spi_on_value_changed_get_text(AtspiEvent *event, void *user_data)
          else if(abs(current_temp_value - atspi_value_get_minimum_value(value_interface, NULL)) < EPS)
             {
                DEBUG("MIN VALUE REACHED");
-               if(asprintf(&text_to_read, "%.2f %s", current_temp_value, MIN_REACHED) < 0)
+               if(asprintf(&text_to_read, "%.2f %s", current_temp_value, _("IDS_REACHED_MIN_VAL")) < 0)
                   {
                      ERROR(MEMORY_ERROR);
                      return NULL;
