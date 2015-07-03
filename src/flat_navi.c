@@ -330,6 +330,33 @@ debug(FlatNaviContext *ctx)
    DEBUG("===============================");
 }
 
+static void _flat_navi_context_current_line_and_object_get(FlatNaviContext *ctx, AtspiAccessible *obj, Eina_List **current_line, Eina_List **current)
+{
+   if(!ctx || !obj) return;
+   Eina_List *l, *l2, *line;
+   AtspiAccessible *tmp;
+
+   EINA_LIST_FOREACH(ctx->lines, l, line)
+   {
+      EINA_LIST_FOREACH(line, l2, tmp)
+      {
+         if (tmp == obj)
+            {
+               *current_line = l;
+               *current = l2;
+               break;
+            }
+      }
+   }
+}
+
+#ifdef SCREEN_READER_FLAT_NAVI_TEST_DUMMY_IMPLEMENTATION
+Eina_Bool flat_navi_context_current_at_x_y_set( FlatNaviContext *ctx, gint x_cord, gint y_cord , AtspiAccessible **target)
+{
+    return EINA_FALSE;
+}
+#else
+
 static Eina_Bool
 _contains(AtspiAccessible *obj, gint x, gint y)
 {
@@ -345,40 +372,102 @@ _contains(AtspiAccessible *obj, gint x, gint y)
    return EINA_FALSE;
 
 }
+static Eina_Bool _flat_navi_context_contains_object(FlatNaviContext *ctx, AtspiAccessible *obj)
+{
+   if(!ctx || !obj) return EINA_FALSE;
+
+   Eina_List *current_line = NULL, *current = NULL;
+
+   _flat_navi_context_current_line_and_object_get(ctx, obj, &current_line, &current);
+   return current_line != NULL;
+}
 
 Eina_Bool flat_navi_context_current_at_x_y_set( FlatNaviContext *ctx, gint x_cord, gint y_cord , AtspiAccessible **target)
 {
    if(!ctx || !target) return EINA_FALSE;
 
-   AtspiAccessible *current = flat_navi_context_current_get(ctx);
-   if (current && _contains(current, x_cord, y_cord))
+   AtspiAccessible *current_obj = flat_navi_context_current_get(ctx);
+   if (current_obj && _contains(current_obj, x_cord, y_cord))
       {
-         *target = current;
+         *target = current_obj;
          return EINA_TRUE;
       }
 
-   Eina_List *l, *l2, *line;
-   Eina_Bool found = EINA_FALSE;
-   AtspiAccessible *obj;
-   EINA_LIST_FOREACH(ctx->lines, l, line)
-   {
-      EINA_LIST_FOREACH(line, l2, obj)
-      if (_contains(obj, x_cord, y_cord))
+   if (!ctx->root)
+     {
+        DEBUG("NO top window");
+        return EINA_FALSE;
+     }
+   Eina_Bool ret = EINA_FALSE;
+   GError * error = NULL;
+   AtspiAccessible *obj = g_object_ref(ctx->root);
+   AtspiAccessible *obj_under_finger = NULL;
+   AtspiAccessible *youngest_ancestor_in_context = (_flat_navi_context_contains_object(ctx, obj) ? g_object_ref(obj) : NULL);
+   AtspiComponent *component;
+   Eina_Bool look_for_next_descendant = EINA_TRUE;
+
+   for(;look_for_next_descendant;) {
+       component = atspi_accessible_get_component_iface(obj);
+       obj_under_finger = atspi_component_get_accessible_at_point(atspi_accessible_get_component_iface(obj),
+                                                     x_cord,
+                                                     y_cord,
+                                                     ATSPI_COORD_TYPE_WINDOW,
+                                                     &error
+                                                     );
+       g_clear_object(&component);
+
+       if (error)
          {
-            found = EINA_TRUE;
-            break;
-         }
-      if (found)
-         {
-            *target = obj;
-            ctx->current_line = l;
-            ctx->current = l2;
-            break;
+            DEBUG("Got error from atspi_component_get_accessible_at_point, domain: %i, code: %i, message: %s",
+                  error->domain, error->code, error->message);
+            g_clear_error(&error);
+            g_clear_object(&obj);
+            g_clear_object(&obj_under_finger);
+            if (youngest_ancestor_in_context)
+                g_clear_object(&youngest_ancestor_in_context);
+            look_for_next_descendant = EINA_FALSE;
+         } else if (obj_under_finger) {
+            DEBUG("Found object %s, role %s", atspi_accessible_get_name(obj_under_finger, NULL), atspi_accessible_get_role_name(obj_under_finger, NULL));
+            if (_flat_navi_context_contains_object(ctx, obj_under_finger))
+              {
+                 DEBUG("Context contains object %s with role %s", atspi_accessible_get_name(obj_under_finger, NULL), atspi_accessible_get_role_name(obj_under_finger, NULL));
+                 if (youngest_ancestor_in_context)
+                     g_object_unref(youngest_ancestor_in_context);
+                 youngest_ancestor_in_context = g_object_ref(obj_under_finger);
+              }
+            g_object_unref(obj);
+            obj = g_object_ref(obj_under_finger);
+            g_clear_object(&obj_under_finger);
+         } else {
+            obj_under_finger = g_object_ref(obj);
+            g_object_unref(obj);
+            look_for_next_descendant = EINA_FALSE;
          }
    }
 
-   return found;
+   if (obj_under_finger)
+       g_clear_object(&obj_under_finger);
+
+   if (youngest_ancestor_in_context)
+      {
+         if (youngest_ancestor_in_context == current_obj ||
+             flat_navi_context_current_set(ctx, youngest_ancestor_in_context))
+            {
+               DEBUG("Setting highlight to object %s with role %s",
+                     atspi_accessible_get_name(youngest_ancestor_in_context, NULL),
+                     atspi_accessible_get_role_name(youngest_ancestor_in_context, NULL));
+               *target = youngest_ancestor_in_context;
+               ret = EINA_TRUE;
+            }
+      }
+   else
+      DEBUG("NO widget under (%d, %d) found or the same widget under hover",
+            x_cord, y_cord);
+
+   DEBUG("END");
+   return ret;
 }
+#endif
 
 int flat_navi_context_current_children_count_visible_get( FlatNaviContext *ctx)
 {
@@ -446,29 +535,13 @@ Eina_Bool flat_navi_context_current_set(FlatNaviContext *ctx, AtspiAccessible *t
 {
    if(!ctx || !target) return EINA_FALSE;
 
-   Eina_List *l, *l2, *line;
-   AtspiAccessible *obj;
-   Eina_Bool found = EINA_FALSE;
-
-   EINA_LIST_FOREACH(ctx->lines, l, line)
-   {
-      EINA_LIST_FOREACH(line, l2, obj)
-      {
-         if (obj == target)
-            {
-               found = EINA_TRUE;
-               break;
-            }
-      }
-      if (found)
-         {
-            ctx->current_line = l;
-            ctx->current = l2;
-            break;
-         }
+   Eina_List *current_line = NULL, *current = NULL;
+   _flat_navi_context_current_line_and_object_get(ctx, target, &current_line, &current);
+   if (current_line) {
+       ctx->current_line = current_line;
+       ctx->current = current;
    }
-
-   return found;
+   return current_line != NULL;
 }
 
 AtspiAccessible *flat_navi_context_next(FlatNaviContext *ctx)

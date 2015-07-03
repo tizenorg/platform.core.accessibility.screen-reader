@@ -27,6 +27,13 @@
 #define TTS_MAX_TEXT_SIZE  2000
 #define GESTURE_LIMIT 10
 
+//Timeout in ms which will be used as interval for handling ongoing
+//hoved gesture updates. It is introduced to improve performance.
+//Even if user makes many mouse move events within hover gesture
+//only 5 highlight updates a second will be performed. Else we will
+//highly pollute dbus bus and and decrease highlight performance.
+#define ONGOING_HOVER_GESTURE_INTERPRETATION_INTERVAL 200
+
 #define DEBUG_MODE
 
 #define GERROR_CHECK(error)\
@@ -53,6 +60,7 @@ static Eina_Bool _window_top_changed;
 static FlatNaviContext *context;
 static bool prepared = false;
 static int counter=0;
+unsigned int _last_hover_event_time = -1;
 
 static struct
 {
@@ -605,26 +613,27 @@ static AtspiAccessible *get_nearest_widget(AtspiAccessible* app_obj, gint x_cord
 static void _focus_widget(Gesture_Info *info)
 {
    DEBUG("START");
+   if (info->type == ONE_FINGER_HOVER)
+     {
+        if (_last_hover_event_time < 0)
+           _last_hover_event_time = info->event_time;
+        //info->event_time and _last_hover_event_time contain timestamp in ms.
+        if (info->event_time - _last_hover_event_time < ONGOING_HOVER_GESTURE_INTERPRETATION_INTERVAL && info->state == 1)
+           return;
+
+        _last_hover_event_time = info->state != 1 ? -1 : info->event_time;
+     }
 
    if ((last_focus.x == info->x_beg) && (last_focus.y == info->y_beg))
       return;
 
-   AtspiAccessible *obj;
-
+   AtspiAccessible *obj = NULL;
    if (flat_navi_context_current_at_x_y_set(context, info->x_beg, info->y_beg, &obj))
-      {
-         if (obj == current_obj)
-            {
-               DEBUG("The same object");
-               return;
-            }
-         last_focus.x = info->x_beg;
-         last_focus.y = info->y_beg;
-         _current_highlight_object_set(obj);
-      }
-   else
-      DEBUG("NO widget under (%d, %d) found or the same widget under hover",
-            info->x_beg, info->y_beg);
+     {
+        last_focus.x = info->x_beg;
+        last_focus.y = info->y_beg;
+        _current_highlight_object_set(obj);
+     }
 
    DEBUG("END");
 }

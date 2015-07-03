@@ -56,6 +56,7 @@ typedef struct
    int y_beg, y_end;     // (x,y) coordinates when gesture ends (screen coords)
    pid_t pid;            // pid of process on which gesture took place.
    int state;            // 0 - begin, 1 - ongoing, 2 - ended, 3 - aborted
+   int event_time;
 } Gesture_Info;
 
 /**
