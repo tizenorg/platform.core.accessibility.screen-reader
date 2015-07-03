@@ -1038,6 +1038,7 @@ static void _activate_widget(void)
    gint i = 0;
    gint index = 0;
    Eina_Bool activate_found = EINA_FALSE;
+   AtspiRole role = ATSPI_ROLE_INVALID;
 
    if(!current_obj)
       return;
@@ -1049,6 +1050,12 @@ static void _activate_widget(void)
       }
 
    current_widget = current_obj;
+
+   role = atspi_accessible_get_role (current_widget, NULL);
+   if(role == ATSPI_ROLE_SLIDER)
+      {
+         return;
+      }
 
    display_info_about_object(current_widget);
 
