@@ -11,8 +11,16 @@
 static int last_utt_id;
 static Eina_Bool pause_state = EINA_FALSE;
 static Eina_Bool flush_flag = EINA_FALSE;
+static Eina_Strbuf *txt_keep_buff = NULL;
 
 static void(*on_utterance_end)(void);
+
+static void _text_keep(const char *txt)
+{
+   if (!txt_keep_buff) return;
+   if (eina_strbuf_length_get(txt_keep_buff) > 0) eina_strbuf_append(txt_keep_buff, ", ");
+   eina_strbuf_append(txt_keep_buff, txt);
+}
 
 static char * get_tts_error( int r )
 {
@@ -154,6 +162,7 @@ bool tts_init(void *data)
    tts_set_utterance_completed_cb(sd->tts,  __tts_test_utt_completed_cb,  sd);
 
    DEBUG( "---------------------- TTS_init END ----------------------\n\n");
+   txt_keep_buff = eina_strbuf_new();
    return true;
 }
 
@@ -193,29 +202,37 @@ Eina_Bool tts_pause_set(Eina_Bool pause_switch)
    return EINA_TRUE;
 }
 
-Eina_Bool tts_speak(char *text_to_speak, Eina_Bool flush_switch)
+void tts_speak(char *text_to_speak, Eina_Bool flush_switch)
 {
    Service_Data *sd = get_pointer_to_service_data_struct();
    int speak_id;
 
    if(!sd)
-      return EINA_FALSE;
+      return;
+   tts_state_e state;
+   tts_get_state(sd->tts, &state);
+
+   if (state != TTS_STATE_PLAYING &&
+          state != TTS_STATE_PAUSED &&
+          state != TTS_STATE_READY)
+     {
+        if (text_to_speak) _text_keep(text_to_speak);
+        return;
+     }
 
    if(flush_flag || flush_switch)
       tts_stop(sd->tts);
 
    DEBUG( "tts_speak\n");
    DEBUG( "text to say:%s\n", text_to_speak);
-   if ( !text_to_speak ) return EINA_FALSE;
-   if ( !text_to_speak[0] ) return EINA_FALSE;
+   if ( !text_to_speak ) return;
+   if ( !text_to_speak[0] ) return;
 
    if(tts_add_text( sd->tts, text_to_speak, sd->language, TTS_VOICE_TYPE_AUTO, TTS_SPEED_AUTO, &speak_id))
-      return EINA_FALSE;
+      return;
 
    DEBUG("added id to:%d\n", speak_id);
    last_utt_id = speak_id;
-
-   return EINA_TRUE;
 }
 
 Eina_Bool update_supported_voices(void *data)
@@ -258,11 +275,28 @@ void state_changed_cb(tts_h tts, tts_state_e previous, tts_state_e current, void
    DEBUG("current state:%s and previous state:%s\n", get_tts_state(current), get_tts_state(previous));
    Service_Data *sd = user_data;
 
-   if(current == TTS_STATE_READY || current == TTS_STATE_PAUSED)
-      {
+   if (TTS_STATE_CREATED == previous && TTS_STATE_READY == current)
+     {
+       char *txt;
+
+       if (!txt_keep_buff) return;
+       if (!eina_strbuf_length_get(txt_keep_buff)) return;
+
+       txt = eina_strbuf_string_steal(txt_keep_buff);
+       eina_strbuf_free(txt_keep_buff);
+       txt_keep_buff = NULL;
+
+       if (txt && strlen(txt) == 0) return;
+
+       tts_speak(txt, EINA_FALSE);
+       tts_play(sd->tts);
+       free(txt);
+     }
+   else if (current == TTS_STATE_READY || current == TTS_STATE_PAUSED)
+     {
          DEBUG("TTS state == %s!", get_tts_state(current));
          tts_play(sd->tts);
-      }
+     }
    else
       {
          DEBUG("TTS state != ready or paused!\n");

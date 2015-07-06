@@ -11,7 +11,7 @@ extern int speed;
 
 bool tts_init(void *data);
 void state_changed_cb(tts_h tts, tts_state_e previous, tts_state_e current, void* user_data);
-Eina_Bool tts_speak(char *text_to_speak, Eina_Bool flush_switch);
+void tts_speak(char *text_to_speak, Eina_Bool flush_switch);
 void spi_stop(void *data);
 
 Eina_Bool tts_pause_get(void);
