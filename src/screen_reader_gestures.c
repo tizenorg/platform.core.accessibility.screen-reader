@@ -104,6 +104,7 @@ static Ecore_X_Window scrolled_win;
 static int rx, ry;
 static Eina_List *handlers;
 static Cover *cov;
+static int win_angle;
 
 static void _hover_event_emit(Cover *cov, int state);
 
@@ -192,6 +193,21 @@ _flick_gesture_direction_get(int x, int y, int x_org, int y_org)
 {
    int dx = x - x_org;
    int dy = y - y_org;
+   int tmp;
+
+   switch(win_angle)
+      {
+      case 90:
+         tmp = dx;
+         dx = -dy;
+         dy = tmp;
+         break;
+      case 270:
+         tmp = dx;
+         dx = dy;
+         dy = -tmp;
+         break;
+      }
 
    if ((dy < 0) && (abs(dx) < -dy))
       return FLICK_DIRECTION_UP;
@@ -409,14 +425,26 @@ _flick_gesture_mouse_move(Ecore_Event_Mouse_Move *ev, Cover *cov)
             {
                int dx = ev->root.x - cov->flick_gesture.x_org[i];
                int dy = ev->root.y - cov->flick_gesture.y_org[i];
+               int tmp;
 
-               if (dx < 0) dx *= -1;
-               if (dy < 0) dy *= -1;
+               switch(win_angle)
+                  {
+                  case 90:
+                     tmp = dx;
+                     dx = -dy;
+                     dy = tmp;
+                     break;
+                  case 270:
+                     tmp = dx;
+                     dx = dy;
+                     dy = -tmp;
+                     break;
+                  }
 
-               if (dx > _e_mod_config->one_finger_flick_min_length)
+               if (abs(dx) > _e_mod_config->one_finger_flick_min_length)
                   {
                      cov->flick_gesture.finger_out[i] = EINA_TRUE;
-                     if (ev->root.x > cov->flick_gesture.x_org[i])
+                     if (dx > 0)
                         {
                            if (cov->flick_gesture.dir == FLICK_DIRECTION_UNDEFINED ||
                                  cov->flick_gesture.dir == FLICK_DIRECTION_RIGHT_RETURN)
@@ -445,10 +473,10 @@ _flick_gesture_mouse_move(Ecore_Event_Mouse_Move *ev, Cover *cov)
                      return;
                   }
 
-               else if (dy > _e_mod_config->one_finger_flick_min_length)
+               else if (abs(dy) > _e_mod_config->one_finger_flick_min_length)
                   {
                      cov->flick_gesture.finger_out[i] = EINA_TRUE;
-                     if (ev->root.y > cov->flick_gesture.y_org[i])
+                     if (dy > 0)
                         {
                            if (cov->flick_gesture.dir == FLICK_DIRECTION_UNDEFINED ||
                                  cov->flick_gesture.dir == FLICK_DIRECTION_DOWN_RETURN)
@@ -1039,6 +1067,29 @@ _tap_gestures_move(Ecore_Event_Mouse_Move *ev, Cover *cov)
       }
 }
 
+static unsigned int
+_win_angle_get(void)
+{
+   Ecore_X_Window root, first_root;
+   int ret;
+   int count;
+   int angle = 0;
+   unsigned char *prop_data = NULL;
+
+   first_root = ecore_x_window_root_first_get();
+   root = ecore_x_window_root_get(first_root);
+   ret = ecore_x_window_prop_property_get(root, ECORE_X_ATOM_E_ILLUME_ROTATE_ROOT_ANGLE,
+                   ECORE_X_ATOM_CARDINAL, 32, &prop_data, &count);
+
+   if (ret && prop_data)
+      memcpy (&angle, prop_data, sizeof (int));
+
+   if (prop_data)
+      free (prop_data);
+
+   return angle;
+}
+
 static Eina_Bool
 _cb_mouse_down(void    *data EINA_UNUSED,
                int      type EINA_UNUSED,
@@ -1050,6 +1101,8 @@ _cb_mouse_down(void    *data EINA_UNUSED,
    cov->event_time = ev->timestamp;
 
    DEBUG("mouse down: multi.device: %d, taps: %d", ev->multi.device, cov->n_taps);
+
+   win_angle = _win_angle_get();
 
    _flick_gesture_mouse_down(ev, cov);
    _hover_gesture_mouse_down(ev, cov);
