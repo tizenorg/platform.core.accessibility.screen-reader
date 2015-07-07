@@ -23,9 +23,10 @@
 
 #define DISTANCE_NB 8
 #define MENU_ITEM_TAB_INDEX_SIZE 16
-#define HOVERSEL_TRAIT_SIZE 70
+#define HOVERSEL_TRAIT_SIZE 200
 #define TTS_MAX_TEXT_SIZE  2000
 #define GESTURE_LIMIT 10
+
 
 //Timeout in ms which will be used as interval for handling ongoing
 //hoved gesture updates. It is introduced to improve performance.
@@ -185,6 +186,8 @@ display_info_about_object(AtspiAccessible *obj)
    GArray *states = atspi_state_set_get_states (st);
    AtspiComponent *comp = atspi_accessible_get_component_iface(obj);
    AtspiValue *value = atspi_accessible_get_value_iface(obj);
+   AtspiRect *rect_screen = atspi_component_get_extents(comp, ATSPI_COORD_TYPE_SCREEN, NULL);
+   AtspiRect *rect_win = atspi_component_get_extents(comp, ATSPI_COORD_TYPE_WINDOW, NULL);
 
    DEBUG("NAME:%s", name);
    DEBUG("ROLE:%s", role)
@@ -208,6 +211,10 @@ display_info_about_object(AtspiAccessible *obj)
          free(state_name);
       }
    DEBUG("LOCALE:%s", atspi_accessible_get_object_locale(obj, NULL));
+   DEBUG("SIZE ON SCREEN, width:%d, height:%d",rect_screen->width, rect_screen->height);
+   DEBUG("POSITION ON SCREEN: x:%d y:%d", rect_screen->x, rect_screen->y);
+   DEBUG("SIZE ON WIN, width:%d, height:%d",rect_win->width, rect_win->height);
+   DEBUG("POSITION ON WIN: x:%d y:%d", rect_win->x, rect_win->y);
    DEBUG("------------------------");
    DEBUG("END");
 }
@@ -216,19 +223,30 @@ char *
 generate_description_for_subtrees(AtspiAccessible *obj)
 {
    DEBUG("START");
-   if (!obj)
-      return strdup("");
-   int child_count = atspi_accessible_get_child_count(obj, NULL);
 
-   DEBUG("There is %d children inside this filler", child_count);
-   if (!child_count)
-      return strdup("");
-
+   AtspiRole role;
+   int child_count;
    int i;
    char *name = NULL;
    char *below = NULL;
    char ret[TTS_MAX_TEXT_SIZE] = "\0";
    AtspiAccessible *child = NULL;
+
+   if (!obj)
+      return strdup("");
+
+   role = atspi_accessible_get_role(obj, NULL);
+
+   // Do not generate that for popups
+   if (role == ATSPI_ROLE_POPUP_MENU)
+      return strdup("");
+
+   child_count = atspi_accessible_get_child_count(obj, NULL);
+
+   DEBUG("There is %d children inside this object", child_count);
+   if (!child_count)
+      return strdup("");
+
    for (i=0; i < child_count; i++)
       {
          child = atspi_accessible_get_child_at_index(obj, i, NULL);
@@ -281,6 +299,30 @@ generate_trait(AtspiAccessible *obj)
          char tab_index[MENU_ITEM_TAB_INDEX_SIZE];
          snprintf(tab_index, MENU_ITEM_TAB_INDEX_SIZE, _("IDS_TRAIT_MENU_ITEM_TAB_INDEX"), index+1, children_count);
          strncat(ret, tab_index, sizeof(ret) - strlen(ret) - 1);
+      }
+   else if (role == ATSPI_ROLE_POPUP_MENU)
+      {
+         char *role_name = atspi_accessible_get_localized_role_name(obj, NULL);
+         strncat(ret, role_name, sizeof(ret) - strlen(ret) - 1);
+         strncat(ret, ", ", sizeof(ret) - strlen(ret) - 1);
+
+         int children_count = atspi_accessible_get_child_count(obj, NULL);
+         char trait[HOVERSEL_TRAIT_SIZE];
+
+         snprintf(trait, HOVERSEL_TRAIT_SIZE, _("IDS_TRAIT_SHOWING"));
+         strncat(ret, trait, sizeof(ret) - strlen(ret) - 1);
+         strncat(ret, " ", sizeof(ret) - strlen(ret) - 1);
+
+         snprintf(trait, HOVERSEL_TRAIT_SIZE, "%d", children_count);
+         strncat(ret, trait, sizeof(ret) - strlen(ret) - 1);
+         strncat(ret, " ", sizeof(ret) - strlen(ret) - 1);
+
+         snprintf(trait, HOVERSEL_TRAIT_SIZE, _("IDS_TRAIT_ITEMS"));
+         strncat(ret, trait, sizeof(ret) - strlen(ret) - 1);
+         strncat(ret, ", ", sizeof(ret) - strlen(ret) - 1);
+
+         snprintf(trait, HOVERSEL_TRAIT_SIZE, _("IDS_TRAIT_POPUP_CLOSE"));
+         strncat(ret, trait, sizeof(ret) - strlen(ret) - 1);
       }
    else if (role == ATSPI_ROLE_GLASS_PANE)
       {

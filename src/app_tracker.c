@@ -78,8 +78,7 @@ _on_atspi_event_cb(const AtspiEvent *event)
          return;
       }
 
-   if ((atspi_accessible_get_role(event->source, NULL) == ATSPI_ROLE_DESKTOP_FRAME) ||
-         !strcmp(event->type, "object:children-changed"))
+   if ((atspi_accessible_get_role(event->source, NULL) == ATSPI_ROLE_DESKTOP_FRAME))
       {
          return;
       }

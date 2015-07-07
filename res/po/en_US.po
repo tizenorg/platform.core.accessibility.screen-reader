@@ -37,6 +37,15 @@ msgstr "Tab %1$d of %2$d"
 msgid "IDS_TRAIT_TEXT_EDIT"
 msgstr "Double tap to edit"
 
+msgid "IDS_TRAIT_SHOWING"
+msgstr "Showing"
+
+msgid "IDS_TRAIT_ITEMS"
+msgstr "Items"
+
+msgid "IDS_TRAIT_POPUP_CLOSE"
+msgstr "double tap to close it"
+
 msgid "IDS_TRAIT_TEXT_EDIT_FOCUSED"
 msgstr "Editing, flick up and down to adjust position."
 

@@ -42,6 +42,7 @@ static const AtspiRole interesting_roles[] =
    ATSPI_ROLE_PANEL,
    ATSPI_ROLE_PARAGRAPH,
    ATSPI_ROLE_PASSWORD_TEXT,
+   ATSPI_ROLE_POPUP_MENU,
    ATSPI_ROLE_PUSH_BUTTON,
    ATSPI_ROLE_PROGRESS_BAR,
    ATSPI_ROLE_RADIO_BUTTON,
@@ -171,6 +172,10 @@ _no_need_for_focusable_state(AtspiAccessible *obj)
          if (_obj_state_visible_and_showing(obj, EINA_TRUE))
             return EINA_TRUE;
          break;
+      case ATSPI_ROLE_MENU_ITEM:
+         if (_obj_state_visible_and_showing(obj, EINA_TRUE))
+            return EINA_TRUE;
+         break;
       case ATSPI_ROLE_PROGRESS_BAR:
          if (_obj_state_visible_and_showing(obj, EINA_FALSE))
             return EINA_TRUE;
@@ -184,6 +189,9 @@ _no_need_for_focusable_state(AtspiAccessible *obj)
             return EINA_TRUE;
          break;
       case ATSPI_ROLE_PUSH_BUTTON:
+         if (_obj_state_visible_and_showing(obj, EINA_FALSE))
+            return EINA_TRUE;
+      case ATSPI_ROLE_POPUP_MENU:
          if (_obj_state_visible_and_showing(obj, EINA_FALSE))
             return EINA_TRUE;
          break;
@@ -259,6 +267,48 @@ _filter_viewport_cb(const void *container, void *data, void *fdata)
    return EINA_TRUE;
 }
 
+static Eina_Bool
+_check_if_object_has_modal_parent(AtspiAccessible *obj)
+{
+   DEBUG("START");
+
+   AtspiAccessible *parent = atspi_accessible_get_parent(obj, NULL);
+
+   if (!parent)
+      return EINA_FALSE;
+
+   AtspiStateSet *ss = atspi_accessible_get_state_set(parent);
+
+   if (atspi_state_set_contains(ss, ATSPI_STATE_MODAL))
+      {
+         g_object_unref(ss);
+         return EINA_TRUE;
+      }
+   else if (_check_if_object_has_modal_parent(parent))
+      return EINA_TRUE;
+   else
+      return EINA_FALSE;
+}
+
+static Eina_Bool
+_filter_ctx_popup_child_cb(const void *container, void *data, void *fdata)
+{
+   DEBUG("START");
+   AtspiAccessible *obj = fdata;
+   AtspiRole role = atspi_accessible_get_role(obj, NULL);
+
+   if (role == ATSPI_ROLE_NOTIFICATION)
+      return EINA_TRUE;
+
+   if (role == ATSPI_ROLE_POPUP_MENU)
+      return EINA_TRUE;
+
+   if (_check_if_object_has_modal_parent(obj))
+      return EINA_TRUE;
+
+   return EINA_FALSE;
+}
+
 static Eina_List*
 _flat_review_candidates_get(AtspiAccessible *root)
 {
@@ -270,6 +320,9 @@ _flat_review_candidates_get(AtspiAccessible *root)
    DEBUG("All descendants: %d", eina_list_count(desc));
    Eina_List *l, *ln;
    AtspiAccessible *obj;
+
+   AtspiRole role;
+   gboolean with_ctx_popup = EINA_FALSE;
 
    // remove object that are not in root's viewport
 
@@ -298,7 +351,18 @@ _flat_review_candidates_get(AtspiAccessible *root)
    EINA_LIST_FOREACH_SAFE(ret, l, ln, obj)
    {
       DEBUG("Name:[%s] Role:[%s]", atspi_accessible_get_name(obj, NULL), atspi_accessible_get_role_name(obj, NULL));
+      role = atspi_accessible_get_role(obj, NULL);
+
+      if (role == ATSPI_ROLE_POPUP_MENU)
+         with_ctx_popup = EINA_TRUE;
    }
+   if (with_ctx_popup)
+      {
+         with_ctx_popup = EINA_FALSE;
+         FilterResult fr3 = _accessible_list_split_with_filter(ret, _filter_ctx_popup_child_cb, NULL);
+         ret = fr3.success;
+         _accessible_list_free(fr3.failure);
+      }
 
    return ret;
 }
