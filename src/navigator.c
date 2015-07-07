@@ -1904,10 +1904,10 @@ void navigator_init(void)
    screen_reader_gestures_tracker_register(on_gesture_detected, NULL);
    // register on active_window
    dbus_gesture_adapter_init();
+   app_tracker_init();
    window_tracker_init();
    window_tracker_register(on_window_activate, NULL);
    window_tracker_active_window_request();
-   app_tracker_init();
    smart_notification_init();
    system_notifications_init();
    keyboard_tracker_init();
