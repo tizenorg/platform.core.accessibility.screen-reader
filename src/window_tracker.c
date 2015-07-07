@@ -7,47 +7,6 @@ static void *user_data;
 static AtspiEventListener *listener;
 static AtspiAccessible *last_active_win;
 
-static AtspiAccessible*
-_get_window_object_from_given(AtspiAccessible *obj)
-{
-   if (!obj)
-      return NULL;
-
-   if (atspi_accessible_get_role(obj, NULL) != ATSPI_ROLE_DESKTOP_FRAME)
-      return NULL;
-
-   AtspiAccessible *win = NULL;
-   AtspiAccessible *app = NULL;
-   AtspiAccessible *ret = NULL;
-   AtspiStateSet *st = NULL;
-   int desktop_childs;
-   int app_childs;
-   int i,j;
-
-   desktop_childs = atspi_accessible_get_child_count(obj, NULL);
-
-   for (i=0; i < desktop_childs; i++)
-      {
-         app = atspi_accessible_get_child_at_index(obj, i, NULL);
-         if (atspi_accessible_get_role(app, NULL) == ATSPI_ROLE_APPLICATION)
-            {
-               app_childs = atspi_accessible_get_child_count(app, NULL);
-               for (j=0; j < app_childs; j++)
-                  {
-                     win = atspi_accessible_get_child_at_index(app, j, NULL);
-                     if (win) {
-                        st = atspi_accessible_get_state_set (win);
-                        if (atspi_state_set_contains(st, ATSPI_STATE_ACTIVE)) {
-                           return win;
-                        }
-                     }
-                  }
-            }
-      }
-
-   return ret;
-}
-
 static void
 _on_atspi_window_cb(const AtspiEvent *event)
 {
@@ -65,7 +24,7 @@ _on_atspi_window_cb(const AtspiEvent *event)
          !strcmp(event->type, "window:destroy"))
       {
          if (last_active_win != event->source)
-           return;
+            return;
          if (user_cb) user_cb(user_data, NULL);
          last_active_win = NULL;
       }
