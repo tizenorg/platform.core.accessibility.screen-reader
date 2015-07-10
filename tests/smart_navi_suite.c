@@ -16,10 +16,7 @@ static FlatNaviContext *ctx;
 void setup(void)
 {
    Service_Data *data = get_pointer_to_service_data_struct();
-   data->information_level = 1;
    data->run_service = 1;
-   data->voice_type = TTS_VOICE_TYPE_FEMALE;
-   data->reading_speed = 2;
    data->tracking_signal_name = HIGHLIGHT_CHANGED_SIG;
 
    //Set by tts

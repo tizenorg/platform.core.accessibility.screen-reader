@@ -16,62 +16,7 @@
 
 keylist_t *keys = NULL;
 
-bool set_langauge(Service_Data *sd, const char *new_language, int new_voice)
-{
-   DEBUG("START");
-
-   Eina_List *l;
-   Voice_Info *vi;
-
-   if (!new_language)
-      return false;
-
-   if(strncmp(sd->language, new_language, LAN_NAME - 1) == 0 && sd->voice_type == new_voice)
-      {
-         DEBUG("No need to change accessibility language: %s(%d) -> %s(%d)",
-               sd->language, sd->voice_type, new_language, new_voice);
-
-         return true;
-      }
-
-   EINA_LIST_FOREACH(sd->available_languages, l, vi)
-   {
-      DEBUG("foreach %s <- %s", vi->language, new_language);
-      if(strncmp(vi->language, new_language, LAN_NAME - 1) == 0 &&
-            vi->voice_type == new_voice)
-         {
-            DEBUG("str_cpy %s (%d) -> %s (%d)", sd->language, sd->voice_type, vi->language, vi->voice_type);
-            snprintf(sd->language, LAN_NAME, "%s", vi->language);
-            sd->voice_type = vi->voice_type;
-            DEBUG("after_str_cpy");
-
-            DEBUG("ACCESSIBILITY LANGUAGE CHANGED");
-            DEBUG("END");
-            return true;
-         }
-   }
-
-   DEBUG("ACCESSIBILITY LANGUAGE FAILED TO CHANGED");
-
-   vconf_set_str("db/setting/accessibility/language", sd->language);
-   vconf_set_int("db/setting/accessibility/voice", sd->voice_type);
-
-   DEBUG("END");
-   return false;
-}
-
 // ------------------------------ vconf callbacks----------------------
-
-void information_level_cb(keynode_t *node, void *user_data)
-{
-   DEBUG("START");
-   DEBUG("Information level set: %d", node->value.i);
-
-   Service_Data *service_data = user_data;
-   service_data->information_level = node->value.i;
-
-   DEBUG("END");
-}
 
 void app_termination_cb(keynode_t *node, void *user_data)
 {
@@ -89,47 +34,15 @@ void app_termination_cb(keynode_t *node, void *user_data)
    DEBUG("END");
 }
 
-void language_cb(keynode_t *node, void *user_data)
+void display_language_cb(keynode_t *node, void *user_data)
 {
    DEBUG("START");
-   DEBUG("Trying to set language to: %s", node->value.s);
+   DEBUG("Trying to set LC_MESSAGES to: %s", node->value.s);
 
    Service_Data *sd = user_data;
-
-   int voice_type;
-
-   /* FIXME: this is a callback of 'db/setting/accessibility/language' */
-   vconf_get_int("db/setting/accessibility/voice", (int*)(&voice_type));
-   set_langauge(sd, node->value.s, voice_type);
-
-   DEBUG("END");
-}
-
-void voice_cb(keynode_t *node, void *user_data)
-{
-   DEBUG("START");
-   DEBUG("Voice set to: %d", node->value.i);
-
-   Service_Data *sd = user_data;
-
-   /* FIXME: this is a callback of 'db/setting/accessibility/voice' */
-   const char *lang = vconf_get_str("db/setting/accessibility/language");
-   if(!lang)
-      {
-         DEBUG("FAILED TO GET LANGUAGE");
-      }
-   set_langauge(sd, lang, (int)node->value.i);
-
-   DEBUG("END");
-}
-
-void reading_speed_cb(keynode_t *node, void *user_data)
-{
-   DEBUG("START");
-   DEBUG("Reading speed set to: %d", node->value.i);
-
-   Service_Data *service_data = user_data;
-   service_data->reading_speed = node->value.i;
+   snprintf(sd->display_language, LANGUAGE_NAME_SIZE, "%s", node->value.s);
+   //to make gettext work
+   setenv("LC_MESSAGES", sd->display_language, 1);
 
    DEBUG("END");
 }
@@ -139,49 +52,34 @@ void reading_speed_cb(keynode_t *node, void *user_data)
 int get_key_values(Service_Data *sd)
 {
    DEBUG("START");
-
-   char *language = vconf_get_str("db/setting/accessibility/language");
-
-   if(!language)
-      {
-         /*FIXME: need to handle to_ret from here */
-         DEBUG("FAILED TO GET LANGUAGE");
-      }
-
-   int ret = -1;
    int to_ret = 0;
 
+   char *display_language = vconf_get_str("db/menu_widget/language");
+   if (display_language)
+     {
+        snprintf(sd->display_language, LANGUAGE_NAME_SIZE, "%s", display_language);
+        //to make gettext work
+        setenv("LC_MESSAGES", sd->display_language, 1);
+        free(display_language);
+     }
+   else
+     WARNING("Can't get db/menu_widget/language value");
 
-   int voice;
-   ret = vconf_get_int("db/setting/accessibility/voice", &voice);
-   if(ret != 0)
-      {
-         to_ret -= -1;
-         DEBUG("FAILED TO SET VOICE TYPE: %d", ret);
-      }
-
-   if(language)
-      set_langauge(sd, language, voice);
-
-   ret = vconf_get_int("db/setting/accessibility/speech_rate", &sd->reading_speed);
-   if(ret != 0)
-      {
-         to_ret -= -2;
-         DEBUG("FAILED TO SET READING SPEED: %d", ret);
-      }
-
-   ret = vconf_get_int("db/setting/accessibility/information_level", &sd->information_level);
-   if(ret != 0)
-      {
-         to_ret -= -4;
-         DEBUG("FAILED TO SET INFORMATION LEVEL: %d", ret);
-      }
-
-   DEBUG("SCREEN READER DATA SET TO: Language: %s; Voice: %d, Reading_Speed: %d, Information_Level: %d, Tracking signal: %s;",
-         sd->language, sd->voice_type, sd->reading_speed, sd->information_level, sd->tracking_signal_name);
+   DEBUG("SCREEN READER DATA SET TO: Display_Language: %s, Tracking signal: %s;",
+         sd->display_language, sd->tracking_signal_name);
 
    DEBUG("END");
    return to_ret;
+}
+
+int _set_vconf_callback_and_print_message_on_error_and_return_error_code(const char *in_key, vconf_callback_fn cb,
+                                                    void *user_data)
+{
+    int ret = vconf_notify_key_changed(in_key, cb, user_data);
+    if(ret != 0)
+          DEBUG("Could not add notify callback to %s key", in_key);
+
+    return ret;
 }
 
 bool vconf_init(Service_Data *service_data)
@@ -207,42 +105,7 @@ bool vconf_init(Service_Data *service_data)
          DEBUG("Could not set data from vconf: %d", ret);
       }
 
-   ret = vconf_notify_key_changed("db/setting/accessibility/information_level", information_level_cb, service_data);
-   if(ret != 0)
-      {
-         DEBUG("Could not add information level callback");
-         return false;
-      }
-
-   ret = vconf_notify_key_changed("db/menu_widget/language", language_cb, service_data);
-   if(ret != 0)
-      {
-         DEBUG("Could not add language callback");
-         return false;
-      }
-
-   ret = vconf_notify_key_changed("db/setting/accessibility/language", language_cb, service_data);
-   if(ret != 0)
-      {
-         DEBUG("Could not add language callback");
-         return false;
-      }
-
-   ret = vconf_notify_key_changed("db/setting/accessibility/voice", voice_cb, service_data);
-   if(ret != 0)
-      {
-         DEBUG("Could not add voice callback");
-         return false;
-      }
-
-   ret = vconf_notify_key_changed("db/setting/accessibility/speech_rate", reading_speed_cb, service_data);
-   if(ret != 0)
-      {
-         DEBUG("Could not add reading speed callback callback");
-         return false;
-      }
-
-   DEBUG("ALL CALBACKS ADDED");
+   _set_vconf_callback_and_print_message_on_error_and_return_error_code("db/menu_widget/language", display_language_cb, service_data);
 
    DEBUG( "---------------------- VCONF_init END ----------------------\n\n");
    return true;

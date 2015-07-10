@@ -2,6 +2,7 @@
 
 #include <Ecore.h>
 #include "screen_reader_tts.h"
+#include "screen_reader_vconf.h"
 #include "logger.h"
 
 // ---------------------------- DEBUG HELPERS ------------------------------
@@ -228,7 +229,7 @@ void tts_speak(char *text_to_speak, Eina_Bool flush_switch)
    if ( !text_to_speak ) return;
    if ( !text_to_speak[0] ) return;
 
-   if(tts_add_text( sd->tts, text_to_speak, sd->language, TTS_VOICE_TYPE_AUTO, TTS_SPEED_AUTO, &speak_id))
+   if(tts_add_text( sd->tts, text_to_speak, NULL, TTS_VOICE_TYPE_AUTO, TTS_SPEED_AUTO, &speak_id))
       return;
 
    DEBUG("added id to:%d\n", speak_id);
@@ -277,6 +278,9 @@ void state_changed_cb(tts_h tts, tts_state_e previous, tts_state_e current, void
 
    if (TTS_STATE_CREATED == previous && TTS_STATE_READY == current)
      {
+
+       update_supported_voices(sd);
+
        char *txt;
 
        if (!txt_keep_buff) return;

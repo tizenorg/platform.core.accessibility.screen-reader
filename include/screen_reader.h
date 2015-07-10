@@ -5,7 +5,7 @@
 #include <Eldbus.h>
 #include <tts.h>
 
-#define LAN_NAME 6
+#define LANGUAGE_NAME_SIZE 6
 
 #define MAX_REACHED ", maximum value reached"
 #define MIN_REACHED ", minimum value reached"
@@ -33,11 +33,8 @@ typedef enum
 typedef struct _Service_Data
 {
    //Set by vconf
-   int information_level;
    bool run_service;
-   char language[LAN_NAME];
-   int voice_type;
-   int reading_speed;
+   char display_language[LANGUAGE_NAME_SIZE];
    char *tracking_signal_name;
 
    //Set by tts

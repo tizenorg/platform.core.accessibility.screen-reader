@@ -14,11 +14,7 @@
 Service_Data service_data =
 {
    //Set by vconf
-   .information_level = 1,
    .run_service = 1,
-   .language = "en_US",
-   .voice_type = TTS_VOICE_TYPE_FEMALE,
-   .reading_speed = 2,
    .tracking_signal_name = HIGHLIGHT_CHANGED_SIG,
 
 
