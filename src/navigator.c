@@ -1691,7 +1691,7 @@ _has_value(void)
          return EINA_TRUE;
       }
 
-   return EINA_TRUE;
+   return EINA_FALSE;
 }
 
 static Eina_Bool
