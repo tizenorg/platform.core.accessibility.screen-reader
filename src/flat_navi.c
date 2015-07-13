@@ -27,6 +27,7 @@ static const AtspiRole interesting_roles[] =
    ATSPI_ROLE_COLOR_CHOOSER,
    ATSPI_ROLE_COMBO_BOX,
    ATSPI_ROLE_DATE_EDITOR,
+   ATSPI_ROLE_DIALOG,
    ATSPI_ROLE_FILE_CHOOSER,
    ATSPI_ROLE_FILLER,
    ATSPI_ROLE_FONT_CHOOSER,
@@ -195,6 +196,10 @@ _no_need_for_focusable_state(AtspiAccessible *obj)
          if (_obj_state_visible_and_showing(obj, EINA_FALSE))
             return EINA_TRUE;
          break;
+      case ATSPI_ROLE_DIALOG:
+         if (_obj_state_visible_and_showing(obj, EINA_FALSE))
+            return EINA_TRUE;
+         break;
       default:
          return EINA_FALSE;
 
@@ -268,26 +273,31 @@ _filter_viewport_cb(const void *container, void *data, void *fdata)
 }
 
 static Eina_Bool
-_check_if_object_has_modal_parent(AtspiAccessible *obj)
+_object_has_modal_state(AtspiAccessible *obj)
 {
-   DEBUG("START");
-
-   AtspiAccessible *parent = atspi_accessible_get_parent(obj, NULL);
-
-   if (!parent)
+   if (!obj)
       return EINA_FALSE;
 
-   AtspiStateSet *ss = atspi_accessible_get_state_set(parent);
+   Eina_Bool ret = EINA_FALSE;
+
+   AtspiStateSet *ss = atspi_accessible_get_state_set(obj);
 
    if (atspi_state_set_contains(ss, ATSPI_STATE_MODAL))
+      ret = EINA_TRUE;
+   g_object_unref(ss);
+   return ret;
+}
+
+static AtspiAccessible *_first_modal_object_in_object_chain(AtspiAccessible *obj)
+{
+    AtspiAccessible *ret = g_object_ref(obj);
+
+    while(ret && !_object_has_modal_state(ret))
       {
-         g_object_unref(ss);
-         return EINA_TRUE;
+        g_object_unref(ret);
+        ret = atspi_accessible_get_parent(ret, NULL);
       }
-   else if (_check_if_object_has_modal_parent(parent))
-      return EINA_TRUE;
-   else
-      return EINA_FALSE;
+    return ret;
 }
 
 static Eina_Bool
@@ -297,16 +307,11 @@ _filter_ctx_popup_child_cb(const void *container, void *data, void *fdata)
    AtspiAccessible *obj = fdata;
    AtspiRole role = atspi_accessible_get_role(obj, NULL);
 
-   if (role == ATSPI_ROLE_NOTIFICATION)
-      return EINA_TRUE;
-
-   if (role == ATSPI_ROLE_POPUP_MENU)
-      return EINA_TRUE;
-
-   if (_check_if_object_has_modal_parent(obj))
-      return EINA_TRUE;
-
-   return EINA_FALSE;
+   AtspiAccessible *first_modal_ancestor = _first_modal_object_in_object_chain(obj);
+   Eina_Bool ret = first_modal_ancestor != NULL || role == ATSPI_ROLE_DIALOG || role == ATSPI_ROLE_POPUP_MENU;
+   if (first_modal_ancestor)
+       g_object_unref(first_modal_ancestor);
+   return ret;
 }
 
 static Eina_List*
@@ -353,7 +358,7 @@ _flat_review_candidates_get(AtspiAccessible *root)
       DEBUG("Name:[%s] Role:[%s]", atspi_accessible_get_name(obj, NULL), atspi_accessible_get_role_name(obj, NULL));
       role = atspi_accessible_get_role(obj, NULL);
 
-      if (role == ATSPI_ROLE_POPUP_MENU)
+      if (role == ATSPI_ROLE_POPUP_MENU || role == ATSPI_ROLE_DIALOG)
          with_ctx_popup = EINA_TRUE;
    }
    if (with_ctx_popup)
@@ -451,8 +456,9 @@ Eina_Bool flat_navi_context_current_at_x_y_set( FlatNaviContext *ctx, gint x_cor
    if(!ctx || !target) return EINA_FALSE;
 
    AtspiAccessible *current_obj = flat_navi_context_current_get(ctx);
-   if (current_obj && _contains(current_obj, x_cord, y_cord))
+   if (current_obj && _contains(current_obj, x_cord, y_cord) && !_object_has_modal_state(current_obj))
       {
+         DEBUG("object already highlighted");
          *target = current_obj;
          return EINA_TRUE;
       }
@@ -464,7 +470,16 @@ Eina_Bool flat_navi_context_current_at_x_y_set( FlatNaviContext *ctx, gint x_cor
      }
    Eina_Bool ret = EINA_FALSE;
    GError * error = NULL;
-   AtspiAccessible *obj = g_object_ref(ctx->root);
+
+   AtspiAccessible *obj = _first_modal_object_in_object_chain(current_obj);
+   if (!obj)
+     {
+        DEBUG("No modal object in ancestors chain. Using top_window");
+        obj = g_object_ref(ctx->root);
+     }
+   else
+     DEBUG("Found modal object in ancestors chain");
+
    AtspiAccessible *obj_under_finger = NULL;
    AtspiAccessible *youngest_ancestor_in_context = (_flat_navi_context_contains_object(ctx, obj) ? g_object_ref(obj) : NULL);
    AtspiComponent *component;
@@ -512,7 +527,7 @@ Eina_Bool flat_navi_context_current_at_x_y_set( FlatNaviContext *ctx, gint x_cor
    if (obj_under_finger)
        g_clear_object(&obj_under_finger);
 
-   if (youngest_ancestor_in_context)
+   if (youngest_ancestor_in_context && !_object_has_modal_state(youngest_ancestor_in_context))
       {
          if (youngest_ancestor_in_context == current_obj ||
              flat_navi_context_current_set(ctx, youngest_ancestor_in_context))

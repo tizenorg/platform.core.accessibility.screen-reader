@@ -37,6 +37,12 @@ msgstr "Tab %1$d of %2$d"
 msgid "IDS_TRAIT_TEXT_EDIT"
 msgstr "Double tap to edit"
 
+msgid "IDS_TRAIT_CTX_POPUP"
+msgstr "Contextual popup"
+
+msgid "IDS_TRAIT_POPUP"
+msgstr "popup"
+
 msgid "IDS_TRAIT_SHOWING"
 msgstr "Showing"
 

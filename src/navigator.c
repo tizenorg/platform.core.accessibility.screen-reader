@@ -238,7 +238,7 @@ generate_description_for_subtrees(AtspiAccessible *obj)
    role = atspi_accessible_get_role(obj, NULL);
 
    // Do not generate that for popups
-   if (role == ATSPI_ROLE_POPUP_MENU)
+   if (role == ATSPI_ROLE_POPUP_MENU || role == ATSPI_ROLE_DIALOG)
       return strdup("");
 
    child_count = atspi_accessible_get_child_count(obj, NULL);
@@ -269,6 +269,56 @@ generate_description_for_subtrees(AtspiAccessible *obj)
          free(name);
       }
    return strdup(ret);
+}
+
+static int
+_check_list_children_count(AtspiAccessible *obj)
+{
+   int list_count = 0;
+   int i;
+   AtspiAccessible *child = NULL;
+
+   if (!obj)
+      return 0;
+
+   if (atspi_accessible_get_role(obj, NULL) == ATSPI_ROLE_LIST)
+      {
+         int children_count = atspi_accessible_get_child_count(obj, NULL);
+
+         for (i=0;i<children_count;i++)
+            {
+               child = atspi_accessible_get_child_at_index(obj, i, NULL);
+               if (atspi_accessible_get_role(child, NULL) == ATSPI_ROLE_LIST_ITEM)
+                  list_count++;
+               g_object_unref(child);
+            }
+      }
+
+   return list_count;
+}
+
+static int
+_find_popup_list_children_count(AtspiAccessible *obj)
+{
+   int list_items_count = 0;
+   int children_count = atspi_accessible_get_child_count(obj, NULL);
+   int i;
+   AtspiAccessible *child = NULL;
+
+   list_items_count = _check_list_children_count(obj);
+   if (list_items_count > 0)
+      return list_items_count;
+
+   for (i=0;i<children_count;i++)
+      {
+         child = atspi_accessible_get_child_at_index(obj, i, NULL);
+         list_items_count = _find_popup_list_children_count(child);
+         if (list_items_count > 0)
+            return list_items_count;
+         g_object_unref(child);
+      }
+
+   return 0;
 }
 
 char *
@@ -302,12 +352,12 @@ generate_trait(AtspiAccessible *obj)
       }
    else if (role == ATSPI_ROLE_POPUP_MENU)
       {
-         char *role_name = atspi_accessible_get_localized_role_name(obj, NULL);
-         strncat(ret, role_name, sizeof(ret) - strlen(ret) - 1);
-         strncat(ret, ", ", sizeof(ret) - strlen(ret) - 1);
-
          int children_count = atspi_accessible_get_child_count(obj, NULL);
          char trait[HOVERSEL_TRAIT_SIZE];
+
+         snprintf(trait, HOVERSEL_TRAIT_SIZE, _("IDS_TRAIT_CTX_POPUP"));
+         strncat(ret, trait, sizeof(ret) - strlen(ret) - 1);
+         strncat(ret, ", ", sizeof(ret) - strlen(ret) - 1);
 
          snprintf(trait, HOVERSEL_TRAIT_SIZE, _("IDS_TRAIT_SHOWING"));
          strncat(ret, trait, sizeof(ret) - strlen(ret) - 1);
@@ -320,6 +370,33 @@ generate_trait(AtspiAccessible *obj)
          snprintf(trait, HOVERSEL_TRAIT_SIZE, _("IDS_TRAIT_ITEMS"));
          strncat(ret, trait, sizeof(ret) - strlen(ret) - 1);
          strncat(ret, ", ", sizeof(ret) - strlen(ret) - 1);
+
+         snprintf(trait, HOVERSEL_TRAIT_SIZE, _("IDS_TRAIT_POPUP_CLOSE"));
+         strncat(ret, trait, sizeof(ret) - strlen(ret) - 1);
+      }
+   else if (role == ATSPI_ROLE_DIALOG)
+      {
+         int children_count = _find_popup_list_children_count(obj);
+         char trait[HOVERSEL_TRAIT_SIZE];
+
+         snprintf(trait, HOVERSEL_TRAIT_SIZE, _("IDS_TRAIT_POPUP"));
+         strncat(ret, trait, sizeof(ret) - strlen(ret) - 1);
+         strncat(ret, ", ", sizeof(ret) - strlen(ret) - 1);
+
+         if(children_count > 0)
+            {
+               snprintf(trait, HOVERSEL_TRAIT_SIZE, _("IDS_TRAIT_SHOWING"));
+               strncat(ret, trait, sizeof(ret) - strlen(ret) - 1);
+               strncat(ret, " ", sizeof(ret) - strlen(ret) - 1);
+
+               snprintf(trait, HOVERSEL_TRAIT_SIZE, "%d", children_count);
+               strncat(ret, trait, sizeof(ret) - strlen(ret) - 1);
+               strncat(ret, " ", sizeof(ret) - strlen(ret) - 1);
+
+               snprintf(trait, HOVERSEL_TRAIT_SIZE, _("IDS_TRAIT_ITEMS"));
+               strncat(ret, trait, sizeof(ret) - strlen(ret) - 1);
+               strncat(ret, ", ", sizeof(ret) - strlen(ret) - 1);
+            }
 
          snprintf(trait, HOVERSEL_TRAIT_SIZE, _("IDS_TRAIT_POPUP_CLOSE"));
          strncat(ret, trait, sizeof(ret) - strlen(ret) - 1);
