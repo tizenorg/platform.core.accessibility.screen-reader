@@ -163,6 +163,31 @@ _obj_state_visible_and_showing(AtspiAccessible *obj, Eina_Bool for_parent)
 }
 
 static Eina_Bool
+_has_escape_action(AtspiAccessible *obj)
+{
+   Eina_Bool ret = EINA_FALSE;
+
+   AtspiAction *action = NULL;
+
+   action = atspi_accessible_get_action_iface(obj);
+   if(action)
+   {
+      int i = 0;
+      for (; i < atspi_action_get_n_actions(action, NULL); i++)
+        {
+           if (!strcmp(atspi_action_get_action_name(action, i, NULL), "escape"))
+             {
+                ret = EINA_TRUE;
+                break;
+             }
+        }
+      g_object_unref(action);
+   }
+   DEBUG("Obj %s %s escape action",atspi_accessible_get_role_name(obj, NULL), ret ? "has" : "doesn't have");
+   return ret;
+}
+
+static Eina_Bool
 _no_need_for_focusable_state(AtspiAccessible *obj)
 {
    AtspiRole role = atspi_accessible_get_role(obj, NULL);
@@ -192,6 +217,7 @@ _no_need_for_focusable_state(AtspiAccessible *obj)
       case ATSPI_ROLE_PUSH_BUTTON:
          if (_obj_state_visible_and_showing(obj, EINA_FALSE))
             return EINA_TRUE;
+         break;
       case ATSPI_ROLE_POPUP_MENU:
          if (_obj_state_visible_and_showing(obj, EINA_FALSE))
             return EINA_TRUE;
@@ -308,7 +334,9 @@ _filter_ctx_popup_child_cb(const void *container, void *data, void *fdata)
    AtspiRole role = atspi_accessible_get_role(obj, NULL);
 
    AtspiAccessible *first_modal_ancestor = _first_modal_object_in_object_chain(obj);
-   Eina_Bool ret = first_modal_ancestor != NULL || role == ATSPI_ROLE_DIALOG || role == ATSPI_ROLE_POPUP_MENU;
+   Eina_Bool ret = (first_modal_ancestor && first_modal_ancestor != obj)
+                   || (role == ATSPI_ROLE_DIALOG && _has_escape_action(obj))
+                   || role == ATSPI_ROLE_POPUP_MENU;
    if (first_modal_ancestor)
        g_object_unref(first_modal_ancestor);
    return ret;

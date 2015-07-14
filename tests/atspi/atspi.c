@@ -418,6 +418,21 @@ int atspi_component_get_highlight_index(AtspiComponent *obj, GError **error)
    return 0;
 }
 
+AtspiAction * atspi_accessible_get_action_iface (AtspiAccessible *obj)
+{
+   return NULL;
+}
+
+gint atspi_action_get_n_actions(AtspiAction *obj, GError **error)
+{
+   return 0;
+}
+
+gchar * atspi_action_get_action_name (AtspiAction *obj, gint i, GError **error)
+{
+    return strdup("");
+}
+
 int atspi_exit(void)
 {
    return 1;

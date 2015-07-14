@@ -42,6 +42,7 @@ typedef struct _AtspiScrollable AtspiScrollable;
 typedef struct _AtspiRect AtspiRect;
 typedef struct _AtspiEditableText AtspiEditableText;
 typedef struct _AtspiRelation AtspiRelation;
+typedef struct _AtspiAction AtspiAction;
 
 typedef struct _AtspiAccessibleClass AtspiAccessibleClass;
 typedef struct _AtspiComponentClass AtspiComponentClass;
@@ -272,6 +273,11 @@ struct _AtspiAccessibleClass
    GObjectClass parent_class;
 };
 
+struct _AtspiAction
+{
+  GTypeInterface parent;
+};
+
 struct _AtspiComponentClass
 {
    GObjectClass parent_class;
@@ -401,6 +407,9 @@ AtspiAccessible * atspi_relation_get_target (AtspiRelation *obj, gint i);
 AtspiAccessible * atspi_accessible_get_parent (AtspiAccessible *obj, GError **error);
 gboolean atspi_component_contains (AtspiComponent *obj, gint x, gint y, AtspiCoordType ctype, GError **error);
 int atspi_component_get_highlight_index(AtspiComponent *obj, GError **error);
+AtspiAction * atspi_accessible_get_action_iface (AtspiAccessible *obj);
+gint atspi_action_get_n_actions (AtspiAction *obj, GError **error);
+gchar * atspi_action_get_action_name (AtspiAction *obj, gint i, GError **error);
 
 int atspi_exit(void);
 
