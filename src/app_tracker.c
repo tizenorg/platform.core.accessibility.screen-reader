@@ -106,7 +106,6 @@ _app_tracker_init_internal(void)
 
    atspi_event_listener_register(_listener, "object:state-changed:showing", NULL);
    atspi_event_listener_register(_listener, "object:state-changed:visible", NULL);
-   atspi_event_listener_register(_listener, "object:children-changed", NULL);
    atspi_event_listener_register(_listener, "object:bounds-changed", NULL);
    atspi_event_listener_register(_listener, "object:visible-data-changed", NULL);
 
