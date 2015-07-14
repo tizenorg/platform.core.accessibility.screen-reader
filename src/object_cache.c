@@ -157,26 +157,6 @@ _object_cache_new(void)
    return eina_hash_pointer_new(_cache_item_free_cb);
 }
 
-void
-object_cache_build(AtspiAccessible *root)
-{
-   DEBUG("START");
-   Eina_List *objs;
-
-   _object_cache_free_internal();
-   cache = _object_cache_new();
-   if (!cache)
-      {
-         ERROR("ObjectCache: hash table creation failed");
-         return;
-      }
-
-   objs = _cache_candidates_list_prepare(root);
-   _cache_item_n_cache(objs, eina_list_count(objs));
-
-   return;
-}
-
 static Eina_Bool
 _do_cache(void *data)
 {
@@ -194,11 +174,7 @@ void
 object_cache_build_async(AtspiAccessible *root, int bulk_size, ObjectCacheReadyCb cb, void *ud)
 {
    DEBUG("START");
-   if (idler)
-      {
-         ERROR("Invalid usage. Async cache build is ongoing...");
-         return;
-      }
+
    _object_cache_free_internal();
 
    callback = cb;

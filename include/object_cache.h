@@ -13,17 +13,6 @@ typedef struct
 typedef void (*ObjectCacheReadyCb)(void *data);
 
 /**
- * @brief Recursivly build ObjectCache structures for root Accessible
- * object from and its descendants. (Children's children also, etc.)
- *
- * @param root starting object.
- *
- * @remarks This function may block main-loop for significant ammount of time.
- *          Flushes all previously cached items.
- */
-void object_cache_build(AtspiAccessible *root);
-
-/**
  * @brief Recursivly build ObjectCache structures for ever Accessible
  * object from root and its all descendants.
  *
