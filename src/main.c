@@ -172,9 +172,12 @@ static int app_create(void *data)
    elm_init(0, NULL);
 
    logger_init();
-   screen_reader_gestures_init();
    screen_reader_create_service(data);
+
+#ifndef SCREEN_READER_TV
+   screen_reader_gestures_init();
    navigator_init();
+#endif
 
    return 0;
 }
@@ -183,8 +186,11 @@ static int app_terminate(void *data)
 {
    screen_reader_terminate_service(data);
 
+#ifndef SCREEN_READER_TV
    navigator_shutdown();
    screen_reader_gestures_shutdown();
+#endif
+
    eldbus_shutdown();
    logger_shutdown();
    return 0;

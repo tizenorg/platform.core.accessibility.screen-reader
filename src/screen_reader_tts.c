@@ -132,13 +132,14 @@ static void __tts_test_utt_completed_cb(tts_h tts, int utt_id, void* user_data)
             flush_flag = EINA_FALSE;
       }
 
+#ifndef SCREEN_READER_TV
    if(last_utt_id == utt_id)
       {
          DEBUG("LAST UTTERANCE");
          pause_state = EINA_FALSE;
          on_utterance_end();
-
       }
+#endif
 
    return;
 }
@@ -151,7 +152,7 @@ bool tts_init(void *data)
    int r = tts_create( &sd->tts );
    DEBUG( "Create tts %d (%s)", r, get_tts_error( r ) );
 
-   r = tts_set_mode( sd->tts, TTS_MODE_DEFAULT );
+   r = tts_set_mode( sd->tts, TTS_MODE_SCREEN_READER );
    DEBUG( "Set tts mode SR %d (%s)", r, get_tts_error( r ) );
 
    r = tts_prepare( sd->tts );
@@ -228,9 +229,30 @@ void tts_speak(char *text_to_speak, Eina_Bool flush_switch)
    DEBUG( "text to say:%s\n", text_to_speak);
    if ( !text_to_speak ) return;
    if ( !text_to_speak[0] ) return;
-
-   if(tts_add_text( sd->tts, text_to_speak, NULL, TTS_VOICE_TYPE_AUTO, TTS_SPEED_AUTO, &speak_id))
+   int ret = 0;
+   if(ret = tts_add_text( sd->tts, text_to_speak, NULL, TTS_VOICE_TYPE_AUTO, TTS_SPEED_AUTO, &speak_id))
+   {
+       switch(ret) {
+       case TTS_ERROR_INVALID_PARAMETER:
+           DEBUG("FAILED tts_add_text: error: TTS_ERROR_INVALID_PARAMETER");
+           break;
+       case TTS_ERROR_INVALID_STATE:
+         DEBUG("FAILED tts_add_text: error: TTS_ERROR_INVALID_STATE, tts_state: %d", state);
+         break;
+       case TTS_ERROR_INVALID_VOICE:
+         DEBUG("FAILED tts_add_text: error: TTS_ERROR_INVALID_VOICE");
+         break;
+       case TTS_ERROR_OPERATION_FAILED:
+         DEBUG("FAILED tts_add_text: error: TTS_ERROR_OPERATION_FAILED");
+         break;
+       case TTS_ERROR_NOT_SUPPORTED:
+         DEBUG("FAILED tts_add_text: error: TTS_ERROR_NOT_SUPPORTED");
+         break;
+       default:
+         DEBUG("FAILED tts_add_text: error: not recognized");
+       }
       return;
+   }
 
    DEBUG("added id to:%d\n", speak_id);
    last_utt_id = speak_id;

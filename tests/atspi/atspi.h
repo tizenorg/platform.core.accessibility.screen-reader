@@ -359,6 +359,7 @@ typedef enum
 
 gchar * atspi_accessible_get_name (AtspiAccessible *obj, GError **error);
 gchar * atspi_accessible_get_role_name (AtspiAccessible *obj, GError **error);
+gchar * atspi_accessible_get_localized_role_name (AtspiAccessible *obj, GError **error);
 gchar * atspi_accessible_get_toolkit_name (AtspiAccessible *obj, GError **error);
 gchar * atspi_accessible_get_description (AtspiAccessible *obj, GError **error);
 AtspiText * atspi_accessible_get_text_iface (AtspiAccessible *obj);

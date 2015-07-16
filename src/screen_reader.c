@@ -15,8 +15,11 @@ Service_Data service_data =
 {
    //Set by vconf
    .run_service = 1,
+#ifdef SCREEN_READER_TV
+   .tracking_signal_name = FOCUS_CHANGED_SIG,
+#else
    .tracking_signal_name = HIGHLIGHT_CHANGED_SIG,
-
+#endif
 
    //Set by tts
    .tts = NULL,
@@ -40,9 +43,11 @@ int screen_reader_create_service(void *data)
    vconf_init(service_data);
    tts_init(service_data);
 
+#ifdef SCREEN_READER_TV
+   spi_init(service_data);
+#endif
 
    /* XML TEST */
-
 #ifdef RUN_IPC_TEST_SUIT
    run_xml_tests();
    test_suite_init();

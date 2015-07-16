@@ -31,7 +31,7 @@ static void display_info(const AtspiEvent *event)
 {
    AtspiAccessible  *source = event->source;
    gchar *name = atspi_accessible_get_name(source, NULL);
-   gchar *role = atspi_accessible_get_role_name(source, NULL);
+   gchar *role = atspi_accessible_get_localized_role_name(source, NULL);
    gchar *toolkit = atspi_accessible_get_toolkit_name(source, NULL);
 
    DEBUG("--------------------------------------------------------");
@@ -111,7 +111,7 @@ static char *spi_on_state_changed_get_text(AtspiEvent *event, void *user_data)
 
    description = atspi_accessible_get_description(sd->currently_focused, NULL);
    name = atspi_accessible_get_name(sd->currently_focused, NULL);
-   role_name = atspi_accessible_get_role_name(sd->currently_focused, NULL);
+   role_name = atspi_accessible_get_localized_role_name(sd->currently_focused, NULL);
    other = generate_description_for_subtree(sd->currently_focused);
 
    DEBUG("->->->->->-> WIDGET GAINED HIGHLIGHT: %s <-<-<-<-<-<-<-", name);
@@ -281,7 +281,6 @@ char *spi_event_get_text_to_read(AtspiEvent *event, void *user_data)
 void spi_event_listener_cb(AtspiEvent *event, void *user_data)
 {
    DEBUG("START")
-
    display_info(event);
 
    if(!user_data)
@@ -296,8 +295,24 @@ void spi_event_listener_cb(AtspiEvent *event, void *user_data)
          ERROR("Can not prepare text to read");
          return;
       }
-   DEBUG("SPEAK:%s", text_to_read)
+   DEBUG("SPEAK: %s", text_to_read)
    tts_speak(text_to_read, EINA_FALSE);
+
+   tts_state_e state;
+   Service_Data *sd = (Service_Data*)user_data;
+   tts_get_state(sd->tts, &state);
+
+   if (state == TTS_STATE_READY || state == TTS_STATE_PAUSED)
+     {
+        int ret = tts_play(sd->tts);
+        if (TTS_ERROR_NONE != ret)
+           ERROR("Fail to play TTS : ret(%d)", ret);
+     }
+   else
+     {
+           DEBUG("Current tts state: %d", state);
+     }
+
    free(text_to_read);
    DEBUG("END")
 }
@@ -335,17 +350,21 @@ void spi_init(Service_Data *sd)
       {
          DEBUG("FAILED TO REGISTER spi focus/highlight listener");
       }
-
-   gboolean ret2 = atspi_event_listener_register(sd->spi_listener, CARET_MOVED_SIG, NULL);
+   GError *error = NULL;
+   gboolean ret2 = atspi_event_listener_register(sd->spi_listener, CARET_MOVED_SIG, &error);
    if(ret2 == false)
       {
-         DEBUG("FAILED TO REGISTER spi caret moved listener");
+         DEBUG("FAILED TO REGISTER spi caret moved listener: %s", error ? error->message : "no error message");
+         if (error)
+             g_clear_error(&error);
       }
 
-   gboolean ret3 = atspi_event_listener_register(sd->spi_listener, VALUE_CHANGED_SIG, NULL);
+   gboolean ret3 = atspi_event_listener_register(sd->spi_listener, VALUE_CHANGED_SIG, &error);
    if(ret3 == false)
       {
-         DEBUG("FAILED TO REGISTER spi value changed listener");
+         DEBUG("FAILED TO REGISTER spi value changed listener: %s", error ? error->message : "no error message");
+         if (error)
+             g_clear_error(&error);
       }
 
    if(ret1 == true && ret2 == true && ret3 == true)
