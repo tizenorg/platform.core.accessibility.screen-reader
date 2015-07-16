@@ -454,21 +454,6 @@ Eina_Bool flat_navi_context_current_at_x_y_set( FlatNaviContext *ctx, gint x_cor
 }
 #else
 
-static Eina_Bool
-_contains(AtspiAccessible *obj, gint x, gint y)
-{
-   const ObjectCache *oc = object_cache_get(obj);
-
-   if (oc && x >= oc->bounds->x && x <= oc->bounds->x + oc->bounds->width
-         && y >= oc->bounds->y && y <= oc->bounds->y + oc->bounds->height)
-      {
-         DEBUG("INSIDE");
-         return EINA_TRUE;
-      }
-
-   return EINA_FALSE;
-
-}
 static Eina_Bool _flat_navi_context_contains_object(FlatNaviContext *ctx, AtspiAccessible *obj)
 {
    if(!ctx || !obj) return EINA_FALSE;
@@ -484,12 +469,6 @@ Eina_Bool flat_navi_context_current_at_x_y_set( FlatNaviContext *ctx, gint x_cor
    if(!ctx || !target) return EINA_FALSE;
 
    AtspiAccessible *current_obj = flat_navi_context_current_get(ctx);
-   if (current_obj && _contains(current_obj, x_cord, y_cord) && !_object_has_modal_state(current_obj))
-      {
-         DEBUG("object already highlighted");
-         *target = current_obj;
-         return EINA_TRUE;
-      }
 
    if (!ctx->root)
      {
