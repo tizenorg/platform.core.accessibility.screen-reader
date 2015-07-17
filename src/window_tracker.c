@@ -19,14 +19,6 @@ _on_atspi_window_cb(const AtspiEvent *event)
          if (user_cb) user_cb(user_data, event->source);
          last_active_win = event->source;
       }
-   if (!strcmp(event->type, "window:deactivate") ||
-         !strcmp(event->type, "window:destroy"))
-      {
-         if (last_active_win != event->source)
-            return;
-         if (user_cb) user_cb(user_data, NULL);
-         last_active_win = NULL;
-      }
 }
 
 static AtspiAccessible*
@@ -65,9 +57,7 @@ void window_tracker_init(void)
 {
    DEBUG("START");
    listener = atspi_event_listener_new_simple(_on_atspi_window_cb, NULL);
-   atspi_event_listener_register(listener, "window:deactivate", NULL);
    atspi_event_listener_register(listener, "window:create", NULL);
-   atspi_event_listener_register(listener, "window:destroy", NULL);
    atspi_event_listener_register(listener, "window:activate", NULL);
    atspi_event_listener_register(listener, "window:restore", NULL);
 }
@@ -75,11 +65,9 @@ void window_tracker_init(void)
 void window_tracker_shutdown(void)
 {
    DEBUG("START");
-   atspi_event_listener_deregister(listener, "window:deactivate", NULL);
    atspi_event_listener_deregister(listener, "window:create", NULL);
    atspi_event_listener_deregister(listener, "window:activate", NULL);
    atspi_event_listener_deregister(listener, "window:restore", NULL);
-   atspi_event_listener_deregister(listener, "window:destroy", NULL);
    g_object_unref(listener);
    listener = NULL;
    user_cb = NULL;

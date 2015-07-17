@@ -9,10 +9,17 @@
 
 #define ATSPI_ACCESSIBLE_OBJECT_TYPE                (atspi_accessible_get_type ())
 #define ATSPI_ACCESSIBLE(obj)                       (G_TYPE_CHECK_INSTANCE_CAST ((obj), ATSPI_ACCESSIBLE_OBJECT_TYPE, AtspiAccessible))
-#define ATSPI_ACESSIBLE_IS_OBJECT(obj)              (G_TYPE_CHECK_INSTANCE_TYPE ((obj), ATSPI_ACCESSIBLE_OBJECT_TYPE))
+#define ATSPI_ACCESSIBLE_IS_OBJECT(obj)             (G_TYPE_CHECK_INSTANCE_TYPE ((obj), ATSPI_ACCESSIBLE_OBJECT_TYPE))
 #define ATSPI_ACCESSIBLE_CLASS(_class)              (G_TYPE_CHECK_CLASS_CAST ((_class), ATSPI_ACCESSIBLE_OBJECT_TYPE, AtspiAccessibleClass))
 #define ATSPI_ACCESSIBLE_IS_OBJECT_CLASS(_class)    (G_TYPE_CHECK_CLASS_TYPE ((_class), ATSPI_ACCESSIBLE_OBJECT_TYPE))
 #define ATSPI_ACCESSIBLE_GET_CLASS(obj)             (G_TYPE_INSTANCE_GET_CLASS ((obj), ATSPI_ACCESSIBLE_OBJECT_TYPE, AtspiAccessibleClass))
+
+#define ATSPI_ACTION_OBJECT_TYPE                (atspi_action_get_type ())
+#define ATSPI_ACTION(obj)                       (G_TYPE_CHECK_INSTANCE_CAST ((obj), ATSPI_ACTION_OBJECT_TYPE, AtspiAccessible))
+#define ATSPI_ACTION_IS_OBJECT(obj)              (G_TYPE_CHECK_INSTANCE_TYPE ((obj), ATSPI_ACTION_OBJECT_TYPE))
+#define ATSPI_ACTION_CLASS(_class)              (G_TYPE_CHECK_CLASS_CAST ((_class), ATSPI_ACTION_OBJECT_TYPE, AtspiAccessibleClass))
+#define ATSPI_ACTION_IS_OBJECT_CLASS(_class)    (G_TYPE_CHECK_CLASS_TYPE ((_class), ATSPI_ACTION_OBJECT_TYPE))
+#define ATSPI_ACTION_GET_CLASS(obj)             (G_TYPE_INSTANCE_GET_CLASS ((obj), ATSPI_ACTION_OBJECT_TYPE, AtspiAccessibleClass))
 
 #define ATSPI_COMPONENT_OBJECT_TYPE                 (atspi_component_get_type ())
 #define ATSPI_COMPONENT(obj)                        (G_TYPE_CHECK_INSTANCE_CAST ((obj), ATSPI_COMPONENT_OBJECT_TYPE, AtspiAccessible))
@@ -32,6 +39,7 @@
 typedef struct _AtspiApplication AtspiApplication;
 typedef struct _AtspiObject AtspiObject;
 typedef struct _AtspiAccessible AtspiAccessible;
+typedef struct _AtspiAction AtspiAction;
 typedef struct _AtspiEvent AtspiEvent;
 typedef struct _AtspiStateSet AtspiStateSet;
 typedef struct _AtspiEventListener AtspiEventListener;
@@ -45,6 +53,7 @@ typedef struct _AtspiRelation AtspiRelation;
 typedef struct _AtspiAction AtspiAction;
 
 typedef struct _AtspiAccessibleClass AtspiAccessibleClass;
+typedef struct _AtspiActionClass AtspiActionClass;
 typedef struct _AtspiComponentClass AtspiComponentClass;
 typedef struct _AtspiStateSetClass AtspiStateSetClass;
 
@@ -266,6 +275,8 @@ struct _AtspiAccessible
    AtspiStateSet *states;
    GHashTable *attributes;
    guint cached_properties;
+   gint index_in_parent;
+   gint child_count;
 };
 
 struct _AtspiAccessibleClass
@@ -273,9 +284,9 @@ struct _AtspiAccessibleClass
    GObjectClass parent_class;
 };
 
-struct _AtspiAction
+struct _AtspiActionClass
 {
-  GTypeInterface parent;
+   GObjectClass parent_class;
 };
 
 struct _AtspiComponentClass
@@ -312,6 +323,10 @@ struct _AtspiEventListener
    GDestroyNotify cb_destroyed;
 };
 
+struct _AtspiAction
+{
+   GTypeInterface parent;
+};
 struct _AtspiText
 {
    GTypeInterface parent;
@@ -363,6 +378,7 @@ gchar * atspi_accessible_get_localized_role_name (AtspiAccessible *obj, GError *
 gchar * atspi_accessible_get_toolkit_name (AtspiAccessible *obj, GError **error);
 gchar * atspi_accessible_get_description (AtspiAccessible *obj, GError **error);
 AtspiText * atspi_accessible_get_text_iface (AtspiAccessible *obj);
+AtspiAction * atspi_accessible_get_action_iface (AtspiAccessible *obj);
 gint atspi_text_get_character_count (AtspiText *obj, GError **error);
 gint atspi_text_get_caret_offset (AtspiText *obj, GError **error);
 gchar * atspi_text_get_text (AtspiText *obj, gint start_offset, gint end_offset, GError **error);
@@ -408,6 +424,7 @@ AtspiAccessible * atspi_relation_get_target (AtspiRelation *obj, gint i);
 AtspiAccessible * atspi_accessible_get_parent (AtspiAccessible *obj, GError **error);
 gboolean atspi_component_contains (AtspiComponent *obj, gint x, gint y, AtspiCoordType ctype, GError **error);
 int atspi_component_get_highlight_index(AtspiComponent *obj, GError **error);
+gint atspi_accessible_get_index_in_parent (AtspiAccessible *obj, GError **error);
 AtspiAction * atspi_accessible_get_action_iface (AtspiAccessible *obj);
 gint atspi_action_get_n_actions (AtspiAction *obj, GError **error);
 gchar * atspi_action_get_action_name (AtspiAction *obj, gint i, GError **error);

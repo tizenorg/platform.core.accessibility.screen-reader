@@ -230,7 +230,7 @@ void tts_speak(char *text_to_speak, Eina_Bool flush_switch)
    if ( !text_to_speak ) return;
    if ( !text_to_speak[0] ) return;
    int ret = 0;
-   if(ret = tts_add_text( sd->tts, text_to_speak, NULL, TTS_VOICE_TYPE_AUTO, TTS_SPEED_AUTO, &speak_id))
+   if((ret = tts_add_text( sd->tts, text_to_speak, NULL, TTS_VOICE_TYPE_AUTO, TTS_SPEED_AUTO, &speak_id)))
    {
        switch(ret) {
        case TTS_ERROR_INVALID_PARAMETER:

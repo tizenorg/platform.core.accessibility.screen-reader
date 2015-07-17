@@ -7,8 +7,6 @@
 #include "window_tracker.h"
 #include "keyboard_tracker.h"
 #include "pivot_chooser.h"
-#include "structural_navi.h"
-#include "object_cache.h"
 #include "flat_navi.h"
 #include "app_tracker.h"
 #include "smart_notification.h"
@@ -55,9 +53,6 @@ static last_focus_t last_focus = {-1,-1};
 static AtspiAccessible *current_obj;
 static AtspiComponent *current_comp = NULL;
 static AtspiAccessible *top_window;
-//static AtspiScrollable *scrolled_obj;
-static Eina_Bool _window_cache_builded;
-static Eina_Bool _window_top_changed;
 static FlatNaviContext *context;
 static bool prepared = false;
 static int counter=0;
@@ -166,7 +161,8 @@ state_to_char(AtspiStateType state)
          return strdup("ATSPI_STATE_READ_ONLY");
       case ATSPI_STATE_LAST_DEFINED:
          return strdup("ATSPI_STATE_LAST_DEFINED");
-
+      case ATSPI_STATE_MODAL:
+         return strdup("ATSPI_STATE_MODAL");
       default:
          return strdup("\0");
       }
@@ -194,6 +190,7 @@ display_info_about_object(AtspiAccessible *obj)
    DEBUG("DESCRIPTION:%s", description);
    DEBUG("CHILDS:%d", atspi_accessible_get_child_count(obj, NULL));
    DEBUG("HIGHLIGHT_INDEX:%d", atspi_component_get_highlight_index(comp, NULL));
+   DEBUG("INDEX IN PARENT:%d", atspi_accessible_get_index_in_parent(obj, NULL));
    if (value)
       {
          DEBUG("VALUE:%f", atspi_value_get_current_value (value, NULL));
@@ -210,6 +207,7 @@ display_info_about_object(AtspiAccessible *obj)
          DEBUG("   %s", state_name);
          free(state_name);
       }
+   g_array_free(states, 0);
    DEBUG("LOCALE:%s", atspi_accessible_get_object_locale(obj, NULL));
    DEBUG("SIZE ON SCREEN, width:%d, height:%d",rect_screen->width, rect_screen->height);
    DEBUG("POSITION ON SCREEN: x:%d y:%d", rect_screen->x, rect_screen->y);
@@ -224,6 +222,10 @@ generate_description_for_subtrees(AtspiAccessible *obj)
 {
    DEBUG("START");
 
+   if (!obj)
+      return strdup("");
+   return strdup("");
+   /*
    AtspiRole role;
    int child_count;
    int i;
@@ -232,8 +234,7 @@ generate_description_for_subtrees(AtspiAccessible *obj)
    char ret[TTS_MAX_TEXT_SIZE] = "\0";
    AtspiAccessible *child = NULL;
 
-   if (!obj)
-      return strdup("");
+   int child_count = atspi_accessible_get_child_count(obj, NULL);
 
    role = atspi_accessible_get_role(obj, NULL);
 
@@ -269,6 +270,7 @@ generate_description_for_subtrees(AtspiAccessible *obj)
          free(name);
       }
    return strdup(ret);
+   */
 }
 
 static int
@@ -487,14 +489,18 @@ _current_highlight_object_set(AtspiAccessible *obj)
    DEBUG("START");
    GError *err = NULL;
    gchar *role = NULL;
-   gchar *name = NULL;
-   if (!context)
-      return;
 
    if (!obj)
       {
          DEBUG("Clearing highlight object");
          current_obj = NULL;
+         if (current_comp)
+            {
+               atspi_component_clear_highlight(current_comp, &err);
+               g_object_ref(current_comp);
+               current_comp = NULL;
+            }
+
          return;
       }
    if (current_obj == obj)
@@ -525,34 +531,6 @@ _current_highlight_object_set(AtspiAccessible *obj)
          GERROR_CHECK(err)
 
          current_obj = obj;
-         const ObjectCache *oc = object_cache_get(obj);
-         if (oc)
-            {
-               name = atspi_accessible_get_name(obj, &err);
-               GERROR_CHECK(err)
-               role = atspi_accessible_get_role_name(obj, &err);
-               GERROR_CHECK(err)
-               DEBUG("New highlighted object: %s, role: %s, (%d %d %d %d)",
-                     name,
-                     role,
-                     oc->bounds->x, oc->bounds->y, oc->bounds->width, oc->bounds->height);
-               haptic_vibrate_start();
-               g_free(name);
-               g_free(role);
-            }
-         else
-            {
-               name = atspi_accessible_get_name(obj, &err);
-               GERROR_CHECK(err)
-               role = atspi_accessible_get_role_name(obj, &err);
-               GERROR_CHECK(err)
-               DEBUG("New highlighted object: %s, role: %s",
-                     name,
-                     role);
-               haptic_vibrate_start();
-               g_free(name);
-               g_free(role);
-            }
          char *text_to_speak = NULL;
          text_to_speak = generate_what_to_read(obj);
          DEBUG("SPEAK:%s", text_to_speak);
@@ -602,133 +580,6 @@ void test_debug(AtspiAccessible *current_widget)
       }
 }
 
-#if 0
-static void object_get_x_y(AtspiAccessible * accessibleObject, int* x, int* y)
-{
-   GError * error = NULL;
-
-   if ( ATSPI_IS_COMPONENT(accessibleObject) )
-      {
-         AtspiComponent * component = ATSPI_COMPONENT(accessibleObject);
-         AtspiPoint *position = atspi_component_get_position (component, ATSPI_COORD_TYPE_SCREEN, &error);
-         if ( error != NULL )
-            {
-               g_error_free(error);
-            }
-         if ( position != NULL )
-            {
-               *x = position->x;
-               *y = position->y;
-               g_free ( position );
-            }
-      }
-}
-
-static void object_get_wh(AtspiAccessible * accessibleObject, int* width, int* height)
-{
-   GError * error = NULL;
-
-   if ( ATSPI_IS_COMPONENT(accessibleObject) )
-      {
-         AtspiComponent * component = ATSPI_COMPONENT(accessibleObject);
-         AtspiPoint * size = atspi_component_get_size (component, &error);
-         if ( error != NULL )
-            {
-               g_error_free(error);
-            }
-         if ( size != NULL )
-            {
-               *width = size->x;
-               *height = size->y;
-               g_free ( size );
-            }
-      }
-}
-
-static void find_objects(AtspiAccessible* parent, gint x, gint y, gint radius, double* distance, AtspiAccessible **find_app)
-{
-   AtspiAccessible* app = NULL;
-   GError* err = NULL;
-   int jdx, kdx;
-
-   int count_child = atspi_accessible_get_child_count(parent, &err);
-
-   for(jdx = 0; jdx < count_child; jdx++)
-      {
-         app = atspi_accessible_get_child_at_index(parent, jdx, &err);
-
-         AtspiStateSet* state_set = atspi_accessible_get_state_set (app);
-         AtspiStateType state =  ATSPI_STATE_VISIBLE;
-
-         int height = 0, width = 0, xpos1 = 0, ypos1 = 0, xpos2 = 0, ypos2 = 0;
-
-         object_get_wh(app, &width, &height);
-         object_get_x_y(app, &xpos1, &ypos1);
-
-         gboolean is_visile = atspi_state_set_contains(state_set, state);
-
-         if(is_visile == TRUE && width > 0 && height > 0)
-            {
-               xpos2 = xpos1 + width;
-               ypos2 = ypos1 + height;
-
-               double set_distance[DISTANCE_NB] = {0};
-               double min_distance = DBL_MAX;
-
-               set_distance[0] = pow((x - xpos1), 2) + pow((y - ypos1), 2);
-               set_distance[1] = pow((x - xpos2), 2) + pow((y - ypos1), 2);
-               set_distance[2] = pow((x - xpos1), 2) + pow((y - ypos2), 2);
-               set_distance[3] = pow((x - xpos2), 2) + pow((y - ypos2), 2);
-               set_distance[4] = DBL_MAX;
-               set_distance[5] = DBL_MAX;
-               set_distance[6] = DBL_MAX;
-               set_distance[7] = DBL_MAX;
-
-               if(x >= fmin(xpos1, xpos2) && x <= fmax(xpos1, xpos2))
-                  {
-                     set_distance[4] = pow((y - ypos1), 2);
-                     set_distance[5] = pow((y - ypos2), 2);
-                  }
-
-               if(y >= fmin(ypos1, ypos2) && y <= fmax(ypos1, ypos2))
-                  {
-                     set_distance[6] = pow((x - xpos1), 2);
-                     set_distance[7] = pow((x - xpos2), 2);
-                  }
-
-               for(kdx = 0; kdx < DISTANCE_NB; kdx++)
-                  {
-                     if(set_distance[kdx] < min_distance)
-                        min_distance = set_distance[kdx];
-                  }
-
-               if(min_distance <= *distance && (radius < 0 || (radius >= 0 && min_distance <= radius)))
-                  {
-                     *distance = min_distance;
-                     *find_app = app;
-                  }
-               find_objects(app, x, y, radius, distance, find_app);
-            }
-      }
-}
-
-
-static AtspiAccessible *get_nearest_widget(AtspiAccessible* app_obj, gint x_cord, gint y_cord, gint radius)
-{
-   int xn = 0, yn = 0;
-   GError *err = NULL;
-   AtspiAccessible* f_app_obj = app_obj;
-   double distance = DBL_MAX;
-   int jdx = 0;
-
-   int count_child = atspi_accessible_get_child_count(app_obj, &err);
-
-   find_objects(app_obj, x_cord, y_cord, radius, &distance, &f_app_obj);
-
-   return f_app_obj;
-}
-#endif
-
 static void _focus_widget(Gesture_Info *info)
 {
    DEBUG("START");
@@ -768,16 +619,6 @@ static void _focus_next(void)
       }
 
    obj = flat_navi_context_next(context);
-   // try next line
-   if (!obj)
-      obj = flat_navi_context_line_next(context);
-   // try 'cycle' objects in context
-   if (!obj)
-      {
-         flat_navi_context_line_first(context);
-         obj = flat_navi_context_first(context);
-         smart_notification(FOCUS_CHAIN_END_NOTIFICATION_EVENT, 0, 0);
-      }
    if (obj)
       _current_highlight_object_set(obj);
    else
@@ -800,9 +641,6 @@ static void _focus_next_visible(void)
    do
       {
          obj = flat_navi_context_next(context);
-         // try next line
-         if (!obj)
-            obj = flat_navi_context_line_next(context);
          // try 'cycle' objects in context
          if (obj)
             {
@@ -833,9 +671,6 @@ static void _focus_prev_visible(void)
    do
       {
          obj = flat_navi_context_prev(context);
-         // try next line
-         if (!obj)
-            obj = flat_navi_context_line_prev(context);
          // try 'cycle' objects in context
          if (obj)
             {
@@ -862,20 +697,6 @@ static void _focus_prev(void)
       }
 
    obj = flat_navi_context_prev(context);
-   // try previous line
-   if (!obj)
-      {
-         obj = flat_navi_context_line_prev(context);
-         if (obj)
-            obj = flat_navi_context_last(context);
-      }
-   // try 'cycle' objects in context
-   if (!obj)
-      {
-         flat_navi_context_line_last(context);
-         obj = flat_navi_context_last(context);
-         smart_notification(FOCUS_CHAIN_END_NOTIFICATION_EVENT, 0, 0);
-      }
    if (obj)
       _current_highlight_object_set(obj);
    else
@@ -1427,38 +1248,6 @@ static void _widget_scroll_end(Gesture_Info *gi)
    GERROR_CHECK(err)
 }
 */
-#if 0
-// part of structural navigation
-static void _goto_children_widget(void)
-{
-   AtspiAccessible *obj;
-   if (!current_obj)
-      {
-         DEBUG("No current object is set. Aborting diving into children structure");
-         return;
-      }
-   obj = structural_navi_level_down(current_obj);
-   if (obj)
-      _current_highlight_object_set(obj);
-   else
-      DEBUG("Unable to find hihglightable children widget");
-}
-
-static void _escape_children_widget(void)
-{
-   AtspiAccessible *obj;
-   if (!current_obj)
-      {
-         DEBUG("No current object is set. Aborting escaping from children structure");
-         return;
-      }
-   obj = structural_navi_level_up(current_obj);
-   if (obj)
-      _current_highlight_object_set(obj);
-   else
-      DEBUG("Unable to find hihglightable parent widget");
-}
-#endif
 
 static void _widget_scroll(Gesture_Info *gi)
 {
@@ -1550,12 +1339,6 @@ void auto_review_highlight_set(void)
 
    if(!obj)
       {
-         obj = flat_navi_context_line_next(context);
-         DEBUG(">>> NEW LINE <<<");
-      }
-
-   if(!obj)
-      {
          s_auto_review.auto_review_on = false;
          return;
       }
@@ -1569,13 +1352,12 @@ void auto_review_highlight_top(void)
 {
    DEBUG("START");
    char *text_to_speak = NULL;
-   AtspiAccessible *first = flat_navi_context_first_get(context);
+   AtspiAccessible *first = flat_navi_context_first(context);
    AtspiAccessible *obj = flat_navi_context_current_get(context);
 
    if(first != obj)
       {
-         obj = flat_navi_context_line_first(context);
-         _current_highlight_object_set(obj);
+         _current_highlight_object_set(first);
       }
    else
       {
@@ -1641,7 +1423,6 @@ _direct_scroll_back(void)
          return;
       }
 
-   int visi = 0;
    AtspiAccessible *obj = NULL;
    AtspiAccessible *current = NULL;
    AtspiAccessible *parent = NULL;
@@ -1657,13 +1438,10 @@ _direct_scroll_back(void)
          return;
       }
 
-   visi = flat_navi_context_current_children_count_visible_get(context);
-   DEBUG("There is %d elements visible", visi);
-
    int index = atspi_accessible_get_index_in_parent(current, NULL);
    int children_count = atspi_accessible_get_child_count(parent, NULL);
 
-   if (visi <=0 || children_count <=0)
+   if (children_count <=0)
       {
          ERROR("NO visible element on list");
          return;
@@ -1671,9 +1449,7 @@ _direct_scroll_back(void)
 
    DEBUG("start from element with index:%d/%d", index, children_count);
 
-   int target = index - visi;
-
-   if (target <=0)
+   if (index <=0)
       {
          DEBUG("first element");
          obj = atspi_accessible_get_child_at_index (parent, 0, NULL);
@@ -1682,8 +1458,8 @@ _direct_scroll_back(void)
 
    else
       {
-         DEBUG("go back to %d element", target);
-         obj = atspi_accessible_get_child_at_index (parent, target, NULL);
+         DEBUG("go back to %d element", index);
+         obj = atspi_accessible_get_child_at_index (parent, index, NULL);
       }
 
 
@@ -1709,7 +1485,6 @@ _direct_scroll_forward(void)
          return;
       }
 
-   int visi = 0;
    AtspiAccessible *obj = NULL;
    AtspiAccessible *current = NULL;
    AtspiAccessible *parent = NULL;
@@ -1725,13 +1500,10 @@ _direct_scroll_forward(void)
          return;
       }
 
-   visi = flat_navi_context_current_children_count_visible_get(context);
-   DEBUG("There is %d elements visible", visi);
-
    int index = atspi_accessible_get_index_in_parent(current, NULL);
    int children_count = atspi_accessible_get_child_count(parent, NULL);
 
-   if (visi <=0 || children_count <=0)
+   if (children_count <=0)
       {
          ERROR("NO visible element on list");
          return;
@@ -1739,9 +1511,7 @@ _direct_scroll_forward(void)
 
    DEBUG("start from element with index:%d/%d", index, children_count);
 
-   int target = index + visi;
-
-   if (target >= children_count)
+   if (index >= children_count)
       {
          DEBUG("last element");
          obj = atspi_accessible_get_child_at_index (parent, children_count-1, NULL);
@@ -1750,8 +1520,8 @@ _direct_scroll_forward(void)
 
    else
       {
-         DEBUG("go back to %d element", target);
-         obj = atspi_accessible_get_child_at_index (parent, target, NULL);
+         DEBUG("go back to %d element", index);
+         obj = atspi_accessible_get_child_at_index (parent, index, NULL);
       }
 
 
@@ -1769,23 +1539,35 @@ _direct_scroll_forward(void)
 static void
 _direct_scroll_to_first(void)
 {
-   AtspiAccessible *obj = NULL;
    DEBUG("ONE_FINGER_FLICK_UP_RETURN");
-   flat_navi_context_line_first(context);
-   obj = flat_navi_context_first(context);
-   if (flat_navi_context_current_set(context, obj))
+   if (!context)
+      {
+         ERROR("No navigation context created");
+         return;
+      }
+   AtspiAccessible *obj = flat_navi_context_first(context);
+   if (obj)
       _current_highlight_object_set(obj);
+   else
+      DEBUG("First widget not found. Abort");
+   DEBUG("END");
 }
 
 static void
 _direct_scroll_to_last(void)
 {
    DEBUG("ONE_FINGER_FLICK_DOWN_RETURN");
-   AtspiAccessible *obj = NULL;
-   flat_navi_context_line_last(context);
-   obj = flat_navi_context_last(context);
-   if (flat_navi_context_current_set(context, obj))
+   if (!context)
+      {
+         ERROR("No navigation context created");
+         return;
+      }
+   AtspiAccessible *obj = flat_navi_context_last(context);
+   if (obj)
       _current_highlight_object_set(obj);
+   else
+      DEBUG("Last widget not found. Abort");
+   DEBUG("END");
 }
 
 static Eina_Bool
@@ -2047,41 +1829,14 @@ static void on_gesture_detected(void *data, Gesture_Info *info)
 }
 
 static void
-_on_cache_builded(void *data)
+_view_content_changed(AtspiAccessible *root, void *user_data)
 {
    DEBUG("START");
-   _window_cache_builded = EINA_TRUE;
-   AtspiAccessible *pivot = NULL;
-   if (context && !_window_top_changed)
-      {
-         DEBUG("Context exists and window as not changed");
-         pivot = flat_navi_context_current_get(context);
-         _current_highlight_object_set(pivot);
-         DEBUG("END");
-         return;
-      }
-
-   _window_top_changed = false;
-   context = flat_navi_context_create(top_window);
-
-   if (context)
-      {
-         DEBUG("New context and current obj highlighted");
-         _current_highlight_object_set(flat_navi_context_current_get(context));
-         DEBUG("END");
-         return;
-      }
-   ERROR("No context");
-}
-
-static void
-_view_content_changed(void *user_data)
-{
-   DEBUG("START");
-   _window_top_changed = EINA_TRUE;
-   _window_cache_builded = EINA_FALSE;
-   if (top_window)
-      object_cache_build_async(top_window, 5, _on_cache_builded, NULL);
+   if (flat_navi_is_valid(context, root))
+       return;
+   flat_navi_context_free(context);
+   context = flat_navi_context_create(root);
+   _current_highlight_object_set(flat_navi_context_current_get(context));
    DEBUG("END");
 }
 
@@ -2095,15 +1850,14 @@ static void on_window_activate(void *data, AtspiAccessible *window)
       {
          DEBUG("Window name: %s", atspi_accessible_get_name(window, NULL));
          app_tracker_callback_register(window, _view_content_changed, NULL);
-         _window_cache_builded = EINA_FALSE;
-         object_cache_build_async(window, 5, _on_cache_builded, NULL);
+         _view_content_changed(window, NULL);
       }
    else
       {
-         ERROR("No top window found!");
+          flat_navi_context_free(context);
+          ERROR("No top window found!");
       }
    top_window = window;
-   _window_top_changed = true;
    DEBUG("END");
 }
 
@@ -2159,7 +1913,6 @@ void navigator_shutdown(void)
          context = NULL;
       }
    dbus_gesture_adapter_shutdown();
-   object_cache_shutdown();
    app_tracker_shutdown();
    window_tracker_shutdown();
    smart_notification_shutdown();

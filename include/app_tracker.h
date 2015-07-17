@@ -7,7 +7,7 @@
 /**
  * @brief Callback
  */
-typedef void (*AppTrackerEventCB)(void *user_data);
+typedef void (*AppTrackerEventCB)(AtspiAccessible *root, void *user_data);
 
 /**
  * @brief Register listener on given event type.

@@ -7,9 +7,11 @@
 static AtspiValue *value = NULL;
 static AtspiText *text = NULL;
 static AtspiEditableText *editable_text = NULL;
+static AtspiAction *action = NULL;
 //static AtspiComponent *component = NULL;
 
 G_DEFINE_TYPE(AtspiAccessible, atspi_accessible, G_TYPE_OBJECT);
+G_DEFINE_TYPE(AtspiAction, atspi_action, G_TYPE_OBJECT);
 G_DEFINE_TYPE(AtspiComponent, atspi_component, G_TYPE_OBJECT);
 G_DEFINE_TYPE(AtspiStateSet, atspi_state_set, G_TYPE_OBJECT);
 
@@ -69,6 +71,22 @@ gchar * atspi_accessible_get_role_name (AtspiAccessible *obj, GError **error)
          return strdup("Entry");
       case ATSPI_ROLE_FILLER:
          return strdup("filler");
+      case ATSPI_ROLE_SCROLL_PANE:
+         return strdup("scroll pane");
+      case ATSPI_ROLE_IMAGE:
+         return strdup("image");
+      case ATSPI_ROLE_SPLIT_PANE:
+         return strdup("split pane");
+      case ATSPI_ROLE_UNKNOWN:
+         return strdup("unknown");
+      case ATSPI_ROLE_RULER:
+         return strdup("ruler");
+      case ATSPI_ROLE_FOOTER:
+         return strdup("footer");
+      case ATSPI_ROLE_INFO_BAR:
+         return strdup("infobar");
+      case ATSPI_ROLE_LINK:
+         return strdup("link");
       default:
          return strdup("\0");
       }
@@ -106,6 +124,12 @@ gchar * atspi_accessible_get_description (AtspiAccessible *obj, GError **error)
 {
    if(!obj || !obj->description) return strdup("\0");
    return strdup(obj->description);
+}
+
+AtspiAction * atspi_accessible_get_action_iface (AtspiAccessible *obj)
+{
+   if(!obj) return NULL;
+   return action;
 }
 
 AtspiText * atspi_accessible_get_text_iface (AtspiAccessible *obj)
@@ -285,8 +309,8 @@ AtspiRect *atspi_component_get_extents (AtspiComponent *component, AtspiCoordTyp
       }
    else if(*(component->role) == ATSPI_ROLE_PUSH_BUTTON)
       {
-         rect.x = 0;
-         rect.y = 0;
+         rect.x = 1;
+         rect.y = 1;
          rect.width = 50;
          rect.height = 50;
       }
@@ -325,6 +349,8 @@ AtspiAccessible *atspi_create_accessible()
 {
    AtspiAccessible *obj = g_object_new(ATSPI_ACCESSIBLE_OBJECT_TYPE, 0);
    obj->children = NULL;
+   obj->index_in_parent = 0;
+   obj->child_count = 0;
 
    GArray *states = g_array_new (TRUE, TRUE, sizeof (AtspiStateType));
    AtspiStateType s[] =
@@ -354,7 +380,10 @@ void atspi_delete_accessible(AtspiAccessible *obj)
 
 void atspi_accessible_add_child(AtspiAccessible *obj, AtspiAccessible *child)
 {
+   child->index_in_parent = obj->child_count;
+   child->accessible_parent = obj;
    obj->children = g_list_append(obj->children, child);
+   obj->child_count++;
 }
 
 void atpis_accessible_remove_children(AtspiAccessible *obj)
@@ -377,6 +406,14 @@ static void atspi_state_set_init(AtspiStateSet* set)
 }
 
 static void atspi_state_set_class_init(AtspiStateSetClass *_class)
+{
+}
+
+static void atspi_action_class_init(AtspiActionClass *_class)
+{
+}
+
+static void atspi_action_init(AtspiAction* obj)
 {
 }
 
@@ -441,11 +478,6 @@ int atspi_component_get_highlight_index(AtspiComponent *obj, GError **error)
    return 0;
 }
 
-AtspiAction * atspi_accessible_get_action_iface (AtspiAccessible *obj)
-{
-   return NULL;
-}
-
 gint atspi_action_get_n_actions(AtspiAction *obj, GError **error)
 {
    return 0;
@@ -454,6 +486,11 @@ gint atspi_action_get_n_actions(AtspiAction *obj, GError **error)
 gchar * atspi_action_get_action_name (AtspiAction *obj, gint i, GError **error)
 {
     return strdup("");
+}
+
+gint atspi_accessible_get_index_in_parent (AtspiAccessible *obj, GError **error)
+{
+   return obj->index_in_parent;
 }
 
 int atspi_exit(void)

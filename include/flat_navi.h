@@ -179,4 +179,7 @@ int flat_navi_context_current_children_count_visible_get( FlatNaviContext *ctx);
  */
 AtspiAccessible *flat_navi_context_first_get(FlatNaviContext *ctx);
 
+
+Eina_Bool flat_navi_is_valid(FlatNaviContext *context, AtspiAccessible *new_root);
+
 #endif /* end of include guard: FLAT_NAVI_H_ */

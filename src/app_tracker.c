@@ -3,6 +3,7 @@
 
 typedef struct
 {
+   AtspiAccessible *base_root;
    AtspiAccessible *root;
    GList *callbacks;
    guint timer;
@@ -11,6 +12,7 @@ typedef struct
 typedef struct
 {
    AppTrackerEventCB func;
+   AtspiAccessible *root;
    void *user_data;
 } EventCallbackData;
 
@@ -36,6 +38,37 @@ _is_descendant(AtspiAccessible *ancestor, AtspiAccessible *descendant)
 #endif
 }
 
+
+static Eina_Bool _object_has_modal_state(AtspiAccessible *obj)
+{
+   if (!obj)
+      return EINA_FALSE;
+
+   Eina_Bool ret = EINA_FALSE;
+
+   AtspiStateSet *ss = atspi_accessible_get_state_set(obj);
+
+   if (atspi_state_set_contains(ss, ATSPI_STATE_MODAL))
+      ret = EINA_TRUE;
+   g_object_unref(ss);
+   return ret;
+}
+
+static Eina_Bool _object_has_showing_state(AtspiAccessible *obj)
+{
+   if (!obj)
+      return EINA_FALSE;
+
+   Eina_Bool ret = EINA_FALSE;
+
+   AtspiStateSet *ss = atspi_accessible_get_state_set(obj);
+
+   if (atspi_state_set_contains(ss, ATSPI_STATE_SHOWING))
+      ret = EINA_TRUE;
+   g_object_unref(ss);
+   return ret;
+}
+
 static void
 _subtree_callbacks_call(SubTreeRootData *std)
 {
@@ -46,7 +79,7 @@ _subtree_callbacks_call(SubTreeRootData *std)
    for (l = std->callbacks; l != NULL; l = l->next)
       {
          ecd = l->data;
-         ecd->func(ecd->user_data);
+         ecd->func(std->root, ecd->user_data);
       }
    DEBUG("END");
 }
@@ -62,6 +95,15 @@ _on_timeout_cb(gpointer user_data)
    std->timer = 0;
    DEBUG("END");
    return FALSE;
+}
+static void _print_event_object_info(const AtspiEvent *event)
+{
+    gchar *name = atspi_accessible_get_name(event->source, NULL),
+          *role = atspi_accessible_get_role_name(event->source, NULL);
+
+    DEBUG("signal:%s, name: %s, role: %s, detail1:%i, detail2: %i", event->type, role, name, event->detail1, event->detail2);
+    g_free(name);
+    g_free(role);
 }
 
 static void
@@ -83,16 +125,38 @@ _on_atspi_event_cb(const AtspiEvent *event)
          return;
       }
 
-   DEBUG("signal:%s", event->type);
+   _print_event_object_info(event);
 
    for (l = _roots; l != NULL; l = l->next)
       {
          std = l->data;
+
+         if (!_object_has_showing_state(std->root) && std->base_root)
+            {
+               std->root = std->base_root;
+               std->base_root = NULL;
+            }
+
          if (_is_descendant(std->root, event->source))
             {
                if (std->timer)
                   g_source_remove(std->timer);
 
+               DEBUG("Before Checking if modal is showing");
+
+               if (!strcmp("object:state-changed:showing",event->type))
+                  {
+
+                     DEBUG("Object is showing");
+
+                     if (_object_has_modal_state(event->source))
+                        {
+                           DEBUG("Object is modal");
+
+                           std->base_root = std->root;
+                           std->root = event->source;
+                        }
+                  }
                std->timer = g_timeout_add(APP_TRACKER_INVACTIVITY_TIMEOUT, _on_timeout_cb, std);
             }
       }
@@ -106,6 +170,7 @@ _app_tracker_init_internal(void)
 
    atspi_event_listener_register(_listener, "object:state-changed:showing", NULL);
    atspi_event_listener_register(_listener, "object:state-changed:visible", NULL);
+   atspi_event_listener_register(_listener, "object:state-changed:defunct", NULL);
    atspi_event_listener_register(_listener, "object:bounds-changed", NULL);
    atspi_event_listener_register(_listener, "object:visible-data-changed", NULL);
 
@@ -134,7 +199,7 @@ _app_tracker_shutdown_internal(void)
    atspi_event_listener_deregister(_listener, "object:state-changed:showing", NULL);
    atspi_event_listener_deregister(_listener, "object:state-changed:visible", NULL);
    atspi_event_listener_deregister(_listener, "object:bounds-changed", NULL);
-   atspi_event_listener_deregister(_listener, "object:children-changed", NULL);
+   atspi_event_listener_deregister(_listener, "object:state-changed:defunct", NULL);
    atspi_event_listener_deregister(_listener, "object:visible-data-changed", NULL);
 
    g_object_unref(_listener);
@@ -183,6 +248,7 @@ void app_tracker_callback_register(AtspiAccessible *app, AppTrackerEventCB cb, v
       {
          rd = g_new(SubTreeRootData, 1);
          rd->root = app;
+         rd->base_root = NULL;
          rd->callbacks = NULL;
          rd->timer = 0;
          _roots = g_list_append(_roots, rd);
@@ -205,7 +271,7 @@ void app_tracker_callback_unregister(AtspiAccessible *app, AppTrackerEventCB cb,
 
    for (l = _roots; l != NULL; l = l->next)
       {
-         if (((SubTreeRootData*)l->data)->root == app)
+         if (((SubTreeRootData*)l->data)->root == app || ((SubTreeRootData*)l->data)->base_root == app)
             {
                std = l->data;
                break;
