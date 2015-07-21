@@ -29,6 +29,12 @@ static void tapi_init(void)
    int i = 0;
    char **cp_list = tel_get_cp_name_list();
 
+   if (!cp_list)
+      {
+         ERROR("cp name list is null");
+         return;
+      }
+
    DEBUG("TAPI INIT");
    for(i = 0; cp_list[i]; ++i)
       {
@@ -203,6 +209,11 @@ void device_time_get(void)
 
    time(&rawtime );
    timeinfo = localtime ( &rawtime );
+   if (!timeinfo)
+      {
+         ERROR("localtime returns NULL");
+         return;
+      }
 
    ret = vconf_get_int(VCONFKEY_REGIONFORMAT_TIME1224, &disp_12_24);
    if (ret != 0)
@@ -266,8 +277,6 @@ char *device_error_to_string(int e)
          return _("IDS_SYSTEM_NETWORK_SERVICE_UNKNOWN");
          break;
       }
-
-   return _("IDS_SYSTEM_NETWORK_SERVICE_UNKNOWN");
 }
 
 void device_battery_get(void)
@@ -621,6 +630,12 @@ void device_date_get(void)
 
    time(&rawtime );
    timeinfo = localtime ( &rawtime );
+   if (!timeinfo)
+      {
+         ERROR("localtime returns NULL");
+         return;
+      }
+
    strftime(buffer, DATE_TIME_BUFFER_SIZE, "%Y:%m:%d %H:%M:%S", timeinfo);
 
    ret = vconf_get_int(VCONFKEY_SETAPPL_DATE_FORMAT_INT, &date_format);

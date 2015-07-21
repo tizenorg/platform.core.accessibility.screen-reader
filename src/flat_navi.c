@@ -417,8 +417,12 @@ debug(FlatNaviContext *ctx)
          char *name = atspi_accessible_get_name(obj, NULL);
          char *role = atspi_accessible_get_role_name(obj, NULL);
          const ObjectCache *oc = object_cache_get(obj);
-         DEBUG("%d %s %s, (%d %d %d %d)", i++, name, role,
-               oc->bounds->x, oc->bounds->y, oc->bounds->width, oc->bounds->height);
+
+         if (oc)
+            DEBUG("%d %s %s, (%d %d %d %d)", i++, name, role,
+                                oc->bounds->x, oc->bounds->y,
+                       oc->bounds->width, oc->bounds->height);
+
          if (name) g_free(name);
          if (role) g_free(role);
       }
