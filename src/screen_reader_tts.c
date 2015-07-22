@@ -312,8 +312,6 @@ void state_changed_cb(tts_h tts, tts_state_e previous, tts_state_e current, void
        eina_strbuf_free(txt_keep_buff);
        txt_keep_buff = NULL;
 
-       if (txt && strlen(txt) == 0) return;
-
        tts_speak(txt, EINA_FALSE);
        tts_play(sd->tts);
        free(txt);
