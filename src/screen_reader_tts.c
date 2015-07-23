@@ -206,6 +206,7 @@ Eina_Bool tts_pause_set(Eina_Bool pause_switch)
 
 void tts_speak(char *text_to_speak, Eina_Bool flush_switch)
 {
+   int ret = 0;
    Service_Data *sd = get_pointer_to_service_data_struct();
    int speak_id;
 
@@ -222,14 +223,24 @@ void tts_speak(char *text_to_speak, Eina_Bool flush_switch)
         return;
      }
 
-   if(flush_flag || flush_switch)
-      tts_stop(sd->tts);
+   if (flush_flag || flush_switch)
+     {
+        if (state == TTS_STATE_PLAYING ||
+            state == TTS_STATE_PAUSED)
+          {
+             ret = tts_stop(sd->tts);
+             if (TTS_ERROR_NONE != ret)
+               {
+                  DEBUG("Fail to stop TTS: resultl(%d)", ret);
+               }
+          }
+     }
 
    DEBUG( "tts_speak\n");
    DEBUG( "text to say:%s\n", text_to_speak);
    if ( !text_to_speak ) return;
    if ( !text_to_speak[0] ) return;
-   int ret = 0;
+
    if((ret = tts_add_text( sd->tts, text_to_speak, NULL, TTS_VOICE_TYPE_AUTO, TTS_SPEED_AUTO, &speak_id)))
    {
        switch(ret) {

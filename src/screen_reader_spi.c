@@ -296,7 +296,7 @@ void spi_event_listener_cb(AtspiEvent *event, void *user_data)
          return;
       }
    DEBUG("SPEAK: %s", text_to_read)
-   tts_speak(text_to_read, EINA_FALSE);
+   tts_speak(text_to_read, EINA_TRUE);
 
    tts_state_e state;
    Service_Data *sd = (Service_Data*)user_data;
