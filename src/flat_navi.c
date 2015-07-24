@@ -111,6 +111,37 @@ _object_is_item(AtspiAccessible *obj)
    return ret;
 }
 
+
+static AtspiAccessible* _get_object_in_relation(AtspiAccessible *source, AtspiRelationType search_type)
+{
+   GArray *relations;
+   AtspiAccessible *ret = NULL;
+   AtspiRelation *relation;
+   AtspiRelationType type;
+   int i;
+   if (source)
+     {
+        DEBUG("CHECKING RELATIONS");
+        relations = atspi_accessible_get_relation_set(source, NULL);
+        for (i = 0; i < relations->len; i++)
+          {
+             DEBUG("ALL RELATIONS FOUND: %d",relations->len);
+             relation = g_array_index (relations, AtspiRelation*, i);
+             type = atspi_relation_get_relation_type(relation);
+             DEBUG("RELATION:  %d",type);
+
+             if (type == search_type)
+               {
+                  ret = atspi_relation_get_target(relation, 0);
+                  DEBUG("SEARCHED RELATION FOUND");
+                  break;
+               }
+          }
+         g_array_free(relations, TRUE);
+     }
+   return ret;
+}
+
 static Eina_Bool
 _accept_object(AtspiAccessible *obj)
 {
@@ -412,42 +443,85 @@ AtspiAccessible * _directional_depth_first_search(AtspiAccessible *root, AtspiAc
     AtspiAccessible *node = (start && start_is_not_defunct)
                             ? g_object_ref(start)
                             : (root ? g_object_ref(root) : NULL);
-    if(!node) return NULL;
+
+    if (!node) return NULL;
+
+    AtspiAccessible *next_related_in_direction = (next_sibling_idx_modifier > 0)
+                                                 ? _get_object_in_relation(node, ATSPI_RELATION_FLOWS_TO)
+                                                 : _get_object_in_relation(node, ATSPI_RELATION_FLOWS_FROM);
+
+    Eina_Bool relation_mode = EINA_FALSE;
+    if (next_related_in_direction)
+       {
+          relation_mode = EINA_TRUE;
+          g_object_unref(next_related_in_direction);
+       }
+
     while (1)
     {
-       if (node != start && stop_condition(node))
+       AtspiAccessible *prev_related_in_direction = (next_sibling_idx_modifier > 0)
+                                                    ? _get_object_in_relation(node, ATSPI_RELATION_FLOWS_FROM)
+                                                    : _get_object_in_relation(node, ATSPI_RELATION_FLOWS_TO);
+
+       if (node != start && (relation_mode || !prev_related_in_direction) && stop_condition(node))
           {
-            return node;
+             g_object_unref(prev_related_in_direction);
+             return node;
           }
 
-        int cc = atspi_accessible_get_child_count(node, NULL);
-        if (cc > 0) // walk down
-           {
-              int idx = next_sibling_idx_modifier > 0 ? 0 : cc-1;
+       AtspiAccessible *next_related_in_direction = (next_sibling_idx_modifier > 0)
+                                                    ? _get_object_in_relation(node, ATSPI_RELATION_FLOWS_TO)
+                                                    : _get_object_in_relation(node, ATSPI_RELATION_FLOWS_FROM);
+
+       DEBUG("RELATION MODE: %d",relation_mode);
+       if (!prev_related_in_direction)
+          DEBUG("PREV IN RELATION NULL");
+       if (!next_related_in_direction)
+          DEBUG("NEXT IN RELATION NULL");
+
+
+       if ((!relation_mode && !prev_related_in_direction && next_related_in_direction) || (relation_mode && next_related_in_direction))
+          {
+              DEBUG("APPLICABLE FOR RELATION NAVIG");
+              g_object_unref(prev_related_in_direction);
+              relation_mode = EINA_TRUE;
               g_object_unref(node);
-              node = atspi_accessible_get_child_at_index (node,idx, NULL);
-              DEBUG("DFS DOWN");
-           }
+              node = next_related_in_direction;
+          }
         else
            {
-              while (!_has_next_sibling(node, next_sibling_idx_modifier) || node==root) // no next sibling
-              {
-                  DEBUG("DFS NO SIBLING");
-                  if (node == root)
-                     {
-                     DEBUG("DFS ROOT")
-                        g_object_unref(node);
-                        return NULL;
-                     }
-                  g_object_unref(node);
-                  node = atspi_accessible_get_parent(node, NULL);       // walk up...
-                  DEBUG("DFS UP");
-              }
-              int idx = atspi_accessible_get_index_in_parent(node, NULL);
-              g_object_unref(node);
-              node = atspi_accessible_get_child_at_index(atspi_accessible_get_parent(node, NULL), idx + next_sibling_idx_modifier, NULL);     //... and next
-              DEBUG("DFS NEXT %d",idx + next_sibling_idx_modifier);
-           }
+              g_object_unref(prev_related_in_direction);
+              g_object_unref(next_related_in_direction);
+              relation_mode = EINA_FALSE;
+              int cc = atspi_accessible_get_child_count(node, NULL);
+              if (cc > 0) // walk down
+                 {
+                    int idx = next_sibling_idx_modifier > 0 ? 0 : cc-1;
+                    g_object_unref(node);
+                    node = atspi_accessible_get_child_at_index (node,idx, NULL);
+                    DEBUG("DFS DOWN");
+                 }
+              else
+                 {
+                    while (!_has_next_sibling(node, next_sibling_idx_modifier) || node==root) // no next sibling
+                          {
+                             DEBUG("DFS NO SIBLING");
+                             if (node == root)
+                                {
+                                   DEBUG("DFS ROOT")
+                                   g_object_unref(node);
+                                   return NULL;
+                                }
+                             g_object_unref(node);
+                             node = atspi_accessible_get_parent(node, NULL);       // walk up...
+                             DEBUG("DFS UP");
+                          }
+                    int idx = atspi_accessible_get_index_in_parent(node, NULL);
+                    g_object_unref(node);
+                    node = atspi_accessible_get_child_at_index(atspi_accessible_get_parent(node, NULL), idx + next_sibling_idx_modifier, NULL);     //... and next
+                    DEBUG("DFS NEXT %d",idx + next_sibling_idx_modifier);
+                 }
+          }
     }
 }
 
