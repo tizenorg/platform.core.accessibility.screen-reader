@@ -85,21 +85,21 @@ _has_escape_action(AtspiAccessible *obj)
 
    action = atspi_accessible_get_action_iface(obj);
    if(action)
-   {
-      int i = 0;
-      for (; i < atspi_action_get_n_actions(action, NULL); i++)
-        {
-           gchar *action_name = atspi_action_get_action_name(action, i, NULL);
-           Eina_Bool equal = !strcmp(action_name, "escape");
-           g_free(action_name);
-           if (equal)
-             {
-                ret = EINA_TRUE;
-                break;
-             }
-        }
-      g_object_unref(action);
-   }
+      {
+         int i = 0;
+         for (; i < atspi_action_get_n_actions(action, NULL); i++)
+            {
+               gchar *action_name = atspi_action_get_action_name(action, i, NULL);
+               Eina_Bool equal = !strcmp(action_name, "escape");
+               g_free(action_name);
+               if (equal)
+                  {
+                     ret = EINA_TRUE;
+                     break;
+                  }
+            }
+         g_object_unref(action);
+      }
    DEBUG("Obj %s %s escape action",atspi_accessible_get_role_name(obj, NULL), ret ? "has" : "doesn't have");
    return ret;
 }
@@ -184,23 +184,23 @@ _accept_object(AtspiAccessible *obj)
       {
          if (_object_is_item(obj))
             {
-                AtspiAccessible *parent = atspi_accessible_get_parent(obj, NULL);
-                if (parent)
-                   {
-                      AtspiStateSet *pss = atspi_accessible_get_state_set(parent);
-                      g_object_unref(parent);
-                      if (pss)
-                         {
-                            ret = atspi_state_set_contains(pss, ATSPI_STATE_SHOWING) && atspi_state_set_contains(pss, ATSPI_STATE_VISIBLE) && !_is_collapsed(pss);
-                            DEBUG("ITEM HAS SHOWING && VISIBLE && NOT COLLAPSED PARENT %d",ret);
-                            g_object_unref(pss);
-                            return ret;
-                         }
-                   }
+               AtspiAccessible *parent = atspi_accessible_get_parent(obj, NULL);
+               if (parent)
+                  {
+                     AtspiStateSet *pss = atspi_accessible_get_state_set(parent);
+                     g_object_unref(parent);
+                     if (pss)
+                        {
+                           ret = atspi_state_set_contains(pss, ATSPI_STATE_SHOWING) && atspi_state_set_contains(pss, ATSPI_STATE_VISIBLE) && !_is_collapsed(pss);
+                           DEBUG("ITEM HAS SHOWING && VISIBLE && NOT COLLAPSED PARENT %d",ret);
+                           g_object_unref(pss);
+                           return ret;
+                        }
+                  }
             }
          else
             {
-                ret = atspi_state_set_contains(ss, ATSPI_STATE_SHOWING) && atspi_state_set_contains(ss, ATSPI_STATE_VISIBLE);
+               ret = atspi_state_set_contains(ss, ATSPI_STATE_SHOWING) && atspi_state_set_contains(ss, ATSPI_STATE_VISIBLE);
             }
          g_object_unref(ss);
       }
@@ -211,24 +211,25 @@ _accept_object(AtspiAccessible *obj)
 
    r = atspi_accessible_get_role(obj, NULL);
 
-   switch(r) {
-   case ATSPI_ROLE_APPLICATION:
-   case ATSPI_ROLE_FILLER:
-   case ATSPI_ROLE_SCROLL_PANE:
-   case ATSPI_ROLE_SPLIT_PANE:
-   case ATSPI_ROLE_WINDOW:
-   case ATSPI_ROLE_IMAGE:
-   case ATSPI_ROLE_LIST:
-   case ATSPI_ROLE_PAGE_TAB_LIST:
-   case ATSPI_ROLE_TOOL_BAR:
-       return EINA_FALSE;
-   case ATSPI_ROLE_DIALOG:
-       if (!_has_escape_action(obj))
-           return EINA_FALSE;
-       break;
-   default:
-       break;
-   }
+   switch(r)
+      {
+      case ATSPI_ROLE_APPLICATION:
+      case ATSPI_ROLE_FILLER:
+      case ATSPI_ROLE_SCROLL_PANE:
+      case ATSPI_ROLE_SPLIT_PANE:
+      case ATSPI_ROLE_WINDOW:
+      case ATSPI_ROLE_IMAGE:
+      case ATSPI_ROLE_LIST:
+      case ATSPI_ROLE_PAGE_TAB_LIST:
+      case ATSPI_ROLE_TOOL_BAR:
+         return EINA_FALSE;
+      case ATSPI_ROLE_DIALOG:
+         if (!_has_escape_action(obj))
+            return EINA_FALSE;
+         break;
+      default:
+         break;
+      }
 
    name = atspi_accessible_get_name(obj, NULL);
 
@@ -294,7 +295,7 @@ _accept_object(AtspiAccessible *obj)
 #ifdef SCREEN_READER_FLAT_NAVI_TEST_DUMMY_IMPLEMENTATION
 Eina_Bool flat_navi_context_current_at_x_y_set( FlatNaviContext *ctx, gint x_cord, gint y_cord , AtspiAccessible **target)
 {
-    return EINA_FALSE;
+   return EINA_FALSE;
 }
 #else
 
@@ -315,14 +316,14 @@ int _object_has_modal_state(AtspiAccessible *obj)
 
 static AtspiAccessible *_first_modal_object_in_object_chain(AtspiAccessible *obj)
 {
-    AtspiAccessible *ret = g_object_ref(obj);
+   AtspiAccessible *ret = g_object_ref(obj);
 
-    while(ret && !_object_has_modal_state(ret))
+   while(ret && !_object_has_modal_state(ret))
       {
-        g_object_unref(ret);
-        ret = atspi_accessible_get_parent(ret, NULL);
+         g_object_unref(ret);
+         ret = atspi_accessible_get_parent(ret, NULL);
       }
-    return ret;
+   return ret;
 }
 
 Eina_Bool flat_navi_context_current_at_x_y_set( FlatNaviContext *ctx, gint x_cord, gint y_cord , AtspiAccessible **target)
@@ -330,10 +331,10 @@ Eina_Bool flat_navi_context_current_at_x_y_set( FlatNaviContext *ctx, gint x_cor
    if(!ctx || !target) return EINA_FALSE;
 
    if (!ctx->root)
-     {
-        DEBUG("NO top window");
-        return EINA_FALSE;
-     }
+      {
+         DEBUG("NO top window");
+         return EINA_FALSE;
+      }
 
    AtspiAccessible *current_obj = flat_navi_context_current_get(ctx);
 
@@ -345,46 +346,51 @@ Eina_Bool flat_navi_context_current_at_x_y_set( FlatNaviContext *ctx, gint x_cor
    AtspiComponent *component;
    Eina_Bool look_for_next_descendant = EINA_TRUE;
 
-   while(look_for_next_descendant) {
-       component = atspi_accessible_get_component_iface(obj);
+   while(look_for_next_descendant)
+      {
+         component = atspi_accessible_get_component_iface(obj);
 
-       g_object_unref(obj);
-       obj = component ? atspi_component_get_accessible_at_point(component,
-                                                     x_cord,
-                                                     y_cord,
-                                                     ATSPI_COORD_TYPE_WINDOW,
-                                                     &error
-                                                     ) : NULL;
-       g_clear_object(&component);
+         g_object_unref(obj);
+         obj = component ? atspi_component_get_accessible_at_point(component,
+               x_cord,
+               y_cord,
+               ATSPI_COORD_TYPE_WINDOW,
+               &error
+                                                                  ) : NULL;
+         g_clear_object(&component);
 
-       if (error)
-         {
-            DEBUG("Got error from atspi_component_get_accessible_at_point, domain: %i, code: %i, message: %s",
-                  error->domain, error->code, error->message);
-            g_clear_error(&error);
-            g_clear_object(&obj);
-            if (youngest_ancestor_in_context)
-                g_clear_object(&youngest_ancestor_in_context);
-            look_for_next_descendant = EINA_FALSE;
-         } else if (obj) {
-            DEBUG("Found object %s, role %s", atspi_accessible_get_name(obj, NULL), atspi_accessible_get_role_name(obj, NULL));
-            if (_accept_object(obj))
-              {
-                 DEBUG("Object  %s with role %s fulfills highlight conditions", atspi_accessible_get_name(obj, NULL), atspi_accessible_get_role_name(obj, NULL));
-                 if (youngest_ancestor_in_context)
-                     g_object_unref(youngest_ancestor_in_context);
-                 youngest_ancestor_in_context = g_object_ref(obj);
-              }
-         } else {
-            g_clear_object(&obj);
-            look_for_next_descendant = EINA_FALSE;
-         }
-   }
+         if (error)
+            {
+               DEBUG("Got error from atspi_component_get_accessible_at_point, domain: %i, code: %i, message: %s",
+                     error->domain, error->code, error->message);
+               g_clear_error(&error);
+               g_clear_object(&obj);
+               if (youngest_ancestor_in_context)
+                  g_clear_object(&youngest_ancestor_in_context);
+               look_for_next_descendant = EINA_FALSE;
+            }
+         else if (obj)
+            {
+               DEBUG("Found object %s, role %s", atspi_accessible_get_name(obj, NULL), atspi_accessible_get_role_name(obj, NULL));
+               if (_accept_object(obj))
+                  {
+                     DEBUG("Object  %s with role %s fulfills highlight conditions", atspi_accessible_get_name(obj, NULL), atspi_accessible_get_role_name(obj, NULL));
+                     if (youngest_ancestor_in_context)
+                        g_object_unref(youngest_ancestor_in_context);
+                     youngest_ancestor_in_context = g_object_ref(obj);
+                  }
+            }
+         else
+            {
+               g_clear_object(&obj);
+               look_for_next_descendant = EINA_FALSE;
+            }
+      }
 
    if (youngest_ancestor_in_context && !_object_has_modal_state(youngest_ancestor_in_context))
       {
          if (youngest_ancestor_in_context == current_obj ||
-             flat_navi_context_current_set(ctx, youngest_ancestor_in_context))
+               flat_navi_context_current_set(ctx, youngest_ancestor_in_context))
             {
                DEBUG("Setting highlight to object %s with role %s",
                      atspi_accessible_get_name(youngest_ancestor_in_context, NULL),
@@ -429,28 +435,28 @@ static Eina_Bool _has_next_sibling(AtspiAccessible *obj, int next_sibling_idx_mo
    Eina_Bool ret = EINA_FALSE;
    int idx = atspi_accessible_get_index_in_parent(obj, NULL);
    if (idx >= 0)
-   {
-     AtspiAccessible *parent = atspi_accessible_get_parent(obj, NULL);
-     int cc = atspi_accessible_get_child_count(parent, NULL);
-     g_object_unref(parent);
-     if ((next_sibling_idx_modifier > 0 && idx < cc-1) || (next_sibling_idx_modifier < 0 && idx > 0))
-     {
-        ret = EINA_TRUE;
-     }
-   }
-  return ret;
+      {
+         AtspiAccessible *parent = atspi_accessible_get_parent(obj, NULL);
+         int cc = atspi_accessible_get_child_count(parent, NULL);
+         g_object_unref(parent);
+         if ((next_sibling_idx_modifier > 0 && idx < cc-1) || (next_sibling_idx_modifier < 0 && idx > 0))
+            {
+               ret = EINA_TRUE;
+            }
+      }
+   return ret;
 }
 
 AtspiAccessible * _directional_depth_first_search(AtspiAccessible *root, AtspiAccessible *start, int next_sibling_idx_modifier, Eina_Bool (*stop_condition)(AtspiAccessible*))
 {
-    Eina_Bool start_is_not_defunct = EINA_FALSE;
-    if (start)
+   Eina_Bool start_is_not_defunct = EINA_FALSE;
+   if (start)
       {
          AtspiStateSet *ss = atspi_accessible_get_state_set(start);
          start_is_not_defunct = !atspi_state_set_contains(ss, ATSPI_STATE_DEFUNCT);
          g_object_unref(ss);
          if (!start_is_not_defunct)
-             DEBUG("Start is defunct!");
+            DEBUG("Start is defunct!");
       }
 
     AtspiAccessible *node = (start && start_is_not_defunct)
@@ -560,10 +566,10 @@ AtspiAccessible *_next(FlatNaviContext *ctx)
    ret = _directional_depth_first_search(root, current, 1, &_accept_object);
 
    if (current && !ret)
-   {
-      DEBUG("DFS SECOND PASS");
-      ret = _directional_depth_first_search(root, NULL, 1, &_accept_object);
-   }
+      {
+         DEBUG("DFS SECOND PASS");
+         ret = _directional_depth_first_search(root, NULL, 1, &_accept_object);
+      }
    return ret;
 }
 
@@ -576,10 +582,10 @@ AtspiAccessible *_prev(FlatNaviContext *ctx)
 
    ret = _directional_depth_first_search(root, current, -1, &_accept_object);
    if (current && !ret)
-   {
-      DEBUG("DFS SECOND PASS");
-      ret = _directional_depth_first_search(root, NULL, -1, &_accept_object);
-   }
+      {
+         DEBUG("DFS SECOND PASS");
+         ret = _directional_depth_first_search(root, NULL, -1, &_accept_object);
+      }
    return ret;
 }
 
@@ -588,25 +594,25 @@ int flat_navi_context_current_children_count_visible_get( FlatNaviContext *ctx)
 {
    if(!ctx) return -1;
    int count = 0;
-/*
-   AtspiAccessible *obj = NULL;
-   AtspiStateSet *ss = NULL;
+   /*
+      AtspiAccessible *obj = NULL;
+      AtspiStateSet *ss = NULL;
 
-   Eina_List *l, *l2, *line;
-   AtspiAccessible *current = flat_navi_context_current_get(ctx);
-   AtspiAccessible *parent = atspi_accessible_get_parent (current, NULL);
+      Eina_List *l, *l2, *line;
+      AtspiAccessible *current = flat_navi_context_current_get(ctx);
+      AtspiAccessible *parent = atspi_accessible_get_parent (current, NULL);
 
-   EINA_LIST_FOREACH(ctx->lines, l, line)
-   {
-      EINA_LIST_FOREACH(line, l2, obj)
+      EINA_LIST_FOREACH(ctx->lines, l, line)
       {
-         ss = atspi_accessible_get_state_set(obj);
-         if (atspi_state_set_contains(ss, ATSPI_STATE_SHOWING) && parent == atspi_accessible_get_parent(obj, NULL))
-            count++;
-         g_object_unref(ss);
+         EINA_LIST_FOREACH(line, l2, obj)
+         {
+            ss = atspi_accessible_get_state_set(obj);
+            if (atspi_state_set_contains(ss, ATSPI_STATE_SHOWING) && parent == atspi_accessible_get_parent(obj, NULL))
+               count++;
+            g_object_unref(ss);
+         }
       }
-   }
-*/
+   */
    return count;
 }
 
@@ -628,6 +634,13 @@ void flat_navi_context_free(FlatNaviContext *ctx)
 {
    if (!ctx) return;
    free(ctx);
+}
+
+AtspiAccessible *flat_navi_context_root_get(FlatNaviContext *ctx)
+{
+   if(!ctx) return NULL;
+
+   return ctx->root;
 }
 
 AtspiAccessible *flat_navi_context_current_get(FlatNaviContext *ctx)
@@ -689,12 +702,12 @@ AtspiAccessible *flat_navi_context_last(FlatNaviContext *ctx)
 
 Eina_Bool flat_navi_is_valid(FlatNaviContext *context, AtspiAccessible *new_root)
 {
-    Eina_Bool ret = EINA_FALSE;
-    if (!context || !context->current || context->root != new_root)
-        return ret;
-    AtspiStateSet *ss = atspi_accessible_get_state_set(context->current);
+   Eina_Bool ret = EINA_FALSE;
+   if (!context || !context->current || context->root != new_root)
+      return ret;
+   AtspiStateSet *ss = atspi_accessible_get_state_set(context->current);
 
-    ret = atspi_state_set_contains(ss, ATSPI_STATE_SHOWING) &&  !atspi_state_set_contains(ss, ATSPI_STATE_DEFUNCT);
-    g_object_unref(ss);
-    return ret;
+   ret = atspi_state_set_contains(ss, ATSPI_STATE_SHOWING) &&  !atspi_state_set_contains(ss, ATSPI_STATE_DEFUNCT);
+   g_object_unref(ss);
+   return ret;
 }

@@ -34,6 +34,13 @@ FlatNaviContext *flat_navi_context_create(AtspiAccessible *root);
 void flat_navi_context_free(FlatNaviContext *ctx);
 
 /**
+ * Returns the  root of given context
+ * @param ctx Flat navi context
+ * @return
+ */
+AtspiAccessible *flat_navi_context_root_get(FlatNaviContext *ctx);
+
+/**
  * Advances to next element in natural reading order and returns
  * new current element.
  *

@@ -1757,6 +1757,71 @@ _move_slider(Gesture_Info *gi)
    DEBUG("END");
 }
 
+AtspiAction *_get_main_window(void)
+{
+   AtspiAccessible *win = flat_navi_context_root_get(context);
+   if (!win) {
+		ERROR("win == NULL");
+		return NULL;
+   }
+
+   AtspiAction *action = atspi_accessible_get_action_iface(win);
+   if (!action) {
+		ERROR("action == NULL");
+		return NULL;
+	}
+
+   return action;
+}
+
+static int _find_action_index(AtspiAction *action, char *action_name_to_find)
+{
+   int action_num = atspi_action_get_n_actions(action, NULL);
+   char *action_name = NULL;
+
+   int i = 0;
+   for(i = 0; i < action_num; ++i)
+      {
+         action_name = atspi_action_get_action_name(action, i, NULL);
+
+         if(!strcmp(action_name_to_find, action_name))
+            {
+               return i;
+            }
+      }
+
+   return -i;
+}
+
+
+
+static void _start_stop_signal_send(void)
+{
+   int action_index = -1;
+   char *action_name = "pause_play";
+   AtspiAction *action = _get_main_window();
+   if(!action)
+   {
+	   ERROR("Could not get the action inteface");
+   }
+
+   if(!action)
+      {
+         ERROR("action == NULL");
+         return;
+      }
+
+   action_index = _find_action_index(action, action_name);
+   if(action_index < 0)
+   {
+	   ERROR("Pause_play action not found");
+	   return;
+   }
+
+   DEBUG("ACTION: %s has index: %d", action_name, action_index);
+   atspi_action_do_action(action, action_index, NULL);
+}
+
 static void on_gesture_detected(void *data, Gesture_Info *info)
 {
    dbus_gesture_adapter_emit(info);
@@ -1816,6 +1881,9 @@ static void on_gesture_detected(void *data, Gesture_Info *info)
          break;
       case TWO_FINGERS_SINGLE_TAP:
          _set_pause();
+         break;
+      case TWO_FINGERS_DOUBLE_TAP:
+         _start_stop_signal_send();
          break;
       case TWO_FINGERS_TRIPLE_TAP:
          _read_quickpanel();
