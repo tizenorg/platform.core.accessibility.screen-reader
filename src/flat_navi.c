@@ -309,25 +309,18 @@ Eina_Bool flat_navi_context_current_at_x_y_set( FlatNaviContext *ctx, gint x_cor
 {
    if(!ctx || !target) return EINA_FALSE;
 
-   AtspiAccessible *current_obj = flat_navi_context_current_get(ctx);
-
    if (!ctx->root)
      {
         DEBUG("NO top window");
         return EINA_FALSE;
      }
+
+   AtspiAccessible *current_obj = flat_navi_context_current_get(ctx);
+
    Eina_Bool ret = EINA_FALSE;
    GError * error = NULL;
 
-   AtspiAccessible *obj = _first_modal_object_in_object_chain(current_obj);
-   if (!obj)
-     {
-        DEBUG("No modal object in ancestors chain. Using top_window");
-        obj = g_object_ref(ctx->root);
-     }
-   else
-     DEBUG("Found modal object in ancestors chain");
-
+   AtspiAccessible *obj = g_object_ref(ctx->root);
    AtspiAccessible *youngest_ancestor_in_context = (_accept_object(obj) ? g_object_ref(obj) : NULL);
    AtspiComponent *component;
    Eina_Bool look_for_next_descendant = EINA_TRUE;

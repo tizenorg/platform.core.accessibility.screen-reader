@@ -1840,23 +1840,72 @@ _view_content_changed(AtspiAccessible *root, void *user_data)
    DEBUG("END");
 }
 
+void clear(gpointer d)
+{
+   AtspiAccessible ** data = d;
+   AtspiAccessible *obj = *data;
+   g_object_unref(obj);
+}
+
+static AtspiAccessible* _get_modal_descendant(AtspiAccessible *root)
+{
+   GError *err= NULL;
+   AtspiStateSet *states = atspi_state_set_new (NULL);
+   atspi_state_set_add (states, ATSPI_STATE_MODAL);
+   DEBUG("GET MODAL: STATE SET PREPARED");
+   AtspiMatchRule *rule = atspi_match_rule_new (states,
+                                                ATSPI_Collection_MATCH_ANY,
+                                                NULL,
+                                                ATSPI_Collection_MATCH_INVALID,
+                                                NULL,
+                                                ATSPI_Collection_MATCH_INVALID,
+                                                NULL,
+                                                ATSPI_Collection_MATCH_INVALID,
+                                                0);
+   DEBUG("GET MODAL: MATCHING RULE PREPARED");
+   AtspiAccessible *ret = NULL;
+   AtspiCollection *col_iface = atspi_accessible_get_collection_iface(root);
+   GArray *result = atspi_collection_get_matches (col_iface,
+                                                  rule,
+                                                  ATSPI_Collection_SORT_ORDER_INVALID,
+                                                  1,
+                                                  1,
+                                                  &err);
+   GERROR_CHECK(err);
+   DEBUG("GET MODAL: QUERY PERFORMED");
+   g_object_unref(states);
+   g_object_unref(rule);
+   g_object_unref(col_iface);
+   if (result && result->len > 0)
+     {
+        DEBUG("GET MODAL: MODAL FOUND");
+        g_array_set_clear_func(result, clear);
+        ret = g_object_ref(g_array_index(result, AtspiAccessible*, 0));
+        g_array_free(result, TRUE);
+     }
+   return ret;
+}
+
 static void on_window_activate(void *data, AtspiAccessible *window)
 {
    DEBUG("START");
 
    app_tracker_callback_unregister(top_window, _view_content_changed, NULL);
 
-   if(window)
-      {
-         DEBUG("Window name: %s", atspi_accessible_get_name(window, NULL));
-         app_tracker_callback_register(window, _view_content_changed, NULL);
-         _view_content_changed(window, NULL);
-      }
+   if (window)
+     {
+        DEBUG("Window name: %s", atspi_accessible_get_name(window, NULL));
+        app_tracker_callback_register(window, _view_content_changed, NULL);
+        // TODO: modal descendant of window should be used (if exists) otherwise window
+        AtspiAccessible *modal_descendant = _get_modal_descendant(window);
+        _view_content_changed(modal_descendant ? modal_descendant : window, NULL);
+        g_object_unref(modal_descendant);
+     }
    else
-      {
-          flat_navi_context_free(context);
-          ERROR("No top window found!");
-      }
+     {
+        flat_navi_context_free(context);
+        ERROR("No top window found!");
+     }
    top_window = window;
    DEBUG("END");
 }
