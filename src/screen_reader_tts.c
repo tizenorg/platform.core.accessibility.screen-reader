@@ -174,6 +174,11 @@ Eina_Bool tts_pause_get(void)
    return pause_state;
 }
 
+void tts_stop_set(void)
+{
+   Service_Data *sd = get_pointer_to_service_data_struct();
+   tts_stop(sd->tts);
+}
 
 Eina_Bool tts_pause_set(Eina_Bool pause_switch)
 {
@@ -216,25 +221,25 @@ void tts_speak(char *text_to_speak, Eina_Bool flush_switch)
    tts_get_state(sd->tts, &state);
 
    if (state != TTS_STATE_PLAYING &&
-          state != TTS_STATE_PAUSED &&
-          state != TTS_STATE_READY)
-     {
-        if (text_to_speak) _text_keep(text_to_speak);
-        return;
-     }
+         state != TTS_STATE_PAUSED &&
+         state != TTS_STATE_READY)
+      {
+         if (text_to_speak) _text_keep(text_to_speak);
+         return;
+      }
 
    if (flush_flag || flush_switch)
-     {
-        if (state == TTS_STATE_PLAYING ||
-            state == TTS_STATE_PAUSED)
-          {
-             ret = tts_stop(sd->tts);
-             if (TTS_ERROR_NONE != ret)
-               {
-                  DEBUG("Fail to stop TTS: resultl(%d)", ret);
-               }
-          }
-     }
+      {
+         if (state == TTS_STATE_PLAYING ||
+               state == TTS_STATE_PAUSED)
+            {
+               ret = tts_stop(sd->tts);
+               if (TTS_ERROR_NONE != ret)
+                  {
+                     DEBUG("Fail to stop TTS: resultl(%d)", ret);
+                  }
+            }
+      }
 
    DEBUG( "tts_speak\n");
    DEBUG( "text to say:%s\n", text_to_speak);
@@ -242,28 +247,29 @@ void tts_speak(char *text_to_speak, Eina_Bool flush_switch)
    if ( !text_to_speak[0] ) return;
 
    if((ret = tts_add_text( sd->tts, text_to_speak, NULL, TTS_VOICE_TYPE_AUTO, TTS_SPEED_AUTO, &speak_id)))
-   {
-       switch(ret) {
-       case TTS_ERROR_INVALID_PARAMETER:
-           DEBUG("FAILED tts_add_text: error: TTS_ERROR_INVALID_PARAMETER");
-           break;
-       case TTS_ERROR_INVALID_STATE:
-         DEBUG("FAILED tts_add_text: error: TTS_ERROR_INVALID_STATE, tts_state: %d", state);
-         break;
-       case TTS_ERROR_INVALID_VOICE:
-         DEBUG("FAILED tts_add_text: error: TTS_ERROR_INVALID_VOICE");
-         break;
-       case TTS_ERROR_OPERATION_FAILED:
-         DEBUG("FAILED tts_add_text: error: TTS_ERROR_OPERATION_FAILED");
-         break;
-       case TTS_ERROR_NOT_SUPPORTED:
-         DEBUG("FAILED tts_add_text: error: TTS_ERROR_NOT_SUPPORTED");
-         break;
-       default:
-         DEBUG("FAILED tts_add_text: error: not recognized");
-       }
-      return;
-   }
+      {
+         switch(ret)
+            {
+            case TTS_ERROR_INVALID_PARAMETER:
+               DEBUG("FAILED tts_add_text: error: TTS_ERROR_INVALID_PARAMETER");
+               break;
+            case TTS_ERROR_INVALID_STATE:
+               DEBUG("FAILED tts_add_text: error: TTS_ERROR_INVALID_STATE, tts_state: %d", state);
+               break;
+            case TTS_ERROR_INVALID_VOICE:
+               DEBUG("FAILED tts_add_text: error: TTS_ERROR_INVALID_VOICE");
+               break;
+            case TTS_ERROR_OPERATION_FAILED:
+               DEBUG("FAILED tts_add_text: error: TTS_ERROR_OPERATION_FAILED");
+               break;
+            case TTS_ERROR_NOT_SUPPORTED:
+               DEBUG("FAILED tts_add_text: error: TTS_ERROR_NOT_SUPPORTED");
+               break;
+            default:
+               DEBUG("FAILED tts_add_text: error: not recognized");
+            }
+         return;
+      }
 
    DEBUG("added id to:%d\n", speak_id);
    last_utt_id = speak_id;
@@ -310,28 +316,28 @@ void state_changed_cb(tts_h tts, tts_state_e previous, tts_state_e current, void
    Service_Data *sd = user_data;
 
    if (TTS_STATE_CREATED == previous && TTS_STATE_READY == current)
-     {
+      {
 
-       update_supported_voices(sd);
+         update_supported_voices(sd);
 
-       char *txt;
+         char *txt;
 
-       if (!txt_keep_buff) return;
-       if (!eina_strbuf_length_get(txt_keep_buff)) return;
+         if (!txt_keep_buff) return;
+         if (!eina_strbuf_length_get(txt_keep_buff)) return;
 
-       txt = eina_strbuf_string_steal(txt_keep_buff);
-       eina_strbuf_free(txt_keep_buff);
-       txt_keep_buff = NULL;
+         txt = eina_strbuf_string_steal(txt_keep_buff);
+         eina_strbuf_free(txt_keep_buff);
+         txt_keep_buff = NULL;
 
-       tts_speak(txt, EINA_FALSE);
-       tts_play(sd->tts);
-       free(txt);
-     }
+         tts_speak(txt, EINA_FALSE);
+         tts_play(sd->tts);
+         free(txt);
+      }
    else if (current == TTS_STATE_READY || current == TTS_STATE_PAUSED)
-     {
+      {
          DEBUG("TTS state == %s!", get_tts_state(current));
          tts_play(sd->tts);
-     }
+      }
    else
       {
          DEBUG("TTS state != ready or paused!\n");

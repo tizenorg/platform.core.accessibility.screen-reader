@@ -287,7 +287,7 @@ _check_list_children_count(AtspiAccessible *obj)
       {
          int children_count = atspi_accessible_get_child_count(obj, NULL);
 
-         for (i=0;i<children_count;i++)
+         for (i=0; i<children_count; i++)
             {
                child = atspi_accessible_get_child_at_index(obj, i, NULL);
                if (atspi_accessible_get_role(child, NULL) == ATSPI_ROLE_LIST_ITEM)
@@ -311,7 +311,7 @@ _find_popup_list_children_count(AtspiAccessible *obj)
    if (list_items_count > 0)
       return list_items_count;
 
-   for (i=0;i<children_count;i++)
+   for (i=0; i<children_count; i++)
       {
          child = atspi_accessible_get_child_at_index(obj, i, NULL);
          list_items_count = _find_popup_list_children_count(child);
@@ -530,10 +530,17 @@ _current_highlight_object_set(AtspiAccessible *obj)
          current_comp = comp;
          GERROR_CHECK(err)
 
+         Eina_Bool is_paused = tts_pause_get();
+         if(is_paused)
+            {
+               tts_stop_set();
+               tts_pause_set(EINA_FALSE);
+            }
          current_obj = obj;
          char *text_to_speak = NULL;
          text_to_speak = generate_what_to_read(obj);
          DEBUG("SPEAK:%s", text_to_speak);
+
          tts_speak(text_to_speak, EINA_TRUE);
          g_free(text_to_speak);
       }
@@ -584,26 +591,26 @@ static void _focus_widget(Gesture_Info *info)
 {
    DEBUG("START");
    if (info->type == ONE_FINGER_HOVER)
-     {
-        if (_last_hover_event_time < 0)
-           _last_hover_event_time = info->event_time;
-        //info->event_time and _last_hover_event_time contain timestamp in ms.
-        if (info->event_time - _last_hover_event_time < ONGOING_HOVER_GESTURE_INTERPRETATION_INTERVAL && info->state == 1)
-           return;
+      {
+         if (_last_hover_event_time < 0)
+            _last_hover_event_time = info->event_time;
+         //info->event_time and _last_hover_event_time contain timestamp in ms.
+         if (info->event_time - _last_hover_event_time < ONGOING_HOVER_GESTURE_INTERPRETATION_INTERVAL && info->state == 1)
+            return;
 
-        _last_hover_event_time = info->state != 1 ? -1 : info->event_time;
-     }
+         _last_hover_event_time = info->state != 1 ? -1 : info->event_time;
+      }
 
    if ((last_focus.x == info->x_beg) && (last_focus.y == info->y_beg))
       return;
 
    AtspiAccessible *obj = NULL;
    if (flat_navi_context_current_at_x_y_set(context, info->x_beg, info->y_beg, &obj))
-     {
-        last_focus.x = info->x_beg;
-        last_focus.y = info->y_beg;
-        _current_highlight_object_set(obj);
-     }
+      {
+         last_focus.x = info->x_beg;
+         last_focus.y = info->y_beg;
+         _current_highlight_object_set(obj);
+      }
 
    DEBUG("END");
 }
@@ -1833,7 +1840,7 @@ _view_content_changed(AtspiAccessible *root, void *user_data)
 {
    DEBUG("START");
    if (flat_navi_is_valid(context, root))
-       return;
+      return;
    flat_navi_context_free(context);
    context = flat_navi_context_create(root);
    _current_highlight_object_set(flat_navi_context_current_get(context));
