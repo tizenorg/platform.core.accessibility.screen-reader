@@ -1189,8 +1189,8 @@ void screen_reader_gestures_shutdown(void)
       ecore_event_handler_del(hdlr);
    }
 
-   ecore_x_pointer_ungrab();
    ecore_x_input_touch_devices_ungrab();
+   ecore_x_pointer_ungrab();
    ecore_x_shutdown();
    ecore_shutdown();
    free(_e_mod_config);

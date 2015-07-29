@@ -168,7 +168,6 @@ void set_signal_handler()
 
 static int app_create(void *data)
 {
-   eldbus_init();
    elm_init(0, NULL);
 
    logger_init();
@@ -184,15 +183,19 @@ static int app_create(void *data)
 
 static int app_terminate(void *data)
 {
-   screen_reader_terminate_service(data);
+   DEBUG("screen reader terminating");
 
 #ifndef SCREEN_READER_TV
+   DEBUG("terminate navigator");
    navigator_shutdown();
+   DEBUG("terminate gestures");
    screen_reader_gestures_shutdown();
 #endif
-
-   eldbus_shutdown();
+   DEBUG("terminate service");
+   screen_reader_terminate_service(data);
+   DEBUG("terminate logger");
    logger_shutdown();
+   DEBUG("screen reader terminated");
    return 0;
 }
 

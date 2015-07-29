@@ -9,7 +9,6 @@
 
 static Eldbus_Connection *conn;
 static Eldbus_Service_Interface *service;
-static Eldbus_Pending *addr_req;
 
 enum _Signals
 {
@@ -83,7 +82,7 @@ void dbus_gesture_adapter_init(void)
         goto fail_msg;
      }
 
-   if (!(addr_req = eldbus_connection_send(session, msg, _on_get_a11y_address, session, -1)))
+   if (!eldbus_connection_send(session, msg, _on_get_a11y_address, session, -1))
      {
         ERROR("Message send failed");
         goto fail_send;
@@ -99,12 +98,10 @@ fail_msg:
 
 void dbus_gesture_adapter_shutdown(void)
 {
-   if (addr_req) eldbus_pending_cancel(addr_req);
    if (service) eldbus_service_object_unregister(service);
    if (conn) eldbus_connection_unref(conn);
 
    conn = NULL;
-   addr_req = NULL;
    service = NULL;
 
    eldbus_shutdown();
