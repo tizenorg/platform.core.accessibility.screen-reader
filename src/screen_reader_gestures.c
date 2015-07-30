@@ -665,10 +665,35 @@ end_scroll(int x, int y)
    ecore_x_mouse_out_send(scrolled_win, x - rx, y - ry);
 }
 
+static unsigned int
+_win_angle_get(void)
+{
+   Ecore_X_Window root, first_root;
+   int ret;
+   int count;
+   int angle = 0;
+   unsigned char *prop_data = NULL;
+
+   first_root = ecore_x_window_root_first_get();
+   root = ecore_x_window_root_get(first_root);
+   ret = ecore_x_window_prop_property_get(root, ECORE_X_ATOM_E_ILLUME_ROTATE_ROOT_ANGLE,
+                   ECORE_X_ATOM_CARDINAL, 32, &prop_data, &count);
+
+   if (ret && prop_data)
+      memcpy (&angle, prop_data, sizeof (int));
+
+   if (prop_data)
+      free (prop_data);
+
+   return angle;
+}
+
 static void
 _hover_event_emit(Cover *cov, int state)
 {
-   int ax = 0, ay = 0, j;
+   Ecore_X_Window root;
+   int ax = 0, ay = 0, j, tmp, w, h;
+
    for (j = 0; j < cov->hover_gesture.n_fingers; j++)
       {
          ax += cov->hover_gesture.x[j];
@@ -678,10 +703,30 @@ _hover_event_emit(Cover *cov, int state)
    ax /= cov->hover_gesture.n_fingers;
    ay /= cov->hover_gesture.n_fingers;
 
+   win_angle = _win_angle_get();
+   switch(win_angle)
+      {
+      case 90:
+         root = ecore_x_window_root_first_get();
+         ecore_x_window_geometry_get(root, NULL, NULL, &w, &h);
+         tmp = ax;
+         ax = h - ay;
+         ay = tmp;
+         break;
+
+      case 270:
+         root = ecore_x_window_root_first_get();
+         ecore_x_window_geometry_get(root, NULL, NULL, &w, &h);
+         tmp = ax;
+         ax = ay;
+         ay = w - tmp;
+         break;
+      }
+
    switch (cov->hover_gesture.n_fingers)
       {
       case 1:
-         INFO("ON FINGER HOVER");
+         INFO("ONE FINGER HOVER");
          _event_emit(ONE_FINGER_HOVER, ax, ay, ax, ay, state, cov->event_time);
          break;
       case 2:
@@ -1065,29 +1110,6 @@ _tap_gestures_move(Ecore_Event_Mouse_Move *ev, Cover *cov)
                break;
             }
       }
-}
-
-static unsigned int
-_win_angle_get(void)
-{
-   Ecore_X_Window root, first_root;
-   int ret;
-   int count;
-   int angle = 0;
-   unsigned char *prop_data = NULL;
-
-   first_root = ecore_x_window_root_first_get();
-   root = ecore_x_window_root_get(first_root);
-   ret = ecore_x_window_prop_property_get(root, ECORE_X_ATOM_E_ILLUME_ROTATE_ROOT_ANGLE,
-                   ECORE_X_ATOM_CARDINAL, 32, &prop_data, &count);
-
-   if (ret && prop_data)
-      memcpy (&angle, prop_data, sizeof (int));
-
-   if (prop_data)
-      free (prop_data);
-
-   return angle;
 }
 
 static Eina_Bool
