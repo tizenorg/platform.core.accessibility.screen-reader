@@ -73,6 +73,7 @@ void print_warning(int sig, siginfo_t *siginfo, FILE *log_file)
             fputs("Caught SIGFPE: Arithmetic Exception\n", log_file);
             break;
         }
+        break;
     case SIGILL:
         switch(siginfo->si_code)
         {
@@ -123,15 +124,23 @@ void posix_signal_handler(int sig, siginfo_t *siginfo, void *context)
     struct tm * timeinfo;
     time_t rawtime = time(NULL);
     timeinfo = localtime(&rawtime);
-    sprintf(file_name, "/tmp/screen_reader_crash_stacktrace_%i%i%i_%i:%i:%i_pid_%i.log", timeinfo->tm_year,
-            timeinfo->tm_mon, timeinfo->tm_mday,timeinfo->tm_hour, timeinfo->tm_min, timeinfo->tm_sec, getpid());
+    if (timeinfo)
+      sprintf(file_name, "/tmp/screen_reader_crash_stacktrace_%i%i%i_%i:%i:%i_pid_%i.log", timeinfo->tm_year,
+              timeinfo->tm_mon, timeinfo->tm_mday,timeinfo->tm_hour, timeinfo->tm_min, timeinfo->tm_sec, getpid());
+    else
+      sprintf(file_name, "/tmp/screen_reader_crash_stacktrace_pid_%i.log", getpid());
+
     FILE * log_file = fopen(file_name, "w");
-    (void)context;
-    print_warning(sig, siginfo, stderr);
-    print_warning(sig, siginfo, log_file);
-    posix_print_stack_trace(log_file);
-    fclose(log_file);
-    log_file = NULL;
+    if (log_file)
+      {
+         (void)context;
+         print_warning(sig, siginfo, stderr);
+         print_warning(sig, siginfo, log_file);
+         posix_print_stack_trace(log_file);
+         fclose(log_file);
+         log_file = NULL;
+      }
+
     _Exit(1);
 }
 static uint8_t alternate_stack[SIGSTKSZ];

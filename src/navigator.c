@@ -56,7 +56,7 @@ static AtspiAccessible *top_window;
 static FlatNaviContext *context;
 static bool prepared = false;
 static int counter=0;
-unsigned int _last_hover_event_time = -1;
+int _last_hover_event_time = -1;
 
 static struct
 {
