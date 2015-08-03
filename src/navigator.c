@@ -1386,8 +1386,8 @@ void auto_review_highlight_top(void)
 {
    DEBUG("START");
    char *text_to_speak = NULL;
-   AtspiAccessible *first = flat_navi_context_first(context);
    AtspiAccessible *obj = flat_navi_context_current_get(context);
+   AtspiAccessible *first = flat_navi_context_first(context);
 
    if(first != obj)
       {
