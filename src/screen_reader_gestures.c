@@ -1138,6 +1138,14 @@ _cb_mouse_down(void    *data EINA_UNUSED,
                void    *event)
 {
    Ecore_Event_Mouse_Button *ev = event;
+   int x, y;
+
+   if (ecore_x_e_virtual_keyboard_get(ev->window))
+     {
+        _get_root_coords(ev->window, &x, &y);
+        ecore_x_mouse_in_send(ev->window, ev->x - x, ev->y - y);
+        ecore_x_mouse_down_send(ev->window, ev->x - x, ev->y -y, 1);
+     }
 
    cov->n_taps++;
    cov->event_time = ev->timestamp;
@@ -1159,6 +1167,14 @@ _cb_mouse_up(void    *data EINA_UNUSED,
              void    *event)
 {
    Ecore_Event_Mouse_Button *ev = event;
+   int x, y;
+
+   if (ecore_x_e_virtual_keyboard_get(ev->window))
+     {
+        _get_root_coords(ev->window, &x, &y);
+        ecore_x_mouse_out_send(ev->window, ev->x - x, ev->y - y);
+        ecore_x_mouse_up_send(ev->window, ev->x - x, ev->y -y, 1);
+     }
 
    cov->n_taps--;
    cov->event_time = ev->timestamp;
@@ -1178,6 +1194,14 @@ _cb_mouse_move(void    *data EINA_UNUSED,
                void    *event)
 {
    Ecore_Event_Mouse_Move *ev = event;
+   int x, y;
+
+   if (ecore_x_e_virtual_keyboard_get(ev->window))
+     {
+        _get_root_coords(ev->window, &x, &y);
+        ecore_x_window_geometry_get(ev->window, &x, &y, NULL, NULL);
+        ecore_x_mouse_move_send(ev->window, ev->x - x, ev->y - y);
+     }
 
    cov->event_time = ev->timestamp;
 
