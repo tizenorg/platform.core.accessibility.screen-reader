@@ -6,7 +6,7 @@ Name:       org.tizen.screen-reader
 Summary:    Screen Reader Assistive Technology
 Version:    0.0.3
 Release:    1
-License:    Apache-2.0
+License:    Flora-1.1
 Source0:    %{name}-%{version}.tar.gz
 
 BuildRequires:  at-spi2-core
