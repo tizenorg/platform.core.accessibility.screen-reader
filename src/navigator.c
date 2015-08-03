@@ -1366,9 +1366,16 @@ void auto_review_highlight_set(void)
 
    if(!obj)
       {
+         DEBUG("obj == NULL");
          s_auto_review.auto_review_on = false;
          return;
       }
+   else if(obj == flat_navi_context_last_get(context))
+      {
+         DEBUG("obj == flat_navi_context_last_get()");
+         s_auto_review.auto_review_on = false;
+      }
+
 
    _current_highlight_object_set(obj);
 
@@ -1760,16 +1767,18 @@ _move_slider(Gesture_Info *gi)
 AtspiAction *_get_main_window(void)
 {
    AtspiAccessible *win = flat_navi_context_root_get(context);
-   if (!win) {
-		ERROR("win == NULL");
-		return NULL;
-   }
+   if (!win)
+      {
+         ERROR("win == NULL");
+         return NULL;
+      }
 
    AtspiAction *action = atspi_accessible_get_action_iface(win);
-   if (!action) {
-		ERROR("action == NULL");
-		return NULL;
-	}
+   if (!action)
+      {
+         ERROR("action == NULL");
+         return NULL;
+      }
 
    return action;
 }
@@ -1801,9 +1810,9 @@ static void _start_stop_signal_send(void)
    char *action_name = "pause_play";
    AtspiAction *action = _get_main_window();
    if(!action)
-   {
-	   ERROR("Could not get the action inteface");
-   }
+      {
+         ERROR("Could not get the action inteface");
+      }
 
    if(!action)
       {
@@ -1813,10 +1822,10 @@ static void _start_stop_signal_send(void)
 
    action_index = _find_action_index(action, action_name);
    if(action_index < 0)
-   {
-	   ERROR("Pause_play action not found");
-	   return;
-   }
+      {
+         ERROR("Pause_play action not found");
+         return;
+      }
 
    DEBUG("ACTION: %s has index: %d", action_name, action_index);
    atspi_action_do_action(action, action_index, NULL);
@@ -1949,35 +1958,35 @@ static AtspiAccessible* _get_modal_descendant(AtspiAccessible *root)
    atspi_state_set_add (states, ATSPI_STATE_MODAL);
    DEBUG("GET MODAL: STATE SET PREPARED");
    AtspiMatchRule *rule = atspi_match_rule_new (states,
-                                                ATSPI_Collection_MATCH_ANY,
-                                                NULL,
-                                                ATSPI_Collection_MATCH_INVALID,
-                                                NULL,
-                                                ATSPI_Collection_MATCH_INVALID,
-                                                NULL,
-                                                ATSPI_Collection_MATCH_INVALID,
-                                                0);
+                          ATSPI_Collection_MATCH_ANY,
+                          NULL,
+                          ATSPI_Collection_MATCH_INVALID,
+                          NULL,
+                          ATSPI_Collection_MATCH_INVALID,
+                          NULL,
+                          ATSPI_Collection_MATCH_INVALID,
+                          0);
    DEBUG("GET MODAL: MATCHING RULE PREPARED");
    AtspiAccessible *ret = NULL;
    AtspiCollection *col_iface = atspi_accessible_get_collection_iface(root);
    GArray *result = atspi_collection_get_matches (col_iface,
-                                                  rule,
-                                                  ATSPI_Collection_SORT_ORDER_INVALID,
-                                                  1,
-                                                  1,
-                                                  &err);
+                    rule,
+                    ATSPI_Collection_SORT_ORDER_INVALID,
+                    1,
+                    1,
+                    &err);
    GERROR_CHECK(err);
    DEBUG("GET MODAL: QUERY PERFORMED");
    g_object_unref(states);
    g_object_unref(rule);
    g_object_unref(col_iface);
    if (result && result->len > 0)
-     {
-        DEBUG("GET MODAL: MODAL FOUND");
-        g_array_set_clear_func(result, clear);
-        ret = g_object_ref(g_array_index(result, AtspiAccessible*, 0));
-        g_array_free(result, TRUE);
-     }
+      {
+         DEBUG("GET MODAL: MODAL FOUND");
+         g_array_set_clear_func(result, clear);
+         ret = g_object_ref(g_array_index(result, AtspiAccessible*, 0));
+         g_array_free(result, TRUE);
+      }
    return ret;
 }
 
@@ -1988,19 +1997,19 @@ static void on_window_activate(void *data, AtspiAccessible *window)
    app_tracker_callback_unregister(top_window, _view_content_changed, NULL);
 
    if (window)
-     {
-        DEBUG("Window name: %s", atspi_accessible_get_name(window, NULL));
-        app_tracker_callback_register(window, _view_content_changed, NULL);
-        // TODO: modal descendant of window should be used (if exists) otherwise window
-        AtspiAccessible *modal_descendant = _get_modal_descendant(window);
-        _view_content_changed(modal_descendant ? modal_descendant : window, NULL);
-        g_object_unref(modal_descendant);
-     }
+      {
+         DEBUG("Window name: %s", atspi_accessible_get_name(window, NULL));
+         app_tracker_callback_register(window, _view_content_changed, NULL);
+         // TODO: modal descendant of window should be used (if exists) otherwise window
+         AtspiAccessible *modal_descendant = _get_modal_descendant(window);
+         _view_content_changed(modal_descendant ? modal_descendant : window, NULL);
+         g_object_unref(modal_descendant);
+      }
    else
-     {
-        flat_navi_context_free(context);
-        ERROR("No top window found!");
-     }
+      {
+         flat_navi_context_free(context);
+         ERROR("No top window found!");
+      }
    top_window = window;
    DEBUG("END");
 }

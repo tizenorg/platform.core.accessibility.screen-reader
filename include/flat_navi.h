@@ -184,8 +184,14 @@ int flat_navi_context_current_children_count_visible_get( FlatNaviContext *ctx);
  * @param ctx FlatNaviContext
  * @return Pointer to the first item in context
  */
-AtspiAccessible *flat_navi_context_first_get(FlatNaviContext *ctx);
+const AtspiAccessible *flat_navi_context_first_get(FlatNaviContext *ctx);
 
+/**
+ * Returns the last item in context;
+ * @param ctx FlatNaviContext
+ * @return Pointer to the last item in context
+ */
+const AtspiAccessible *flat_navi_context_last_get(FlatNaviContext *ctx);
 
 Eina_Bool flat_navi_is_valid(FlatNaviContext *context, AtspiAccessible *new_root);
 
