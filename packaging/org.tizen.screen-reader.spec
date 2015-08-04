@@ -74,4 +74,4 @@ rm -rf %{buildroot}
 %{AppInstallPath}/bin/screen-reader
 %{AppInstallPath}/res/icons/screen-reader.png
 %{AppInstallPath}/res/locale/*/LC_MESSAGES/*
-/opt/share/packages/%{name}.xml
+/usr/share/packages/%{name}.xml
