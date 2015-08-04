@@ -476,7 +476,7 @@ AtspiAccessible * _directional_depth_first_search(AtspiAccessible *root, AtspiAc
          g_object_unref(next_related_in_direction);
       }
 
-   while (1)
+   while (node)
       {
          AtspiAccessible *prev_related_in_direction = (next_sibling_idx_modifier > 0)
                ? _get_object_in_relation(node, ATSPI_RELATION_FLOWS_FROM)
@@ -525,9 +525,9 @@ AtspiAccessible * _directional_depth_first_search(AtspiAccessible *root, AtspiAc
                      while (!_has_next_sibling(node, next_sibling_idx_modifier) || node==root) // no next sibling
                         {
                            DEBUG("DFS NO SIBLING");
-                           if (node == root)
+                           if (!node || node == root)
                               {
-                                 DEBUG("DFS ROOT")
+                                 DEBUG("DFS END");
                                  g_object_unref(node);
                                  return NULL;
                               }
@@ -542,6 +542,8 @@ AtspiAccessible * _directional_depth_first_search(AtspiAccessible *root, AtspiAc
                   }
             }
       }
+      DEBUG("DFS END");
+      return NULL;
 }
 
 AtspiAccessible *_first(FlatNaviContext *ctx)
