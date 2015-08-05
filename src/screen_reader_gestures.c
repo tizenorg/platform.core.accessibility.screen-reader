@@ -32,8 +32,10 @@ struct _Gestures_Config
    int one_finger_flick_max_time;
    // timeout period to activate hover gesture (first longpress timeout)
    double one_finger_hover_longpress_timeout;
-   // tap timeout - maximal ammount of time allowed between seqiential taps
-   double two_fingers_hover_longpress_timeout;
+   // to activate flick gesture by 2 fingers (it is hotfix - gestures need serious refactoring)
+   int two_finger_flick_to_scroll_timeout;
+   // after mowing this pixels flick two finger flick to scroll gesture is started
+   int two_finger_flick_to_scroll_min_length;
    // tap timeout - maximal ammount of time allowed between seqiential taps
    double one_finger_tap_timeout;
    // tap radius(in pixels)
@@ -88,6 +90,7 @@ struct _Cover
       //         still touching screen
       Eina_Bool finger_out[3];   // finger is out of the finger boundary
       Eina_Bool return_flick[3];
+      Eina_Bool flick_to_scroll;
    } flick_gesture;
 
    struct
@@ -152,6 +155,7 @@ _flick_gesture_mouse_down(Ecore_Event_Mouse_Button *ev, Cover *cov)
          cov->flick_gesture.x_org[0] = ev->root.x;
          cov->flick_gesture.y_org[0] = ev->root.y;
          cov->flick_gesture.timestamp[0] = ev->timestamp;
+         cov->flick_gesture.flick_to_scroll = EINA_FALSE;
          cov->flick_gesture.n_fingers = 1;
          cov->flick_gesture.n_fingers_left = 1;
          cov->flick_gesture.dir = FLICK_DIRECTION_UNDEFINED;
@@ -350,7 +354,14 @@ _flick_gesture_mouse_up(Ecore_Event_Mouse_Button *ev, Cover *cov)
                cov->flick_gesture.state = GESTURE_ABORTED;
                goto end;
             }
-
+        if (ev->multi.device == 1 && cov->flick_gesture.flick_to_scroll)//we react only on second finger
+            {
+               DEBUG("Flick gesture was interpreted as scroll so we aborting it.");
+               end_scroll(ev->x, ev->y);
+               cov->flick_gesture.flick_to_scroll  = EINA_FALSE;
+               cov->flick_gesture.state = GESTURE_ABORTED;
+               goto end;
+            }
          // check if flick for given finger is valid
          if (!_flick_gesture_time_check(ev->timestamp,
                                         cov->flick_gesture.timestamp[i]))
@@ -416,6 +427,15 @@ end:
          cov->flick_gesture.state = GESTURE_NOT_STARTED;
       }
 }
+static Eina_Bool _flick_to_scroll_gesture_conditions_met(Ecore_Event_Mouse_Move *ev, int gesture_timestamp, int dx, int dy)
+{
+    if (ev->timestamp - gesture_timestamp > _e_mod_config->two_finger_flick_to_scroll_timeout)
+        if (abs(dx) > _e_mod_config->two_finger_flick_to_scroll_min_length ||
+            abs(dy) > _e_mod_config->two_finger_flick_to_scroll_min_length)
+            return EINA_TRUE;
+
+    return EINA_FALSE;
+}
 
 static void
 _flick_gesture_mouse_move(Ecore_Event_Mouse_Move *ev, Cover *cov)
@@ -437,26 +457,41 @@ _flick_gesture_mouse_move(Ecore_Event_Mouse_Move *ev, Cover *cov)
                      return;
                   }
             }
+         DEBUG("i: %i, ev->multi.device: %i", i, ev->multi.device);
+
+         int dx = ev->root.x - cov->flick_gesture.x_org[i];
+         int dy = ev->root.y - cov->flick_gesture.y_org[i];
+         int tmp;
+
+         switch(win_angle)
+            {
+            case 90:
+               tmp = dx;
+               dx = -dy;
+               dy = tmp;
+               break;
+            case 270:
+               tmp = dx;
+               dx = dy;
+               dy = -tmp;
+               break;
+            }
+         if ( i == 1)
+         {
+             if (cov->flick_gesture.flick_to_scroll || _flick_to_scroll_gesture_conditions_met(ev, cov->flick_gesture.timestamp[i], dx, dy))
+               {
+                 if (!cov->flick_gesture.flick_to_scroll) {
+                    start_scroll(ev->x, ev->y);
+                    cov->flick_gesture.flick_to_scroll = EINA_TRUE;
+                 } else {
+                    continue_scroll(ev->x, ev->y);
+                 }
+                 return;
+              }
+         }
+
          if(!cov->flick_gesture.finger_out[i])
             {
-               int dx = ev->root.x - cov->flick_gesture.x_org[i];
-               int dy = ev->root.y - cov->flick_gesture.y_org[i];
-               int tmp;
-
-               switch(win_angle)
-                  {
-                  case 90:
-                     tmp = dx;
-                     dx = -dy;
-                     dy = tmp;
-                     break;
-                  case 270:
-                     tmp = dx;
-                     dx = dy;
-                     dy = -tmp;
-                     break;
-                  }
-
                if (abs(dx) > _e_mod_config->one_finger_flick_min_length)
                   {
                      cov->flick_gesture.finger_out[i] = EINA_TRUE;
@@ -659,7 +694,7 @@ start_scroll(int x, int y)
 {
    Ecore_X_Window under = ecore_x_window_at_xy_get(x, y);
    _get_root_coords(under, &rx, &ry);
-   DEBUG("Send down: %d %d", x - rx, y - ry);
+   DEBUG("Starting scroll: %d %d", x - rx, y - ry);
    ecore_x_mouse_in_send(under, x - rx, y - ry);
    ecore_x_window_focus(under);
    ecore_x_mouse_down_send(under, x - rx, y - ry, 1);
@@ -669,14 +704,14 @@ start_scroll(int x, int y)
 void
 continue_scroll(int x, int y)
 {
-   DEBUG("Send move: %d %d", x - rx, y - ry);
+   DEBUG("Continuing scroll: %d %d", x - rx, y - ry);
    ecore_x_mouse_move_send(scrolled_win, x - rx, y - ry);
 }
 
 void
 end_scroll(int x, int y)
 {
-   DEBUG("Send up: %d %d", x - rx, y - ry);
+   DEBUG("Ending scroll : %d %d", x - rx, y - ry);
    ecore_x_mouse_up_send(scrolled_win, x - rx, y - ry, 1);
    ecore_x_mouse_out_send(scrolled_win, x - rx, y - ry);
 }
@@ -744,16 +779,6 @@ _hover_event_emit(Cover *cov, int state)
       case 1:
          INFO("ONE FINGER HOVER");
          _event_emit(ONE_FINGER_HOVER, ax, ay, ax, ay, state, cov->event_time);
-         break;
-      case 2:
-         INFO("TWO FINGERS HOVER");
-         _event_emit(TWO_FINGERS_HOVER, ax, ay, ax, ay, state, cov->event_time);
-         if (state == 0)
-            start_scroll(ax, ay);
-         else if (state == 1)
-            continue_scroll(ax, ay);
-         else if (state == 2)
-            end_scroll(ax, ay);
          break;
       default:
          break;
@@ -1231,8 +1256,9 @@ Eina_Bool screen_reader_gestures_init(void)
 
    _e_mod_config->one_finger_flick_min_length = 100;
    _e_mod_config->one_finger_flick_max_time = 400;
+   _e_mod_config->two_finger_flick_to_scroll_timeout = 100;
+   _e_mod_config->two_finger_flick_to_scroll_min_length = 50;
    _e_mod_config->one_finger_hover_longpress_timeout = 0.81;
-   _e_mod_config->two_fingers_hover_longpress_timeout = 0.1;
    _e_mod_config->one_finger_tap_timeout = 0.4;
    _e_mod_config->one_finger_tap_radius = 100;
 
