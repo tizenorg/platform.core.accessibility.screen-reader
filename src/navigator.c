@@ -185,6 +185,11 @@ state_to_char(AtspiStateType state)
 
 }
 
+void clear_char_array(gpointer d)
+{
+   g_free(d);
+}
+
 static void
 display_info_about_object(AtspiAccessible *obj)
 {
@@ -200,6 +205,7 @@ display_info_about_object(AtspiAccessible *obj)
    AtspiValue *value = atspi_accessible_get_value_iface(obj);
    AtspiRect *rect_screen = atspi_component_get_extents(comp, ATSPI_COORD_TYPE_SCREEN, NULL);
    AtspiRect *rect_win = atspi_component_get_extents(comp, ATSPI_COORD_TYPE_WINDOW, NULL);
+   GArray *ifaces = atspi_accessible_get_interfaces(obj);
 
    DEBUG("NAME:%s", name);
    DEBUG("ROLE:%s", role)
@@ -224,6 +230,11 @@ display_info_about_object(AtspiAccessible *obj)
          free(state_name);
       }
    g_array_free(states, 0);
+   DEBUG("INTERFACES:");
+   for (a = 0; ifaces && (a < ifaces->len); ++a)
+         DEBUG("   %s", g_array_index (ifaces, gchar *, a));
+   g_array_set_clear_func(ifaces, clear_char_array);
+   g_array_free(ifaces, TRUE);
    DEBUG("LOCALE:%s", atspi_accessible_get_object_locale(obj, NULL));
    DEBUG("SIZE ON SCREEN, width:%d, height:%d",rect_screen->width, rect_screen->height);
    DEBUG("POSITION ON SCREEN: x:%d y:%d", rect_screen->x, rect_screen->y);
@@ -456,12 +467,21 @@ generate_what_to_read(AtspiAccessible *obj)
    char *description;
    char *role_name;
    char *other;
+   char *text = NULL;
    char ret[TTS_MAX_TEXT_SIZE] = "\0";
-
    description = atspi_accessible_get_description(obj, NULL);
    name = atspi_accessible_get_name(obj, NULL);
    role_name = generate_trait(obj);
    other = generate_description_for_subtrees(obj);
+   AtspiText *iface_text = atspi_accessible_get_text_iface(obj);
+   if (iface_text)
+      {
+        text = atspi_text_get_text(iface_text,
+                                   0,
+                                   atspi_text_get_character_count(iface_text, NULL),
+                                   NULL);
+        g_object_unref(iface_text);
+      }
 
    DEBUG("->->->->->-> WIDGET GAINED HIGHLIGHT: %s <-<-<-<-<-<-<-", name);
    DEBUG("->->->->->-> FROM SUBTREE HAS NAME:  %s <-<-<-<-<-<-<-", other);
@@ -472,6 +492,14 @@ generate_what_to_read(AtspiAccessible *obj)
       names = strdup(name);
    else if (other && strncmp(other, "\0", 1))
       names = strdup(other);
+
+   if (text)
+      {
+         strncat(ret, text, sizeof(ret) - strlen(ret) - 1);
+         strncat(ret, ", ", sizeof(ret) - strlen(ret) - 1);
+      }
+
+   DEBUG("Text:%s", text);
 
    if (names)
       {
@@ -489,6 +517,7 @@ generate_what_to_read(AtspiAccessible *obj)
          strncat(ret, description, sizeof(ret) - strlen(ret) - 1);
       }
 
+   free(text);
    free(name);
    free(names);
    free(description);
