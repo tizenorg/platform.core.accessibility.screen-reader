@@ -1700,12 +1700,14 @@ _move_slider(Gesture_Info *gi)
    if (!obj)
       {
          DEBUG("no object");
+         prepared = false;
          return;
       }
 
    if (!_is_slider(obj))
       {
          ERROR("Object is not a slider");
+         prepared = false;
          return;
       }
 
@@ -1715,6 +1717,7 @@ _move_slider(Gesture_Info *gi)
          if (!comp)
             {
                ERROR("that slider do not have component interface");
+               prepared = false;
                return;
             }
 
