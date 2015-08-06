@@ -139,21 +139,24 @@ static AtspiAccessible* _get_object_in_relation(AtspiAccessible *source, AtspiRe
       {
          DEBUG("CHECKING RELATIONS");
          relations = atspi_accessible_get_relation_set(source, NULL);
-         for (i = 0; i < relations->len; i++)
-            {
-               DEBUG("ALL RELATIONS FOUND: %d",relations->len);
-               relation = g_array_index (relations, AtspiRelation*, i);
-               type = atspi_relation_get_relation_type(relation);
-               DEBUG("RELATION:  %d",type);
+         if (relations)
+           {
+              for (i = 0; i < relations->len; i++)
+                 {
+                   DEBUG("ALL RELATIONS FOUND: %d",relations->len);
+                   relation = g_array_index (relations, AtspiRelation*, i);
+                   type = atspi_relation_get_relation_type(relation);
+                   DEBUG("RELATION:  %d",type);
 
-               if (type == search_type)
-                  {
-                     ret = atspi_relation_get_target(relation, 0);
-                     DEBUG("SEARCHED RELATION FOUND");
-                     break;
-                  }
-            }
-         g_array_free(relations, TRUE);
+                   if (type == search_type)
+                      {
+                         ret = atspi_relation_get_target(relation, 0);
+                         DEBUG("SEARCHED RELATION FOUND");
+                         break;
+                      }
+                 }
+              g_array_free(relations, TRUE);
+           }
       }
    return ret;
 }
