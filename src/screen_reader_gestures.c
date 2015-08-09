@@ -23,6 +23,8 @@
 
 static GestureCB _global_cb;
 static void *_global_data;
+static Ecore_Window win;
+static Ecore_Event_Handler *property_changed_hld;
 
 struct _Gestures_Config
 {
@@ -692,7 +694,8 @@ static void _get_root_coords(Ecore_X_Window win, int *x, int *y)
 void
 start_scroll(int x, int y)
 {
-   Ecore_X_Window under = ecore_x_window_at_xy_get(x, y);
+   Ecore_X_Window wins[1] = { win };
+   Ecore_X_Window under = ecore_x_window_at_xy_with_skip_get(x, y, wins, sizeof(wins)/sizeof(wins[0]));
    _get_root_coords(under, &rx, &ry);
    DEBUG("Starting scroll: %d %d", x - rx, y - ry);
    ecore_x_mouse_in_send(under, x - rx, y - ry);
@@ -1233,27 +1236,82 @@ _cb_mouse_move(void    *data EINA_UNUSED,
    return ECORE_CALLBACK_PASS_ON;
 }
 
+static Eina_Bool
+_gesture_input_win_create(void)
+{
+   int w, h;
+
+   if (!win)
+     {
+        Ecore_Window root = ecore_x_window_root_first_get();
+        if (!root)
+          return EINA_FALSE;
+        ecore_x_window_geometry_get(root, NULL, NULL, &w, &h);
+        win = ecore_x_window_input_new(root, 0, 0, w, h);
+     }
+   if (!win)
+     return EINA_FALSE;
+
+   ecore_x_input_multi_select(win);
+   ecore_x_window_show(win);
+   ecore_x_window_raise(win);
+
+   // restet gestures
+   memset(cov, 0x0, sizeof(Cover));
+
+   return EINA_TRUE;
+}
+
+static Eina_Bool
+_win_property_changed(void *data, int type, void *event)
+{
+   Ecore_X_Event_Window_Property *wp = event;
+
+   if (wp->atom != ECORE_X_ATOM_NET_CLIENT_LIST_STACKING)
+     return EINA_TRUE;
+
+   _gesture_input_win_create();
+
+   return EINA_TRUE;
+}
+
+static Eina_Bool
+_gestures_input_window_init(void)
+{
+   Ecore_Window root = ecore_x_window_root_first_get();
+   if (!root)
+     {
+        ERROR("No root window found. Is Window manager running?");
+        return EINA_FALSE;
+     }
+   ecore_x_event_mask_set(root, ECORE_X_EVENT_MASK_WINDOW_PROPERTY);
+   property_changed_hld = ecore_event_handler_add(ECORE_X_EVENT_WINDOW_PROPERTY, _win_property_changed, NULL);
+
+   return _gesture_input_win_create();
+}
+
+static void
+_gestures_input_widnow_shutdown(void)
+{
+   ecore_event_handler_del(property_changed_hld);
+   if (win) ecore_x_window_free(win);
+   win = 0;
+}
+
 Eina_Bool screen_reader_gestures_init(void)
 {
    ecore_init();
    ecore_x_init(NULL);
 
-   if (!ecore_x_pointer_grab(ecore_x_window_root_first_get()))
-      {
-         ERROR("Failed to grab pointer on: %x", ecore_x_window_root_first_get());
-         return EINA_FALSE;
-      }
-   if (!ecore_x_input_touch_devices_grab(ecore_x_window_root_first_get()))
-      {
-         ERROR("Failed to grab devices on: %x", ecore_x_window_root_first_get());
-         ecore_x_pointer_ungrab();
-         return EINA_FALSE;
-      }
-
-   ecore_x_input_multi_select(ecore_x_window_root_first_get());
-   _e_mod_config = calloc(sizeof(Gestures_Config), 1);
    cov = calloc(sizeof(Cover), 1);
 
+   if (!_gestures_input_window_init())
+     {
+        free(cov);
+        return EINA_FALSE;
+     }
+
+   _e_mod_config = calloc(sizeof(Gestures_Config), 1);
    _e_mod_config->one_finger_flick_min_length = 100;
    _e_mod_config->one_finger_flick_max_time = 400;
    _e_mod_config->two_finger_flick_to_scroll_timeout = 100;
@@ -1276,9 +1334,8 @@ void screen_reader_gestures_shutdown(void)
    {
       ecore_event_handler_del(hdlr);
    }
+   _gestures_input_widnow_shutdown();
 
-   ecore_x_input_touch_devices_ungrab();
-   ecore_x_pointer_ungrab();
    ecore_x_shutdown();
    ecore_shutdown();
    free(_e_mod_config);
