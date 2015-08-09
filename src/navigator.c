@@ -185,11 +185,6 @@ state_to_char(AtspiStateType state)
 
 }
 
-void clear_char_array(gpointer d)
-{
-   g_free(d);
-}
-
 static void
 display_info_about_object(AtspiAccessible *obj)
 {
@@ -205,7 +200,6 @@ display_info_about_object(AtspiAccessible *obj)
    AtspiValue *value = atspi_accessible_get_value_iface(obj);
    AtspiRect *rect_screen = atspi_component_get_extents(comp, ATSPI_COORD_TYPE_SCREEN, NULL);
    AtspiRect *rect_win = atspi_component_get_extents(comp, ATSPI_COORD_TYPE_WINDOW, NULL);
-   GArray *ifaces = atspi_accessible_get_interfaces(obj);
 
    DEBUG("NAME:%s", name);
    DEBUG("ROLE:%s", role)
@@ -230,11 +224,6 @@ display_info_about_object(AtspiAccessible *obj)
          free(state_name);
       }
    g_array_free(states, 0);
-   DEBUG("INTERFACES:");
-   for (a = 0; ifaces && (a < ifaces->len); ++a)
-         DEBUG("   %s", g_array_index (ifaces, gchar *, a));
-   g_array_set_clear_func(ifaces, clear_char_array);
-   g_array_free(ifaces, TRUE);
    DEBUG("LOCALE:%s", atspi_accessible_get_object_locale(obj, NULL));
    DEBUG("SIZE ON SCREEN, width:%d, height:%d",rect_screen->width, rect_screen->height);
    DEBUG("POSITION ON SCREEN: x:%d y:%d", rect_screen->x, rect_screen->y);
