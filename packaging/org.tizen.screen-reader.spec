@@ -40,6 +40,7 @@ An utility library for developers of the menu screen.
 %if "%{?tizen_profile_name}" == "tv"
     export CFLAGS+=" -DSCREEN_READER_TV"
 %endif
+export CFLAGS+=" -DELM_ACCESS_KEYBOARD"
 
 rm -rf CMakeFiles CMakeCache.txt && cmake . -DCMAKE_INSTALL_PREFIX="%{AppInstallPath}" -DCMAKE_TARGET="%{Exec}" -DCMAKE_PACKAGE="%{name}"
 make %{?jobs:-j%jobs} \

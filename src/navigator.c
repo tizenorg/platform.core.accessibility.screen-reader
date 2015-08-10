@@ -31,6 +31,7 @@
 #include "screen_reader_tts.h"
 #include "screen_reader_gestures.h"
 #include "dbus_gesture_adapter.h"
+#include "elm_access_adapter.h"
 
 #define QUICKPANEL_DOWN TRUE
 #define QUICKPANEL_UP FALSE
@@ -1850,6 +1851,25 @@ static void _start_stop_signal_send(void)
 
 static void on_gesture_detected(void *data, Gesture_Info *info)
 {
+
+#ifdef ELM_ACCESS_KEYBOARD
+   Ecore_X_Window keyboard_win = top_window_get(info->x_end, info->y_end);
+   if (keyboard_win && ecore_x_e_virtual_keyboard_get(keyboard_win))
+      {
+         DEBUG("Gesture is on virtural keyboard screen");
+         if (info->type == ONE_FINGER_SINGLE_TAP || info->type == ONE_FINGER_HOVER)
+            {
+               elm_access_adaptor_emit_read (keyboard_win, info->x_end, info->y_end);
+               return;
+            }
+         else if (info->type == ONE_FINGER_DOUBLE_TAP)
+            {
+               elm_access_adaptor_emit_activate (keyboard_win, info->x_end, info->y_end);
+               return;
+            }
+      }
+#endif
+
    dbus_gesture_adapter_emit(info);
    _on_auto_review_stop();
 

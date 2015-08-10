@@ -95,4 +95,13 @@ void continue_scroll(int x, int y);
  */
 void end_scroll(int x, int y);
 
+/**
+ * @brief Get top window object on which gesture occure
+ *
+ * @param x Gesture X coordinate
+ * @param y Gesture Y coordinate
+ *
+ * @return Ecore_X_Window Object which represents top window on which gesture occure
+ */
+Ecore_X_Window top_window_get (int x, int y);
 #endif
