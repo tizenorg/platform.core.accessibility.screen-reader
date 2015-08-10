@@ -26,9 +26,11 @@ BuildRequires:  vconf
 BuildRequires:  gettext-tools
 BuildRequires:  pkgconfig(check)
 BuildRequires:  pkgconfig(capi-network-bluetooth)
-BuildRequires:  pkgconfig(tapi)
 BuildRequires:  pkgconfig(notification)
 BuildRequires:  pkgconfig(capi-network-wifi)
+#%if "%{?tizen_profile_name}" != "tv"
+BuildRequires:  pkgconfig(tapi)
+#%endif
 
 %description
 An utility library for developers of the menu screen.
@@ -37,12 +39,20 @@ An utility library for developers of the menu screen.
 %setup -q
 
 %build
-%if "%{?tizen_profile_name}" == "tv"
-    export CFLAGS+=" -DSCREEN_READER_TV"
+rm -rf CMakeFiles CMakeCache.txt
+
+%if "%{?tizen_profile_name}" != "tv"
+        export SEC_FEATURE_TAPI_ENABLE="1"
+%else
+        export SEC_FEATURE_TAPI_ENABLE="0"
 %endif
 export CFLAGS+=" -DELM_ACCESS_KEYBOARD"
 
-rm -rf CMakeFiles CMakeCache.txt && cmake . -DCMAKE_INSTALL_PREFIX="%{AppInstallPath}" -DCMAKE_TARGET="%{Exec}" -DCMAKE_PACKAGE="%{name}"
+cmake . -DCMAKE_INSTALL_PREFIX="%{AppInstallPath}" \
+        -DCMAKE_TARGET="%{Exec}" \
+        -DCMAKE_PACKAGE="%{name}" \
+        -DSEC_FEATURE_TAPI_ENABLE=${SEC_FEATURE_TAPI_ENABLE}
+
 make %{?jobs:-j%jobs} \
 2>&1 | sed \
 -e 's%^.*: error: .*$%\x1b[37;41m&\x1b[m%' \

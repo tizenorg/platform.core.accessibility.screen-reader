@@ -199,7 +199,7 @@ static int app_create(void *data)
    logger_init();
    screen_reader_switch_enabled_set(EINA_TRUE);
    screen_reader_create_service(data);
-#ifndef SCREEN_READER_TV
+#ifdef SCREEN_READER_MOBILE
    screen_reader_gestures_init();
    navigator_init();
 #endif
@@ -211,7 +211,7 @@ static int app_terminate(void *data)
 {
    DEBUG("screen reader terminating");
 
-#ifndef SCREEN_READER_TV
+#ifdef SCREEN_READER_MOBILE
    DEBUG("terminate navigator");
    navigator_shutdown();
    DEBUG("terminate gestures");

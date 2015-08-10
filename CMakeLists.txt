@@ -9,6 +9,12 @@ INCLUDE(CMakeLists.sub)
 SET(RESOURCE_DIR "${CMAKE_SOURCE_DIR}/res")
 SET(LOCALEDIR "/usr/apps/org.tizen.screen-reader/res/locale")
 
+IF("${SEC_FEATURE_TAPI_ENABLE}" STREQUAL "1")
+	MESSAGE("STATUS_SEC:/-${SEC_FEATURE_TAPI_ENABLE}-/")
+	SET(TAPI_REQUIRED_PKG "tapi")
+	ADD_DEFINITIONS("-DSCREEN_READER_MOBILE")
+ENDIF ()
+
 INCLUDE(FindPkgConfig)
 pkg_check_modules(pkgs REQUIRED
 	bundle
@@ -25,9 +31,9 @@ pkg_check_modules(pkgs REQUIRED
 	capi-media-tone-player
 	capi-system-device
 	capi-network-bluetooth
-	tapi
 	notification
 	capi-network-wifi
+	${TAPI_REQUIRED_PKG}
 )
 
 FOREACH(flag ${pkgs_CFLAGS})

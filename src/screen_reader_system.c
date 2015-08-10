@@ -16,6 +16,10 @@
 
 #define _GNU_SOURCE
 
+
+#ifdef SCREEN_READER_MOBILE
+
+
 #include <device/battery.h>
 #include <device/display.h>
 #include <device/callback.h>
@@ -757,3 +761,5 @@ void device_bluetooth_get(void)
          free(buffer);
       }
 }
+
+#endif

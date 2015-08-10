@@ -148,7 +148,7 @@ static void __tts_test_utt_completed_cb(tts_h tts, int utt_id, void* user_data)
             flush_flag = EINA_FALSE;
       }
 
-#ifndef SCREEN_READER_TV
+#ifdef SCREEN_READER_MOBILE
    if(last_utt_id == utt_id)
       {
          DEBUG("LAST UTTERANCE");
