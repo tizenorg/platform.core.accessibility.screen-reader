@@ -625,16 +625,6 @@ void test_debug(AtspiAccessible *current_widget)
 static void _focus_widget(Gesture_Info *info)
 {
    DEBUG("START");
-   if (info->type == ONE_FINGER_HOVER)
-      {
-         if (_last_hover_event_time < 0)
-            _last_hover_event_time = info->event_time;
-         //info->event_time and _last_hover_event_time contain timestamp in ms.
-         if (info->event_time - _last_hover_event_time < ONGOING_HOVER_GESTURE_INTERPRETATION_INTERVAL && info->state == 1)
-            return;
-
-         _last_hover_event_time = info->state != 1 ? -1 : info->event_time;
-      }
 
    if ((last_focus.x == info->x_beg) && (last_focus.y == info->y_beg))
       return;
@@ -1851,26 +1841,7 @@ static void _start_stop_signal_send(void)
 
 static void on_gesture_detected(void *data, Gesture_Info *info)
 {
-
-#ifdef ELM_ACCESS_KEYBOARD
-   Ecore_X_Window keyboard_win = top_window_get(info->x_end, info->y_end);
-   if (keyboard_win && ecore_x_e_virtual_keyboard_get(keyboard_win))
-      {
-         DEBUG("Gesture is on virtural keyboard screen");
-         if (info->type == ONE_FINGER_SINGLE_TAP || info->type == ONE_FINGER_HOVER)
-            {
-               elm_access_adaptor_emit_read (keyboard_win, info->x_end, info->y_end);
-               return;
-            }
-         else if (info->type == ONE_FINGER_DOUBLE_TAP)
-            {
-               elm_access_adaptor_emit_activate (keyboard_win, info->x_end, info->y_end);
-               return;
-            }
-      }
-#endif
-
-   dbus_gesture_adapter_emit(info);
+   Ecore_X_Window keyboard_win;
    _on_auto_review_stop();
 
    if (info->type == ONE_FINGER_SINGLE_TAP && info->state == 3)
@@ -1889,7 +1860,21 @@ static void on_gesture_detected(void *data, Gesture_Info *info)
             }
          else
             {
-               DEBUG("Will focus on object, slider is not ready");
+               if (_last_hover_event_time < 0)
+                  _last_hover_event_time = info->event_time;
+               //info->event_time and _last_hover_event_time contain timestamp in ms.
+               //RETURN so we do not handle all incoming event
+               if ((info->event_time - _last_hover_event_time) < ONGOING_HOVER_GESTURE_INTERPRETATION_INTERVAL && info->state == 1)
+                  return;
+               _last_hover_event_time = info->state != 1 ? -1 : info->event_time;
+#ifdef ELM_ACCESS_KEYBOARD
+               keyboard_win = top_window_get(info->x_end, info->y_end);
+               if (keyboard_win && ecore_x_e_virtual_keyboard_get(keyboard_win))
+                 {
+                    elm_access_adaptor_emit_read (keyboard_win, info->x_end, info->y_end);
+                    break;
+                 }
+#endif
                _focus_widget(info);
             }
          break;
@@ -1919,10 +1904,26 @@ static void on_gesture_detected(void *data, Gesture_Info *info)
             _focus_next();
          break;
       case ONE_FINGER_SINGLE_TAP:
+#ifdef ELM_ACCESS_KEYBOARD
+         keyboard_win = top_window_get(info->x_end, info->y_end);
+         if (keyboard_win && ecore_x_e_virtual_keyboard_get(keyboard_win))
+           {
+              elm_access_adaptor_emit_read (keyboard_win, info->x_end, info->y_end);
+              break;
+           }
+#endif
          if (!prepared)
             _focus_widget(info);
          break;
       case ONE_FINGER_DOUBLE_TAP:
+#ifdef ELM_ACCESS_KEYBOARD
+         keyboard_win = top_window_get(info->x_end, info->y_end);
+         if (keyboard_win && ecore_x_e_virtual_keyboard_get(keyboard_win))
+           {
+              elm_access_adaptor_emit_activate(keyboard_win, info->x_end, info->y_end);
+              break;
+           }
+#endif
          _activate_widget();
          break;
       case TWO_FINGERS_SINGLE_TAP:
@@ -1969,6 +1970,8 @@ static void on_gesture_detected(void *data, Gesture_Info *info)
       default:
          DEBUG("Gesture type %d not handled in switch", info->type);
       }
+
+   dbus_gesture_adapter_emit(info);
 }
 
 static void
