@@ -1,6 +1,6 @@
 <manifest>
  <define>
-    <domain name="screen-reader" />
+    <domain name="org.tizen.screen-reader" />
     <permit>
        <smack permit="dbus" type="rwx" />
        <smack permit="atspi" type="rwx" />
@@ -41,6 +41,6 @@
  </define>
 
 <request>
-<domain name="screen-reader"/>
+<domain name="org.tizen.screen-reader"/>
 </request>
 </manifest>
