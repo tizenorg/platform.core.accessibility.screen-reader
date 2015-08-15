@@ -59,9 +59,7 @@ int screen_reader_create_service(void *data)
    vconf_init(service_data);
    tts_init(service_data);
 
-#ifdef SCREEN_READER_MOBILE
    spi_init(service_data);
-#endif
 
    /* XML TEST */
 #ifdef RUN_IPC_TEST_SUIT
