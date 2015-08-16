@@ -186,7 +186,6 @@ _app_tracker_init_internal(void)
 
    atspi_event_listener_register(_listener, "object:state-changed:showing", NULL);
    atspi_event_listener_register(_listener, "object:state-changed:visible", NULL);
-   atspi_event_listener_register(_listener, "object:state-changed:defunct", NULL);
    atspi_event_listener_register(_listener, "object:bounds-changed", NULL);
    atspi_event_listener_register(_listener, "object:visible-data-changed", NULL);
 
@@ -215,7 +214,6 @@ _app_tracker_shutdown_internal(void)
    atspi_event_listener_deregister(_listener, "object:state-changed:showing", NULL);
    atspi_event_listener_deregister(_listener, "object:state-changed:visible", NULL);
    atspi_event_listener_deregister(_listener, "object:bounds-changed", NULL);
-   atspi_event_listener_deregister(_listener, "object:state-changed:defunct", NULL);
    atspi_event_listener_deregister(_listener, "object:visible-data-changed", NULL);
 
    g_object_unref(_listener);
