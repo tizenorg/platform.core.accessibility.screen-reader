@@ -128,11 +128,44 @@ static Cover *cov;
 static int win_angle;
 
 static void _hover_event_emit(Cover *cov, int state);
+static unsigned int _win_angle_get(void);
+
+void __transform_coordinates(int *ax, int *ay)
+{
+   Ecore_X_Window root;
+   int w;
+   int h;
+   int tmp;
+
+   win_angle = _win_angle_get();
+
+   switch (win_angle)
+      {
+      case 90:
+         root = ecore_x_window_root_first_get();
+         ecore_x_window_geometry_get(root, NULL, NULL, &w, &h);
+         tmp = *ax;
+         *ax = h - *ay;
+         *ay = tmp;
+         break;
+
+      case 270:
+         root = ecore_x_window_root_first_get();
+         ecore_x_window_geometry_get(root, NULL, NULL, &w, &h);
+         tmp = *ax;
+         *ax = *ay;
+         *ay = w - tmp;
+         break;
+      }
+}
 
 static void _event_emit(Gesture g, int x, int y, int x_e, int y_e, int state, int event_time)
 {
    Gesture_Info *info = calloc(sizeof(Gesture_Info), 1);
    EINA_SAFETY_ON_NULL_RETURN(info);
+
+   __transform_coordinates(&x, &y);
+   __transform_coordinates(&x_e, &y_e);
 
    info->type = g;
    info->x_beg = x;
@@ -180,10 +213,10 @@ _flick_gesture_mouse_down(Ecore_Event_Mouse_Button *ev, Cover *cov)
          cov->flick_gesture.n_fingers++;
          cov->flick_gesture.n_fingers_left++;
          if (cov->flick_gesture.n_fingers < 3) /* n_fingers == 3 makes out of bounds write */
-           {
-              cov->flick_gesture.finger_out[cov->flick_gesture.n_fingers] = EINA_FALSE;
-              cov->flick_gesture.return_flick[cov->flick_gesture.n_fingers] = EINA_FALSE;
-           }
+            {
+               cov->flick_gesture.finger_out[cov->flick_gesture.n_fingers] = EINA_FALSE;
+               cov->flick_gesture.return_flick[cov->flick_gesture.n_fingers] = EINA_FALSE;
+            }
       }
 }
 
@@ -356,7 +389,7 @@ _flick_gesture_mouse_up(Ecore_Event_Mouse_Button *ev, Cover *cov)
                cov->flick_gesture.state = GESTURE_ABORTED;
                goto end;
             }
-        if (ev->multi.device == 1 && cov->flick_gesture.flick_to_scroll)//we react only on second finger
+         if (ev->multi.device == 1 && cov->flick_gesture.flick_to_scroll)//we react only on second finger
             {
                DEBUG("Flick gesture was interpreted as scroll so we aborting it.");
                end_scroll(ev->x, ev->y);
@@ -431,12 +464,12 @@ end:
 }
 static Eina_Bool _flick_to_scroll_gesture_conditions_met(Ecore_Event_Mouse_Move *ev, int gesture_timestamp, int dx, int dy)
 {
-    if (ev->timestamp - gesture_timestamp > _e_mod_config->two_finger_flick_to_scroll_timeout)
-        if (abs(dx) > _e_mod_config->two_finger_flick_to_scroll_min_length ||
+   if (ev->timestamp - gesture_timestamp > _e_mod_config->two_finger_flick_to_scroll_timeout)
+      if (abs(dx) > _e_mod_config->two_finger_flick_to_scroll_min_length ||
             abs(dy) > _e_mod_config->two_finger_flick_to_scroll_min_length)
-            return EINA_TRUE;
+         return EINA_TRUE;
 
-    return EINA_FALSE;
+   return EINA_FALSE;
 }
 
 static void
@@ -479,18 +512,21 @@ _flick_gesture_mouse_move(Ecore_Event_Mouse_Move *ev, Cover *cov)
                break;
             }
          if ( i == 1)
-         {
-             if (cov->flick_gesture.flick_to_scroll || _flick_to_scroll_gesture_conditions_met(ev, cov->flick_gesture.timestamp[i], dx, dy))
-               {
-                 if (!cov->flick_gesture.flick_to_scroll) {
-                    start_scroll(ev->x, ev->y);
-                    cov->flick_gesture.flick_to_scroll = EINA_TRUE;
-                 } else {
-                    continue_scroll(ev->x, ev->y);
-                 }
-                 return;
-              }
-         }
+            {
+               if (cov->flick_gesture.flick_to_scroll || _flick_to_scroll_gesture_conditions_met(ev, cov->flick_gesture.timestamp[i], dx, dy))
+                  {
+                     if (!cov->flick_gesture.flick_to_scroll)
+                        {
+                           start_scroll(ev->x, ev->y);
+                           cov->flick_gesture.flick_to_scroll = EINA_TRUE;
+                        }
+                     else
+                        {
+                           continue_scroll(ev->x, ev->y);
+                        }
+                     return;
+                  }
+            }
 
          if(!cov->flick_gesture.finger_out[i])
             {
@@ -744,7 +780,7 @@ _win_angle_get(void)
    first_root = ecore_x_window_root_first_get();
    root = ecore_x_window_root_get(first_root);
    ret = ecore_x_window_prop_property_get(root, ECORE_X_ATOM_E_ILLUME_ROTATE_ROOT_ANGLE,
-                   ECORE_X_ATOM_CARDINAL, 32, &prop_data, &count);
+                                          ECORE_X_ATOM_CARDINAL, 32, &prop_data, &count);
 
    if (ret && prop_data)
       memcpy (&angle, prop_data, sizeof (int));
@@ -769,26 +805,6 @@ _hover_event_emit(Cover *cov, int state)
 
    ax /= cov->hover_gesture.n_fingers;
    ay /= cov->hover_gesture.n_fingers;
-
-   win_angle = _win_angle_get();
-   switch(win_angle)
-      {
-      case 90:
-         root = ecore_x_window_root_first_get();
-         ecore_x_window_geometry_get(root, NULL, NULL, &w, &h);
-         tmp = ax;
-         ax = h - ay;
-         ay = tmp;
-         break;
-
-      case 270:
-         root = ecore_x_window_root_first_get();
-         ecore_x_window_geometry_get(root, NULL, NULL, &w, &h);
-         tmp = ax;
-         ax = ay;
-         ay = w - tmp;
-         break;
-      }
 
    switch (cov->hover_gesture.n_fingers)
       {
@@ -1231,15 +1247,15 @@ _gesture_input_win_create(void)
    int w, h;
 
    if (!win)
-     {
-        Ecore_Window root = ecore_x_window_root_first_get();
-        if (!root)
-          return EINA_FALSE;
-        ecore_x_window_geometry_get(root, NULL, NULL, &w, &h);
-        win = ecore_x_window_input_new(root, 0, 0, w, h);
-     }
+      {
+         Ecore_Window root = ecore_x_window_root_first_get();
+         if (!root)
+            return EINA_FALSE;
+         ecore_x_window_geometry_get(root, NULL, NULL, &w, &h);
+         win = ecore_x_window_input_new(root, 0, 0, w, h);
+      }
    if (!win)
-     return EINA_FALSE;
+      return EINA_FALSE;
 
    ecore_x_input_multi_select(win);
    ecore_x_window_show(win);
@@ -1257,7 +1273,7 @@ _win_property_changed(void *data, int type, void *event)
    Ecore_X_Event_Window_Property *wp = event;
 
    if (wp->atom != ECORE_X_ATOM_NET_CLIENT_LIST_STACKING)
-     return EINA_TRUE;
+      return EINA_TRUE;
 
    _gesture_input_win_create();
 
@@ -1269,10 +1285,10 @@ _gestures_input_window_init(void)
 {
    Ecore_Window root = ecore_x_window_root_first_get();
    if (!root)
-     {
-        ERROR("No root window found. Is Window manager running?");
-        return EINA_FALSE;
-     }
+      {
+         ERROR("No root window found. Is Window manager running?");
+         return EINA_FALSE;
+      }
    ecore_x_event_mask_set(root, ECORE_X_EVENT_MASK_WINDOW_PROPERTY);
    property_changed_hld = ecore_event_handler_add(ECORE_X_EVENT_WINDOW_PROPERTY, _win_property_changed, NULL);
 
@@ -1295,10 +1311,10 @@ Eina_Bool screen_reader_gestures_init(void)
    cov = calloc(sizeof(Cover), 1);
 
    if (!_gestures_input_window_init())
-     {
-        free(cov);
-        return EINA_FALSE;
-     }
+      {
+         free(cov);
+         return EINA_FALSE;
+      }
 
    _e_mod_config = calloc(sizeof(Gestures_Config), 1);
    _e_mod_config->one_finger_flick_min_length = 100;
