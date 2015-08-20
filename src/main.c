@@ -137,15 +137,15 @@ void print_warning(int sig, siginfo_t *siginfo, FILE *log_file)
 
 void posix_signal_handler(int sig, siginfo_t *siginfo, void *context)
 {
-    char file_name[256] = {0};
+    char file_name[256];
     struct tm * timeinfo;
     time_t rawtime = time(NULL);
     timeinfo = localtime(&rawtime);
     if (timeinfo)
-      sprintf(file_name, "/tmp/screen_reader_crash_stacktrace_%i%i%i_%i:%i:%i_pid_%i.log", timeinfo->tm_year,
+      snprintf(file_name, sizeof(file_name), "/tmp/screen_reader_crash_stacktrace_%i%i%i_%i:%i:%i_pid_%i.log", timeinfo->tm_year,
               timeinfo->tm_mon, timeinfo->tm_mday,timeinfo->tm_hour, timeinfo->tm_min, timeinfo->tm_sec, getpid());
     else
-      sprintf(file_name, "/tmp/screen_reader_crash_stacktrace_pid_%i.log", getpid());
+      snprintf(file_name, sizeof(file_name), "/tmp/screen_reader_crash_stacktrace_pid_%i.log", getpid());
 
     FILE * log_file = fopen(file_name, "w");
     if (log_file)
