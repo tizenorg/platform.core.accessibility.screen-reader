@@ -165,11 +165,7 @@ static void device_system_cb(device_callback_e type, void *value, void *user_dat
                return;
             }
 
-         if(charging)
-            {
-               tts_speak(_("IDS_SYSTEM_CHARGING"), EINA_FALSE);
-            }
-         else
+         if(!charging)
             {
                tts_speak(_("IDS_SYSTEM_NOT_CHARGING"), EINA_FALSE);
             }
@@ -628,9 +624,9 @@ void device_missed_events_get(void)
 
    ret = notification_free_list(list);
    if(ret != NOTIFICATION_ERROR_NONE)
-   {
-	   ERROR("ret == %d", ret);
-   }
+      {
+         ERROR("ret == %d", ret);
+      }
 }
 
 void device_date_get(void)
