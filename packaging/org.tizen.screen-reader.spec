@@ -28,9 +28,9 @@ BuildRequires:  pkgconfig(check)
 BuildRequires:  pkgconfig(capi-network-bluetooth)
 BuildRequires:  pkgconfig(notification)
 BuildRequires:  pkgconfig(capi-network-wifi)
-#%if "%{?tizen_profile_name}" != "tv"
+%if "%{?tizen_profile_name}" != "tv"
 BuildRequires:  pkgconfig(tapi)
-#%endif
+%endif
 
 %description
 An utility library for developers of the menu screen.

@@ -199,8 +199,10 @@ static int app_create(void *data)
    logger_init();
    screen_reader_switch_enabled_set(EINA_TRUE);
    screen_reader_create_service(data);
+#ifndef SCREEN_READER_TV
    screen_reader_gestures_init();
    navigator_init();
+#endif
 
    return 0;
 }
@@ -208,11 +210,12 @@ static int app_create(void *data)
 static int app_terminate(void *data)
 {
    DEBUG("screen reader terminating");
-
+#ifndef SCREEN_READER_TV
    DEBUG("terminate navigator");
    navigator_shutdown();
    DEBUG("terminate gestures");
    screen_reader_gestures_shutdown();
+#endif
    DEBUG("terminate service");
    screen_reader_terminate_service(data);
    DEBUG("clear ScreenReaderEnabled property");

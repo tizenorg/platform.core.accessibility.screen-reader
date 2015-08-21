@@ -1933,7 +1933,7 @@ static void on_gesture_detected(void *data, Gesture_Info *info)
          _start_stop_signal_send();
          break;
       case TWO_FINGERS_TRIPLE_TAP:
-#ifdef SCREEN_READER_MOBILE
+#ifndef SCREEN_READER_TV
          _read_quickpanel();
 #endif
          break;
@@ -2085,7 +2085,7 @@ void navigator_init(void)
    window_tracker_register(on_window_activate, NULL);
    window_tracker_active_window_request();
    smart_notification_init();
-#ifdef SCREEN_READER_MOBILE
+#ifndef SCREEN_READER_TV
    system_notifications_init();
 #endif
    keyboard_tracker_init();
@@ -2113,7 +2113,7 @@ void navigator_shutdown(void)
    app_tracker_shutdown();
    window_tracker_shutdown();
    smart_notification_shutdown();
-#ifdef SCREEN_READER_MOBILE
+#ifndef SCREEN_READER_TV
    system_notifications_shutdown();
 #endif
    keyboard_tracker_shutdown();

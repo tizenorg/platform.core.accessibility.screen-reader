@@ -14,11 +14,9 @@
  * limitations under the License.
  */
 
+#ifndef SCREEN_READER_TV
+
 #define _GNU_SOURCE
-
-
-#ifdef SCREEN_READER_MOBILE
-
 
 #include <device/battery.h>
 #include <device/display.h>

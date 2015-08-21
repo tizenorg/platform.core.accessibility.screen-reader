@@ -1,4 +1,4 @@
-#ifdef SCREEN_READER_MOBILE
+#ifndef SCREEN_READER_TV
 void system_notifications_init(void);
 void system_notifications_shutdown(void);
 
