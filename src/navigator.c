@@ -1539,9 +1539,9 @@ static Eina_Bool _is_active_entry(void)
 		g_object_unref(state_set);
 		return EINA_FALSE;
 	}
-	return EINA_FALSE;
 
 	DEBUG("END");
+	return EINA_FALSE;
 }
 
 static Eina_Bool _is_slider(AtspiAccessible * obj)

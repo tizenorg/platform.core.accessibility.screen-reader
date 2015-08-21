@@ -285,16 +285,25 @@ void device_battery_get(void)
 	}
 
 	if (percent == 100) {
-		if (!asprintf(&buffer, "%s %s", charging_text, _("IDS_SYSTEM_BATTERY_FULLY_CHARGED_STR"))) {
+		ret = asprintf(&buffer, "%s %s", charging_text, _("IDS_SYSTEM_BATTERY_FULLY_CHARGED_STR"));
+		if (ret == 0) {
+			free(buffer);
 			ERROR("Buffer length == 0");
+			return;
+		} else if (ret < 0) {
+			ERROR("Buffer == NULL");
 			return;
 		}
 	} else {
-		if (!asprintf(&buffer, "%s %d %% %s", charging_text, percent, _("IDS_SYSTEM_BATTERY_INFO_BATTERY_STR"))) {
+		ret = asprintf(&buffer, "%s %d %% %s", charging_text, percent, _("IDS_SYSTEM_BATTERY_INFO_BATTERY_STR"));
+		if (ret == 0) {
+			free(buffer);
 			ERROR("Buffer length == 0");
 			return;
+		} else if(ret < 0) {
+			ERROR("Buffer == NULL");
+			return;
 		}
-
 	}
 
 	if (!buffer) {
@@ -421,8 +430,13 @@ static void _signal_strength_wifi_get(void)
 		if (!ap) {
 			DEBUG("Text to say: %s %s", _("IDS_SYSTEM_NETWORK_TYPE_WIFI"), "Not connected");
 
-			if (!asprintf(&buffer, " %s, %s", _("IDS_SYSTEM_NETWORK_TYPE_WIFI"), "Not connected")) {
-				ERROR("buffer length == 0");
+			ret = asprintf(&buffer, " %s, %s", _("IDS_SYSTEM_NETWORK_TYPE_WIFI"), "Not connected");
+			if (ret == 0) {
+				free(buffer);
+				ERROR("Buffer length == 0");
+				return;
+			} else if (ret < 0) {
+				ERROR("Buffer == NULL");
 				return;
 			}
 
