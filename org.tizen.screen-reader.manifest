@@ -9,6 +9,7 @@
        <smack permit="deviced" type="rwx" />
        <smack permit="sensord" type="rwx" />
        <smack permit="media-server" type="rwx" />
+       <smack permit="telephony_framework" type="rw"/>
     </permit>
     <request>
        <smack request="sdbd" type="rwx" />
