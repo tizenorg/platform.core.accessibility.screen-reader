@@ -173,6 +173,10 @@ char *state_to_char(AtspiStateType state)
 		return strdup("ATSPI_STATE_LAST_DEFINED");
 	case ATSPI_STATE_MODAL:
 		return strdup("ATSPI_STATE_MODAL");
+	case ATSPI_STATE_HIGHLIGHTED:
+		return strdup("ATSPI_STATE_HIGHLIGHTED");
+	case ATSPI_STATE_HIGHLIGHTABLE:
+		return strdup("ATSPI_STATE_HIGHLIGHTABLE");
 	default:
 		return strdup("\0");
 	}
@@ -1830,6 +1834,14 @@ static void _view_content_changed(AtspiAccessible * root, void *user_data)
 	DEBUG("END");
 }
 
+static void _new_highlighted_obj_changed(AtspiAccessible * new_highlighted_obj, void *user_data)
+{
+	DEBUG("context: %p, current: %p, new_highlighted_obj: %p", context, flat_navi_context_current_get(context), new_highlighted_obj);
+	if (context && flat_navi_context_current_get(context) != new_highlighted_obj) {
+		flat_navi_context_current_set(context, g_object_ref(new_highlighted_obj));
+	}
+}
+
 void clear(gpointer d)
 {
 	AtspiAccessible **data = d;
@@ -1920,6 +1932,7 @@ void navigator_init(void)
 	// register on active_window
 	dbus_gesture_adapter_init();
 	app_tracker_init();
+	app_tracker_new_obj_highlighted_callback_register(_new_highlighted_obj_changed);
 	window_tracker_init();
 	window_tracker_register(on_window_activate, NULL);
 	window_tracker_active_window_request();

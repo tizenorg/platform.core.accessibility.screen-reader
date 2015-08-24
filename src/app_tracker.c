@@ -35,6 +35,7 @@ typedef struct {
 static int _init_count;
 static GList *_roots;
 static AtspiEventListener *_listener;
+static AppTrackerEventCB _new_obj_highlighted_callback;
 
 static int _is_descendant(AtspiAccessible * ancestor, AtspiAccessible * descendant)
 {
@@ -76,6 +77,21 @@ static Eina_Bool _object_has_showing_state(AtspiAccessible * obj)
 	AtspiStateSet *ss = atspi_accessible_get_state_set(obj);
 
 	if (atspi_state_set_contains(ss, ATSPI_STATE_SHOWING))
+		ret = EINA_TRUE;
+	g_object_unref(ss);
+	return ret;
+}
+
+static Eina_Bool _object_has_highlighted_state(AtspiAccessible * obj)
+{
+	if (!obj)
+		return EINA_FALSE;
+
+	Eina_Bool ret = EINA_FALSE;
+
+	AtspiStateSet *ss = atspi_accessible_get_state_set(obj);
+
+	if (atspi_state_set_contains(ss, ATSPI_STATE_HIGHLIGHTED))
 		ret = EINA_TRUE;
 	g_object_unref(ss);
 	return ret;
@@ -134,6 +150,20 @@ static void _on_atspi_event_cb(const AtspiEvent * event)
 
 	_print_event_object_info(event);
 
+	AtspiAccessible *new_highlighted_obj = NULL;
+
+	if (!strcmp(event->type, "object:state-changed:highlighted"))
+		new_highlighted_obj = event->source;
+	else if (!strcmp(event->type, "object:active-descendant-changed"))
+		new_highlighted_obj = atspi_accessible_get_child_at_index(event->source, event->detail1, NULL);
+
+	if (new_highlighted_obj && _new_obj_highlighted_callback && _object_has_highlighted_state(new_highlighted_obj)) {
+		DEBUG("HIGHLIGHTED OBJECT IS ABOUT TO CHANGE");
+		_new_obj_highlighted_callback(new_highlighted_obj, NULL);
+		g_object_unref(new_highlighted_obj);
+		new_highlighted_obj = NULL;
+	}
+
 	for (l = _roots; l != NULL; l = l->next) {
 		std = l->data;
 
@@ -167,13 +197,16 @@ static void _on_atspi_event_cb(const AtspiEvent * event)
 static int _app_tracker_init_internal(void)
 {
 	DEBUG("START");
+	_new_obj_highlighted_callback = NULL;
 	_listener = atspi_event_listener_new_simple(_on_atspi_event_cb, NULL);
 
 	atspi_event_listener_register(_listener, "object:state-changed:showing", NULL);
 	atspi_event_listener_register(_listener, "object:state-changed:visible", NULL);
 	atspi_event_listener_register(_listener, "object:state-changed:defunct", NULL);
+	atspi_event_listener_register(_listener, "object:state-changed:highlighted", NULL);
 	atspi_event_listener_register(_listener, "object:bounds-changed", NULL);
 	atspi_event_listener_register(_listener, "object:visible-data-changed", NULL);
+	atspi_event_listener_register(_listener, "object:active-descendant-changed", NULL);
 
 	return 0;
 }
@@ -196,13 +229,15 @@ static void _app_tracker_shutdown_internal(void)
 {
 	atspi_event_listener_deregister(_listener, "object:state-changed:showing", NULL);
 	atspi_event_listener_deregister(_listener, "object:state-changed:visible", NULL);
+	atspi_event_listener_deregister(_listener, "object:state-changed:highlighted", NULL);
 	atspi_event_listener_deregister(_listener, "object:bounds-changed", NULL);
 	atspi_event_listener_deregister(_listener, "object:state-changed:defunct", NULL);
 	atspi_event_listener_deregister(_listener, "object:visible-data-changed", NULL);
+	atspi_event_listener_deregister(_listener, "object:active-descendant-changed", NULL);
 
 	g_object_unref(_listener);
 	_listener = NULL;
-
+	_new_obj_highlighted_callback = NULL;
 	g_list_free_full(_roots, _free_rootdata);
 	_roots = NULL;
 }
@@ -259,6 +294,11 @@ void app_tracker_callback_register(AtspiAccessible * app, AppTrackerEventCB cb, 
 	DEBUG("END");
 }
 
+void app_tracker_new_obj_highlighted_callback_register(AppTrackerEventCB cb)
+{
+	_new_obj_highlighted_callback = cb;
+}
+
 void app_tracker_callback_unregister(AtspiAccessible * app, AppTrackerEventCB cb, void *user_data)
 {
 	DEBUG("START");
@@ -290,4 +330,9 @@ void app_tracker_callback_unregister(AtspiAccessible * app, AppTrackerEventCB cb
 		_roots = g_list_remove(_roots, std);
 		g_free(std);
 	}
+}
+
+void app_tracker_new_obj_highlighted_callback_unregister(AppTrackerEventCB cb)
+{
+	_new_obj_highlighted_callback = NULL;
 }

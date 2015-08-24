@@ -22,7 +22,6 @@ struct _FlatNaviContext {
 	AtspiAccessible *current;
 	AtspiAccessible *first;
 	AtspiAccessible *last;
-	AtspiAccessible *prev;
 };
 
 static const AtspiStateType required_states[] = {
@@ -546,7 +545,6 @@ FlatNaviContext *flat_navi_context_create(AtspiAccessible * root)
 		return NULL;
 
 	ret->root = root;
-	ret->prev = NULL;
 	ret->current = _first(ret);
 	return ret;
 }

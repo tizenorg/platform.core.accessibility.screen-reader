@@ -17,6 +17,7 @@ typedef void (*AppTrackerEventCB)(AtspiAccessible *root, void *user_data);
  * @param user_data pointer passed to cb function.
  */
 void app_tracker_callback_register(AtspiAccessible *app, AppTrackerEventCB cb, void *user_data);
+void app_tracker_new_obj_highlighted_callback_register(AppTrackerEventCB cb);
 
 /**
  * @brief Unregister listener on given event type.
@@ -26,6 +27,7 @@ void app_tracker_callback_register(AtspiAccessible *app, AppTrackerEventCB cb, v
  * @param user_data pointer passed to cb function.
  */
 void app_tracker_callback_unregister(AtspiAccessible *app, AppTrackerEventCB cb, void *user_data);
+void app_tracker_new_obj_highlighted_callback_unregister(AppTrackerEventCB cb);
 
 /**
  * @brief Initialize app tracker module.

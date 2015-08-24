@@ -431,7 +431,6 @@ static void _flick_gesture_mouse_move(Ecore_Event_Mouse_Move * ev, Cover * cov)
 				return;
 			}
 		}
-		DEBUG("i: %i, ev->multi.device: %i", i, ev->multi.device);
 
 		int dx = ev->root.x - cov->flick_gesture.x_org[i];
 		int dy = ev->root.y - cov->flick_gesture.y_org[i];
@@ -637,7 +636,6 @@ void start_scroll(int x, int y)
 	Ecore_X_Window wins[1] = { win };
 	Ecore_X_Window under = ecore_x_window_at_xy_with_skip_get(x, y, wins, sizeof(wins) / sizeof(wins[0]));
 	_get_root_coords(under, &rx, &ry);
-	DEBUG("Starting scroll: %d %d", x - rx, y - ry);
 	ecore_x_mouse_in_send(under, x - rx, y - ry);
 	ecore_x_window_focus(under);
 	ecore_x_mouse_down_send(under, x - rx, y - ry, 1);
@@ -646,13 +644,11 @@ void start_scroll(int x, int y)
 
 void continue_scroll(int x, int y)
 {
-	DEBUG("Continuing scroll: %d %d", x - rx, y - ry);
 	ecore_x_mouse_move_send(scrolled_win, x - rx, y - ry);
 }
 
 void end_scroll(int x, int y)
 {
-	DEBUG("Ending scroll : %d %d", x - rx, y - ry);
 	ecore_x_mouse_up_send(scrolled_win, x - rx, y - ry, 1);
 	ecore_x_mouse_out_send(scrolled_win, x - rx, y - ry);
 }
