@@ -439,14 +439,30 @@ generate_trait(AtspiAccessible *obj)
          snprintf(trait, HOVERSEL_TRAIT_SIZE, _("IDS_TRAIT_PD_HOVERSEL"), children_count);
          strncat(ret, trait, sizeof(ret) - strlen(ret) - 1);
       }
-   else if (role == ATSPI_ROLE_LIST_ITEM && atspi_state_set_contains(state_set, ATSPI_STATE_EXPANDABLE))
+   else if (role == ATSPI_ROLE_LIST_ITEM)
       {
-         strncat(ret, _("IDS_TRAIT_GROUP_INDEX"), sizeof(ret) - strlen(ret) - 1);
-         strncat(ret, ", ", sizeof(ret) - strlen(ret) - 1);
-         if (atspi_state_set_contains(state_set, ATSPI_STATE_EXPANDED))
-            strncat(ret, _("IDS_TRAIT_GROUP_INDEX_EXPANDED"), sizeof(ret) - strlen(ret) - 1);
+         if(atspi_state_set_contains(state_set, ATSPI_STATE_EXPANDABLE))
+            {
+               strncat(ret, _("IDS_TRAIT_GROUP_INDEX"), sizeof(ret) - strlen(ret) - 1);
+               strncat(ret, ", ", sizeof(ret) - strlen(ret) - 1);
+               if (atspi_state_set_contains(state_set, ATSPI_STATE_EXPANDED))
+                  strncat(ret, _("IDS_TRAIT_GROUP_INDEX_EXPANDED"), sizeof(ret) - strlen(ret) - 1);
+               else
+                  strncat(ret, _("IDS_TRAIT_GROUP_INDEX_COLLAPSED"), sizeof(ret) - strlen(ret) - 1);
+            }
          else
-            strncat(ret, _("IDS_TRAIT_GROUP_INDEX_COLLAPSED"), sizeof(ret) - strlen(ret) - 1);
+            return NULL;
+      }
+   else if (role == ATSPI_ROLE_CHECK_BOX)
+      {
+         if(atspi_state_set_contains(state_set, ATSPI_STATE_CHECKED))
+            strncat(ret, _("IDS_TRAIT_CHECK_BOX_SELECTED"), sizeof(ret) - strlen(ret) - 1);
+         else
+            strncat(ret, _("IDS_TRAIT_CHECK_BOX_NOT_SELECTED"), sizeof(ret) - strlen(ret) - 1);
+      }
+   else if (role == ATSPI_ROLE_PUSH_BUTTON)
+      {
+         strncat(ret, _("IDS_TRAIT_PUSH_BUTTON"), sizeof(ret) - strlen(ret) - 1);
       }
    else if (role == ATSPI_ROLE_PROGRESS_BAR)
       {
@@ -516,13 +532,13 @@ generate_what_to_read(AtspiAccessible *obj)
    DEBUG("Text:%s", text);
 
    if (names)
-      {
          strncat(ret, names, sizeof(ret) - strlen(ret) - 1);
-         strncat(ret, ", ", sizeof(ret) - strlen(ret) - 1);
-      }
 
    if (role_name)
-      strncat(ret, role_name, sizeof(ret) - strlen(ret) - 1);
+      {
+         strncat(ret, ", ", sizeof(ret) - strlen(ret) - 1);
+         strncat(ret, role_name, sizeof(ret) - strlen(ret) - 1);
+      }
 
    if (description)
       {

@@ -61,6 +61,15 @@ msgstr "Progressing"
 msgid "IDS_TRAIT_PD_PROGRESSBAR_PERCENT"
 msgstr "%.0f percent, Progressing"
 
+msgid "IDS_TRAIT_PUSH_BUTTON"
+msgstr "button"
+
+msgid "IDS_TRAIT_CHECK_BOX_SELECTED"
+msgstr "selected"
+
+msgid "IDS_TRAIT_CHECK_BOX_NOT_SELECTED"
+msgstr "not selected"
+
 msgid "IDS_TEXT_BEGIN"
 msgstr "Cursor is at the begining of text"
 
