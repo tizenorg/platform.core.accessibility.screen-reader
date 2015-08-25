@@ -281,17 +281,6 @@ int _object_has_modal_state(AtspiAccessible * obj)
 	return ret;
 }
 
-static AtspiAccessible *_first_modal_object_in_object_chain(AtspiAccessible * obj)
-{
-	AtspiAccessible *ret = g_object_ref(obj);
-
-	while (ret && !_object_has_modal_state(ret)) {
-		g_object_unref(ret);
-		ret = atspi_accessible_get_parent(ret, NULL);
-	}
-	return ret;
-}
-
 Eina_Bool flat_navi_context_current_at_x_y_set(FlatNaviContext * ctx, gint x_cord, gint y_cord, AtspiAccessible ** target)
 {
 	if (!ctx || !target)
