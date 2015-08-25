@@ -55,6 +55,12 @@ msgstr "double tap to close it"
 msgid "IDS_TRAIT_TEXT_EDIT_FOCUSED"
 msgstr "Editing, flick up and down to adjust position."
 
+msgid "IDS_TRAIT_PD_PROGRESSBAR"
+msgstr "Progressing"
+
+msgid "IDS_TRAIT_PD_PROGRESSBAR_PERCENT"
+msgstr "%.0f percent, Progressing"
+
 msgid "IDS_TEXT_BEGIN"
 msgstr "Cursor is at the begining of text"
 

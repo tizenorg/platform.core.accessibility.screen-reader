@@ -230,6 +230,17 @@ display_info_about_object(AtspiAccessible *obj)
    DEBUG("POSITION ON SCREEN: x:%d y:%d", rect_screen->x, rect_screen->y);
    DEBUG("SIZE ON WIN, width:%d, height:%d",rect_win->width, rect_win->height);
    DEBUG("POSITION ON WIN: x:%d y:%d", rect_win->x, rect_win->y);
+   DEBUG("INTERFACES:");
+   GArray *ifaces = atspi_accessible_get_interfaces(obj);
+   for (a = 0; ifaces && (a < ifaces->len); ++a)
+   {
+      gchar * interface_name = g_array_index (ifaces, gchar *, a);
+      DEBUG("   %s", interface_name);
+      free(interface_name);
+   }
+   if (ifaces)
+      g_array_free(ifaces, FALSE);
+
    DEBUG("------------------------");
    DEBUG("END");
 }
@@ -436,6 +447,19 @@ generate_trait(AtspiAccessible *obj)
             strncat(ret, _("IDS_TRAIT_GROUP_INDEX_EXPANDED"), sizeof(ret) - strlen(ret) - 1);
          else
             strncat(ret, _("IDS_TRAIT_GROUP_INDEX_COLLAPSED"), sizeof(ret) - strlen(ret) - 1);
+      }
+   else if (role == ATSPI_ROLE_PROGRESS_BAR)
+      {
+         AtspiValue *value = atspi_accessible_get_value_iface(obj);
+         double val = atspi_value_get_current_value(value, NULL);
+         char trait[HOVERSEL_TRAIT_SIZE];
+         if (val > 0)
+            {
+               snprintf(trait, HOVERSEL_TRAIT_SIZE, _("IDS_TRAIT_PD_PROGRESSBAR_PERCENT"), val*100);
+               strncat(ret, trait, sizeof(ret) - strlen(ret) - 1);
+            }
+         else
+            strncat(ret, _("IDS_TRAIT_PD_PROGRESSBAR"), sizeof(ret) - strlen(ret) - 1);
       }
    else
       {
