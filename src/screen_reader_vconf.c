@@ -29,100 +29,90 @@
 #endif
 #define LOG_TAG "SCREEN READER VCONF"
 
-
 keylist_t *keys = NULL;
 
 // ------------------------------ vconf callbacks----------------------
 
-void app_termination_cb(keynode_t *node, void *user_data)
+void app_termination_cb(keynode_t * node, void *user_data)
 {
-   DEBUG("START");
-   DEBUG("Application terminate %d", !node->value.i);
+	DEBUG("START");
+	DEBUG("Application terminate %d", !node->value.i);
 
-   Service_Data *service_data = user_data;
-   service_data->run_service = node->value.i;
+	Service_Data *service_data = user_data;
+	service_data->run_service = node->value.i;
 
-   if(service_data->run_service == 0)
-      {
-         elm_exit();
-      }
+	if (service_data->run_service == 0) {
+		elm_exit();
+	}
 
-   DEBUG("END");
+	DEBUG("END");
 }
 
-void display_language_cb(keynode_t *node, void *user_data)
+void display_language_cb(keynode_t * node, void *user_data)
 {
-   DEBUG("START");
-   DEBUG("Trying to set LC_MESSAGES to: %s", node->value.s);
+	DEBUG("START");
+	DEBUG("Trying to set LC_MESSAGES to: %s", node->value.s);
 
-   Service_Data *sd = user_data;
-   snprintf(sd->display_language, LANGUAGE_NAME_SIZE, "%s", node->value.s);
-   //to make gettext work
-   setenv("LC_MESSAGES", sd->display_language, 1);
+	Service_Data *sd = user_data;
+	snprintf(sd->display_language, LANGUAGE_NAME_SIZE, "%s", node->value.s);
+	//to make gettext work
+	setenv("LC_MESSAGES", sd->display_language, 1);
 
-   DEBUG("END");
+	DEBUG("END");
 }
 
 // --------------------------------------------------------------------
 
-int get_key_values(Service_Data *sd)
+int get_key_values(Service_Data * sd)
 {
-   DEBUG("START");
-   int to_ret = 0;
+	DEBUG("START");
+	int to_ret = 0;
 
-   char *display_language = vconf_get_str("db/menu_widget/language");
-   if (display_language)
-     {
-        snprintf(sd->display_language, LANGUAGE_NAME_SIZE, "%s", display_language);
-        //to make gettext work
-        setenv("LC_MESSAGES", sd->display_language, 1);
-        free(display_language);
-     }
-   else
-     WARNING("Can't get db/menu_widget/language value");
+	char *display_language = vconf_get_str("db/menu_widget/language");
+	if (display_language) {
+		snprintf(sd->display_language, LANGUAGE_NAME_SIZE, "%s", display_language);
+		//to make gettext work
+		setenv("LC_MESSAGES", sd->display_language, 1);
+		free(display_language);
+	} else
+		WARNING("Can't get db/menu_widget/language value");
 
-   DEBUG("SCREEN READER DATA SET TO: Display_Language: %s, Tracking signal: %s;",
-         sd->display_language, sd->tracking_signal_name);
+	DEBUG("SCREEN READER DATA SET TO: Display_Language: %s, Tracking signal: %s;", sd->display_language, sd->tracking_signal_name);
 
-   DEBUG("END");
-   return to_ret;
+	DEBUG("END");
+	return to_ret;
 }
 
-int _set_vconf_callback_and_print_message_on_error_and_return_error_code(const char *in_key, vconf_callback_fn cb,
-                                                    void *user_data)
+int _set_vconf_callback_and_print_message_on_error_and_return_error_code(const char *in_key, vconf_callback_fn cb, void *user_data)
 {
-    int ret = vconf_notify_key_changed(in_key, cb, user_data);
-    if(ret != 0)
-          DEBUG("Could not add notify callback to %s key", in_key);
+	int ret = vconf_notify_key_changed(in_key, cb, user_data);
+	if (ret != 0)
+		DEBUG("Could not add notify callback to %s key", in_key);
 
-    return ret;
+	return ret;
 }
 
-bool vconf_init(Service_Data *service_data)
+bool vconf_init(Service_Data * service_data)
 {
-   DEBUG( "--------------------- VCONF_init START ---------------------");
-   int ret = 0;
+	DEBUG("--------------------- VCONF_init START ---------------------");
+	int ret = 0;
 
-   if(vconf_set(keys))
-      {
-         DEBUG("nothing is written\n");
-      }
-   else
-      {
-         DEBUG("everything is written\n");
-      }
+	if (vconf_set(keys)) {
+		DEBUG("nothing is written\n");
+	} else {
+		DEBUG("everything is written\n");
+	}
 
-   vconf_keylist_free(keys);
-   // ----------------------------------------------------------------------------------
+	vconf_keylist_free(keys);
+	// ----------------------------------------------------------------------------------
 
-   ret = get_key_values(service_data);
-   if(ret != 0)
-      {
-         DEBUG("Could not set data from vconf: %d", ret);
-      }
+	ret = get_key_values(service_data);
+	if (ret != 0) {
+		DEBUG("Could not set data from vconf: %d", ret);
+	}
 
-   _set_vconf_callback_and_print_message_on_error_and_return_error_code("db/menu_widget/language", display_language_cb, service_data);
+	_set_vconf_callback_and_print_message_on_error_and_return_error_code("db/menu_widget/language", display_language_cb, service_data);
 
-   DEBUG( "---------------------- VCONF_init END ----------------------\n\n");
-   return true;
+	DEBUG("---------------------- VCONF_init END ----------------------\n\n");
+	return true;
 }

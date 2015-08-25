@@ -27,63 +27,61 @@
 
 #define BUF_SIZE 1024
 
-Service_Data service_data =
-{
-   //Set by vconf
-   .run_service = 1,
+Service_Data service_data = {
+	//Set by vconf
+	.run_service = 1,
 #ifdef SCREEN_READER_TV
-   .tracking_signal_name = FOCUS_CHANGED_SIG,
+	.tracking_signal_name = FOCUS_CHANGED_SIG,
 #else
-   .tracking_signal_name = HIGHLIGHT_CHANGED_SIG,
+	.tracking_signal_name = HIGHLIGHT_CHANGED_SIG,
 #endif
 
-   //Set by tts
-   .tts = NULL,
-   .available_languages = NULL,
+	//Set by tts
+	.tts = NULL,
+	.available_languages = NULL,
 
-   //Actions to do when tts state is 'ready'
-   .update_language_list = false,
+	//Actions to do when tts state is 'ready'
+	.update_language_list = false,
 
-   .text_to_say_info = NULL
+	.text_to_say_info = NULL
 };
 
 Service_Data *get_pointer_to_service_data_struct()
 {
-   return &service_data;
+	return &service_data;
 }
 
 int screen_reader_create_service(void *data)
 {
-   Service_Data *service_data = data;
+	Service_Data *service_data = data;
 
-   vconf_init(service_data);
-   tts_init(service_data);
+	vconf_init(service_data);
+	tts_init(service_data);
 
 #ifdef SCREEN_READER_TV
-   spi_init(service_data);
+	spi_init(service_data);
 #endif
 
-   /* XML TEST */
+	/* XML TEST */
 #ifdef RUN_IPC_TEST_SUIT
-   run_xml_tests();
-   test_suite_init();
+	run_xml_tests();
+	test_suite_init();
 #endif
 
-
-   return 0;
+	return 0;
 }
 
 int screen_reader_terminate_service(void *data)
 {
-   DEBUG("Service Terminate Callback \n");
+	DEBUG("Service Terminate Callback \n");
 
-   Service_Data *service_data = data;
+	Service_Data *service_data = data;
 
-   tts_stop(service_data->tts);
-   tts_unprepare(service_data->tts);
-   tts_destroy(service_data->tts);
-   service_data->text_from_dbus = NULL;
-   service_data->current_value = NULL;
+	tts_stop(service_data->tts);
+	tts_unprepare(service_data->tts);
+	tts_destroy(service_data->tts);
+	service_data->text_from_dbus = NULL;
+	service_data->current_value = NULL;
 
-   return 0;
+	return 0;
 }
