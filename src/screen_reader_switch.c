@@ -110,12 +110,8 @@ Eina_Bool screen_reader_switch_enabled_set(Eina_Bool value)
 		ERROR("Failed to close variant iterator");
 		goto fail_msg;
 	}
-	reply = eldbus_proxy_send_and_block(proxy, req, 100.0);
-	if (!reply || eldbus_message_error_get(reply, &errname, &errmsg)) {
-		ERROR("Send failed: %s %s\n", errname, errmsg);
-		goto fail_msg;
-	} else
-		ret = EINA_TRUE;
+	eldbus_proxy_send(proxy, req, NULL, NULL, -1.0);
+	ret = EINA_TRUE;
 
  fail_msg:
 	eldbus_message_unref(req);

@@ -1891,7 +1891,8 @@ static void on_window_activate(void *data, AtspiAccessible * window)
 {
 	DEBUG("START");
 
-	app_tracker_callback_unregister(top_window, _view_content_changed, NULL);
+	if (top_window)
+		app_tracker_callback_unregister(top_window, _view_content_changed, NULL);
 
 	if (window) {
 		DEBUG("Window name: %s", atspi_accessible_get_name(window, NULL));

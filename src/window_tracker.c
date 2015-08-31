@@ -27,7 +27,7 @@ static AtspiAccessible *last_active_win;
 
 static void _on_atspi_window_cb(const AtspiEvent * event)
 {
-	ERROR("Event: %s: %s", event->type, atspi_accessible_get_name(event->source, NULL));
+	DEBUG("Event: %s: %s", event->type, atspi_accessible_get_name(event->source, NULL));
 
 	if (!strcmp(event->type, "window:activate") && last_active_win != event->source)	//if we got activate 2 times
 	{
@@ -68,7 +68,6 @@ static AtspiAccessible *_get_active_win(void)
 			app_children_count = atspi_accessible_get_child_count(app, NULL);
 		else
 			app_children_count = 0;
-
 		for (j = 0; j < app_children_count; j++) {
 			AtspiAccessible *win = atspi_accessible_get_child_at_index(app, j, NULL);
 			AtspiStateSet *states = atspi_accessible_get_state_set(win);
@@ -101,17 +100,13 @@ void window_tracker_init(void)
 {
 	DEBUG("START");
 	listener = atspi_event_listener_new_simple(_on_atspi_window_cb, NULL);
-	atspi_event_listener_register(listener, "window:create", NULL);
 	atspi_event_listener_register(listener, "window:activate", NULL);
-	atspi_event_listener_register(listener, "window:restore", NULL);
 }
 
 void window_tracker_shutdown(void)
 {
 	DEBUG("START");
-	atspi_event_listener_deregister(listener, "window:create", NULL);
 	atspi_event_listener_deregister(listener, "window:activate", NULL);
-	atspi_event_listener_deregister(listener, "window:restore", NULL);
 	g_object_unref(listener);
 	listener = NULL;
 	user_cb = NULL;

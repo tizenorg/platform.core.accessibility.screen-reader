@@ -208,13 +208,12 @@ static int app_create(void *data)
 	elm_init(0, NULL);
 
 	logger_init();
-	screen_reader_switch_enabled_set(EINA_TRUE);
 	screen_reader_create_service(data);
 #ifndef SCREEN_READER_TV
 	screen_reader_gestures_init();
 	navigator_init();
 #endif
-
+	screen_reader_switch_enabled_set(EINA_TRUE);
 	return 0;
 }
 
