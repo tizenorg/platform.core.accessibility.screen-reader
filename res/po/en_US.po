@@ -183,3 +183,12 @@ msgstr "Nothing connected"
 
 msgid "IDS_SYSTEM_BT_DEVICES_CONNECTED_COUNT"
 msgstr "Devices connected"
+
+msgid "IDS_TRAIT_TOGGLE_BUTTON_ON"
+msgstr "On"
+
+msgid "IDS_TRAIT_TOGGLE_BUTTON_OFF"
+msgstr "Off"
+
+msgid "IDS_TRAIT_TOGGLE_BUTTON"
+msgstr "button"

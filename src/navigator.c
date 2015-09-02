@@ -444,6 +444,14 @@ char *generate_trait(AtspiAccessible * obj)
 		} else {
 			strncat(ret, _("IDS_TRAIT_PD_PROGRESSBAR"), sizeof(ret) - strlen(ret) - 1);
 		}
+	} else if (role == ATSPI_ROLE_TOGGLE_BUTTON) {
+		strncat(ret, _("IDS_TRAIT_TOGGLE_BUTTON"), sizeof(ret) - strlen(ret) - 1);
+		strncat(ret, ", ", sizeof(ret) - strlen(ret) - 1);
+		if (atspi_state_set_contains(state_set, ATSPI_STATE_CHECKED)) {
+			strncat(ret, _("IDS_TRAIT_TOGGLE_BUTTON_ON"), sizeof(ret) - strlen(ret) - 1);
+		} else {
+			strncat(ret, _("IDS_TRAIT_TOGGLE_BUTTON_OFF"), sizeof(ret) - strlen(ret) - 1);
+		}
 	} else {
 		char *role_name = atspi_accessible_get_localized_role_name(obj, NULL);
 		strncat(ret, role_name, sizeof(ret) - strlen(ret) - 1);
