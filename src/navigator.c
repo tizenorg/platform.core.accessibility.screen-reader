@@ -433,6 +433,16 @@ char *generate_trait(AtspiAccessible * obj)
 			strncat(ret, _("IDS_TRAIT_CHECK_BOX_NOT_SELECTED"), sizeof(ret) - strlen(ret) - 1);
 		}
 	} else if (role == ATSPI_ROLE_PUSH_BUTTON) {
+
+		char *name = atspi_accessible_get_name(obj, NULL);
+		if(name) {
+			if(strlen(name) > 0) {
+				strncat(ret, ", ", sizeof(ret) - strlen(ret) - 1);
+			}
+
+			g_free(name);
+		}
+
 		strncat(ret, _("IDS_TRAIT_PUSH_BUTTON"), sizeof(ret) - strlen(ret) - 1);
 	} else if (role == ATSPI_ROLE_PROGRESS_BAR) {
 		AtspiValue *value = atspi_accessible_get_value_iface(obj);
