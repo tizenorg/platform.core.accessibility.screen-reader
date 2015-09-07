@@ -150,6 +150,13 @@ static void _on_atspi_event_cb(const AtspiEvent * event)
 
 	_print_event_object_info(event);
 
+	if (!strcmp(event->type, "object:property-change:accessible-name")) {
+		gchar *name = atspi_accessible_get_name(event->source, NULL);
+		DEBUG("New name for object, read:%s", name);
+		tts_speak (name, EINA_TRUE);
+		g_free(name);
+		return;
+	}
 	AtspiAccessible *new_highlighted_obj = NULL;
 
 	if (!strcmp(event->type, "object:state-changed:highlighted"))
@@ -207,6 +214,7 @@ static int _app_tracker_init_internal(void)
 	atspi_event_listener_register(_listener, "object:bounds-changed", NULL);
 	atspi_event_listener_register(_listener, "object:visible-data-changed", NULL);
 	atspi_event_listener_register(_listener, "object:active-descendant-changed", NULL);
+	atspi_event_listener_register(_listener, "object:property-change", NULL);
 
 	return 0;
 }
@@ -234,6 +242,7 @@ static void _app_tracker_shutdown_internal(void)
 	atspi_event_listener_deregister(_listener, "object:state-changed:defunct", NULL);
 	atspi_event_listener_deregister(_listener, "object:visible-data-changed", NULL);
 	atspi_event_listener_deregister(_listener, "object:active-descendant-changed", NULL);
+	atspi_event_listener_deregister(_listener, "object:property-change", NULL);
 
 	g_object_unref(_listener);
 	_listener = NULL;
