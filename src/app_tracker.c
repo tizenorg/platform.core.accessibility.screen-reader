@@ -133,7 +133,6 @@ static void _print_event_object_info(const AtspiEvent * event)
 
 static void _on_atspi_event_cb(const AtspiEvent * event)
 {
-	DEBUG("START");
 	GList *l;
 	SubTreeRootData *std;
 
@@ -171,32 +170,28 @@ static void _on_atspi_event_cb(const AtspiEvent * event)
 		new_highlighted_obj = NULL;
 	}
 
-	for (l = _roots; l != NULL; l = l->next) {
-		std = l->data;
+	if (!strcmp("object:state-changed:showing", event->type) ||
+		!strcmp("object:state-changed:visible", event->type) ||
+		!strcmp("object:state-changed:defunct", event->type)) {
+		for (l = _roots; l != NULL; l = l->next) {
+			std = l->data;
 
-		if (!_object_has_showing_state(std->root) && std->base_root) {
-			std->root = std->base_root;
-			std->base_root = NULL;
-		}
-
-		if (_is_descendant(std->root, event->source)) {
-			if (std->timer)
-				g_source_remove(std->timer);
-
-			DEBUG("Before Checking if modal is showing");
-
-			if (!strcmp("object:state-changed:showing", event->type)) {
-
-				DEBUG("Object is showing");
-
-				if (_object_has_modal_state(event->source)) {
-					DEBUG("Object is modal");
-
-					std->base_root = std->root;
-					std->root = event->source;
-				}
+			if (!_object_has_showing_state(std->root) && std->base_root) {
+				std->root = std->base_root;
+				std->base_root = NULL;
 			}
-			std->timer = g_timeout_add(APP_TRACKER_INVACTIVITY_TIMEOUT, _on_timeout_cb, std);
+
+			if (_is_descendant(std->root, event->source)) {
+				if (std->timer)
+					g_source_remove(std->timer);
+					DEBUG("Before Checking if modal is showing");
+					if (_object_has_modal_state(event->source)) {
+						DEBUG("Object is modal");
+						std->base_root = std->root;
+						std->root = event->source;
+					}
+				std->timer = g_timeout_add(APP_TRACKER_INVACTIVITY_TIMEOUT, _on_timeout_cb, std);
+			}
 		}
 	}
 }
