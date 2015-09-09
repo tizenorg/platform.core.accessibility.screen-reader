@@ -338,16 +338,16 @@ static int _find_popup_list_children_count(AtspiAccessible * obj)
 	return 0;
 }
 
-static void append_children_trait(AtspiAccessible *obj, char *trait, unsigned trait_size)
+static gboolean find_group_index_child(AtspiAccessible *obj, char *trait, unsigned trait_size)
 {
 	AtspiAccessible *child;
 	AtspiRole child_role;
 	AtspiStateSet *child_state_set;
+	gboolean child_found = FALSE;
 
 	int children_count = atspi_accessible_get_child_count(obj, NULL);
-
 	int i;
-	for (i = 0; i < children_count; ++i)
+	for (i = 0; i < children_count && child_found == FALSE; ++i)
 	{
 		child = atspi_accessible_get_child_at_index(obj, i, NULL);
 		child_role = atspi_accessible_get_role(child, NULL);
@@ -362,16 +362,8 @@ static void append_children_trait(AtspiAccessible *obj, char *trait, unsigned tr
 				strncat(trait, ", ", trait_size - strlen(trait) - 1);
 				strncat(trait, _("IDS_TRAIT_GROUP_INDEX_CHECK_BOX_NOT_SELECTED"), trait_size - strlen(trait) - 1);
 			}
-		} else {
-			strncat(trait, ", ", trait_size - strlen(trait) - 1);
-			strncat(trait, _("IDS_TRAIT_GROUP_INDEX"), trait_size - strlen(trait) - 1);
-			if (atspi_state_set_contains(child_state_set, ATSPI_STATE_EXPANDED)) {
-				strncat(trait, ", ", trait_size - strlen(trait) - 1);
-				strncat(trait, _("IDS_TRAIT_GROUP_INDEX_EXPANDED"), trait_size - strlen(trait) - 1);
-			} else {
-				strncat(trait, ", ", trait_size - strlen(trait) - 1);
-				strncat(trait, _("IDS_TRAIT_GROUP_INDEX_COLLAPSED"), trait_size - strlen(trait) - 1);
-			}
+
+			child_found = TRUE;
 		}
 
 		if(child)
@@ -379,6 +371,9 @@ static void append_children_trait(AtspiAccessible *obj, char *trait, unsigned tr
 		if(child_state_set)
 			g_object_unref(child_state_set);
 	}
+
+	return child_found;
+
 }
 
 char *generate_trait(AtspiAccessible * obj)
@@ -459,11 +454,16 @@ char *generate_trait(AtspiAccessible * obj)
 		strncat(ret, trait, sizeof(ret) - strlen(ret) - 1);
 	} else if (role == ATSPI_ROLE_LIST_ITEM) {
 		if (atspi_state_set_contains(state_set, ATSPI_STATE_EXPANDABLE)) {
-			if(atspi_accessible_get_child_count(obj, NULL) > 0)
+
+			int children_count = atspi_accessible_get_child_count(obj, NULL);
+			gboolean child_found = false;
+
+			if(children_count > 0)
 			{
-				append_children_trait(obj, ret, sizeof(ret));
+				child_found = find_group_index_child(obj, ret, sizeof(ret));
 			}
-			else {
+
+			if (!child_found || children_count == 0) {
 				strncat(ret, _("IDS_TRAIT_GROUP_INDEX"), sizeof(ret) - strlen(ret) - 1);
 				strncat(ret, ", ", sizeof(ret) - strlen(ret) - 1);
 				if (atspi_state_set_contains(state_set, ATSPI_STATE_EXPANDED)) {
