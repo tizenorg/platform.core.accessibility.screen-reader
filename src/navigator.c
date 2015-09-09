@@ -501,6 +501,19 @@ char *generate_trait(AtspiAccessible * obj)
 		} else {
 			strncat(ret, _("IDS_TRAIT_TOGGLE_BUTTON_OFF"), sizeof(ret) - strlen(ret) - 1);
 		}
+	} else if (role == ATSPI_ROLE_RADIO_BUTTON) {
+		/* Don't say role name if it's a color chooser radio button */
+		AtspiAccessible *parent;
+		AtspiRole parent_role;
+		parent = atspi_accessible_get_parent(obj, NULL);
+		parent_role = atspi_accessible_get_role(parent, NULL);
+		if (parent_role != ATSPI_ROLE_COLOR_CHOOSER) {
+			char *role_name;
+			role_name = atspi_accessible_get_localized_role_name(obj, NULL);
+			strncat(ret, role_name, sizeof(ret) - strlen(ret) - 1);
+			free(role_name);
+		}
+		g_object_unref(parent);
 	} else {
 		char *role_name = atspi_accessible_get_localized_role_name(obj, NULL);
 		strncat(ret, role_name, sizeof(ret) - strlen(ret) - 1);
