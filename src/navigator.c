@@ -475,7 +475,7 @@ char *generate_trait(AtspiAccessible * obj)
 		} else {
 			return NULL;
 		}
-	} else if (role == ATSPI_ROLE_CHECK_BOX) {
+	} else if ((role == ATSPI_ROLE_CHECK_BOX) || (role == ATSPI_ROLE_RADIO_BUTTON)) {
 		if (atspi_state_set_contains(state_set, ATSPI_STATE_CHECKED)) {
 			strncat(ret, _("IDS_TRAIT_CHECK_BOX_SELECTED"), sizeof(ret) - strlen(ret) - 1);
 		} else {
