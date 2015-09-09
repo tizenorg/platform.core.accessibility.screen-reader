@@ -482,16 +482,6 @@ char *generate_trait(AtspiAccessible * obj)
 			strncat(ret, _("IDS_TRAIT_CHECK_BOX_NOT_SELECTED"), sizeof(ret) - strlen(ret) - 1);
 		}
 	} else if (role == ATSPI_ROLE_PUSH_BUTTON) {
-
-		char *name = atspi_accessible_get_name(obj, NULL);
-		if(name) {
-			if(strlen(name) > 0) {
-				strncat(ret, ", ", sizeof(ret) - strlen(ret) - 1);
-			}
-
-			g_free(name);
-		}
-
 		strncat(ret, _("IDS_TRAIT_PUSH_BUTTON"), sizeof(ret) - strlen(ret) - 1);
 	} else if (role == ATSPI_ROLE_PROGRESS_BAR) {
 		AtspiValue *value = atspi_accessible_get_value_iface(obj);
@@ -554,21 +544,24 @@ static char *generate_what_to_read(AtspiAccessible * obj)
 
 	if (text) {
 		strncat(ret, text, sizeof(ret) - strlen(ret) - 1);
-		strncat(ret, ", ", sizeof(ret) - strlen(ret) - 1);
 	}
 
 	DEBUG("Text:%s", text);
 
-	if (names)
+	if (names && strlen(names) > 0) {
+		if (strlen(ret) > 0)
+			strncat(ret, ", ", sizeof(ret) - strlen(ret) - 1);
 		strncat(ret, names, sizeof(ret) - strlen(ret) - 1);
-
-	if (role_name) {
-		strncat(ret, role_name, sizeof(ret) - strlen(ret) - 1);
-		strncat(ret, ", ", sizeof(ret) - strlen(ret) - 1);
 	}
 
-	if (description) {
-		if (strncmp(description, "\0", 1))
+	if (role_name && strlen(role_name) > 0) {
+		if (strlen(ret) > 0)
+			strncat(ret, ", ", sizeof(ret) - strlen(ret) - 1);
+		strncat(ret, role_name, sizeof(ret) - strlen(ret) - 1);
+	}
+
+	if (description && strlen(description) > 0) {
+		if (strlen(ret) > 0)
 			strncat(ret, ", ", sizeof(ret) - strlen(ret) - 1);
 		strncat(ret, description, sizeof(ret) - strlen(ret) - 1);
 	}
