@@ -1039,7 +1039,7 @@ static void _activate_widget(void)
 		return;
 
 	if (!_check_if_widget_is_enabled(current_obj)) {
-		DEBUG("Widget disable so cannot be activated");
+		DEBUG("Widget is disabled so cannot be activated");
 		return;
 	}
 
@@ -1591,6 +1591,15 @@ static Eina_Bool _has_value(void)
 	return EINA_FALSE;
 }
 
+static Eina_Bool _is_enabled(void)
+{
+	if (!current_obj) {
+		return EINA_FALSE;
+	}
+
+	return _check_if_widget_is_enabled(current_obj);
+}
+
 static Eina_Bool _is_active_entry(void)
 {
 	DEBUG("START");
@@ -1662,7 +1671,13 @@ static void _move_slider(Gesture_Info * gi)
 	}
 
 	if (!_is_slider(obj)) {
-		ERROR("Object is not a slider");
+		DEBUG("Object is not a slider");
+		prepared = false;
+		return;
+	}
+
+	if (!_check_if_widget_is_enabled(obj)) {
+		DEBUG("Slider is disabled");
 		prepared = false;
 		return;
 	}
@@ -1814,7 +1829,7 @@ static void on_gesture_detected(void *data, Gesture_Info * info)
 	case ONE_FINGER_FLICK_UP:
 		if (_is_active_entry())
 			_caret_move_backward();
-		else if (_has_value())
+		else if (_has_value() && _is_enabled())
 			_value_inc();
 		else
 			_focus_prev();
@@ -1822,7 +1837,7 @@ static void on_gesture_detected(void *data, Gesture_Info * info)
 	case ONE_FINGER_FLICK_DOWN:
 		if (_is_active_entry())
 			_caret_move_forward();
-		else if (_has_value())
+		else if (_has_value() && _is_enabled())
 			_value_dec();
 		else
 			_focus_next();
