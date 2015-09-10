@@ -272,19 +272,7 @@ void spi_event_listener_cb(AtspiEvent * event, void *user_data)
 		return;
 	}
 	DEBUG("SPEAK: %s", text_to_read)
-		tts_speak(text_to_read, EINA_TRUE);
-
-	tts_state_e state;
-	Service_Data *sd = (Service_Data *) user_data;
-	tts_get_state(sd->tts, &state);
-
-	if (state == TTS_STATE_READY || state == TTS_STATE_PAUSED) {
-		int ret = tts_play(sd->tts);
-		if (TTS_ERROR_NONE != ret)
-			ERROR("Fail to play TTS : ret(%d)", ret);
-	} else {
-		DEBUG("Current tts state: %d", state);
-	}
+	tts_speak(text_to_read, EINA_TRUE);
 
 	free(text_to_read);
 	DEBUG("END")

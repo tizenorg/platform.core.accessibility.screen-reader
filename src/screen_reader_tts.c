@@ -271,6 +271,7 @@ void tts_speak(char *text_to_speak, Eina_Bool flush_switch)
 
 	DEBUG("added id to:%d\n", speak_id);
 	last_utt_id = speak_id;
+	tts_play(sd->tts);
 }
 
 Eina_Bool update_supported_voices(void *data)
@@ -322,15 +323,8 @@ void state_changed_cb(tts_h tts, tts_state_e previous, tts_state_e current, void
 		txt = eina_strbuf_string_steal(txt_keep_buff);
 		eina_strbuf_free(txt_keep_buff);
 		txt_keep_buff = NULL;
-
 		tts_speak(txt, EINA_FALSE);
-		tts_play(sd->tts);
 		free(txt);
-	} else if (current == TTS_STATE_READY || current == TTS_STATE_PAUSED) {
-		DEBUG("TTS state == %s!", get_tts_state(current));
-		tts_play(sd->tts);
-	} else {
-		DEBUG("TTS state != ready or paused!\n");
 	}
 }
 
