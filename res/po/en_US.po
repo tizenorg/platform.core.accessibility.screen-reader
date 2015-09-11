@@ -193,8 +193,8 @@ msgstr "Off"
 msgid "IDS_TRAIT_TOGGLE_BUTTON"
 msgstr "button"
 
-msgid "IDS_TRAIT_GROUP_INDEX_CHECK_BOX_SELECTED"
-msgstr "The Tick box for the entire group, selected"
+msgid "IDS_TRAIT_GROUP_INDEX_CHECK_BOX"
+msgstr "The Tick box for the entire group"
 
-msgid "IDS_TRAIT_GROUP_INDEX_CHECK_BOX_NOT_SELECTED"
-msgstr "The Tick box for the entire group, not selected"
+msgid "IDS_TRAIT_LIST_ITEM_ICON"
+msgstr "icon"

@@ -338,14 +338,23 @@ static int _find_popup_list_children_count(AtspiAccessible * obj)
 	return 0;
 }
 
-static gboolean find_group_index_child(AtspiAccessible *obj, char *trait, unsigned trait_size)
+static gboolean list_item_childs_trait(AtspiAccessible *obj, char *trait, unsigned trait_size)
 {
 	AtspiAccessible *child;
 	AtspiRole child_role;
 	AtspiStateSet *child_state_set;
 	gboolean child_found = FALSE;
+	AtspiStateSet* state_set = atspi_accessible_get_state_set(obj);
+
 
 	int children_count = atspi_accessible_get_child_count(obj, NULL);
+	if (children_count == 0)
+	{
+		if(state_set)
+			g_object_unref(state_set);
+		return FALSE;
+	}
+
 	int i;
 	for (i = 0; i < children_count && child_found == FALSE; ++i)
 	{
@@ -353,17 +362,45 @@ static gboolean find_group_index_child(AtspiAccessible *obj, char *trait, unsign
 		child_role = atspi_accessible_get_role(child, NULL);
 		child_state_set = atspi_accessible_get_state_set(child);
 
-		if (child_role == ATSPI_ROLE_CHECK_BOX)
+		if(child_role == ATSPI_ROLE_CHECK_BOX && atspi_state_set_contains(state_set, ATSPI_STATE_EXPANDABLE))
 		{
-			if (atspi_state_set_contains(child_state_set, ATSPI_STATE_CHECKED)) {
+			strncat(trait, ", ", trait_size - strlen(trait) - 1);
+			strncat(trait, _("IDS_TRAIT_GROUP_INDEX_CHECK_BOX"), trait_size - strlen(trait) - 1);
+			if (atspi_state_set_contains(child_state_set, ATSPI_STATE_CHECKED))
+			{
 				strncat(trait, ", ", trait_size - strlen(trait) - 1);
-				strncat(trait, _("IDS_TRAIT_GROUP_INDEX_CHECK_BOX_SELECTED"), trait_size - strlen(trait) - 1);
+				strncat(trait, _("IDS_TRAIT_CHECK_BOX_SELECTED"), trait_size - strlen(trait) - 1);
 			} else {
 				strncat(trait, ", ", trait_size - strlen(trait) - 1);
-				strncat(trait, _("IDS_TRAIT_GROUP_INDEX_CHECK_BOX_NOT_SELECTED"), trait_size - strlen(trait) - 1);
+				strncat(trait, _("IDS_TRAIT_CHECK_BOX_NOT_SELECTED"), trait_size - strlen(trait) - 1);
+			}
+			child_found = TRUE;
+
+		} else {
+
+			switch (child_role) {
+			case ATSPI_ROLE_ICON:
+				strncat(trait, ", ", trait_size - strlen(trait) - 1);
+				strncat(trait, _("IDS_TRAIT_LIST_ITEM_ICON"), trait_size - strlen(trait) - 1);
+				child_found = TRUE;
+				break;
+			case ATSPI_ROLE_RADIO_BUTTON:
+			case ATSPI_ROLE_CHECK_BOX:
+
+				if (atspi_state_set_contains(child_state_set, ATSPI_STATE_CHECKED))
+				{
+					strncat(trait, ", ", trait_size - strlen(trait) - 1);
+					strncat(trait, _("IDS_TRAIT_CHECK_BOX_SELECTED"), trait_size - strlen(trait) - 1);
+				} else {
+					strncat(trait, ", ", trait_size - strlen(trait) - 1);
+					strncat(trait, _("IDS_TRAIT_CHECK_BOX_NOT_SELECTED"), trait_size - strlen(trait) - 1);
+				}
+				child_found = TRUE;
+				break;
+			default:
+				break;
 			}
 
-			child_found = TRUE;
 		}
 
 		if(child)
@@ -371,6 +408,9 @@ static gboolean find_group_index_child(AtspiAccessible *obj, char *trait, unsign
 		if(child_state_set)
 			g_object_unref(child_state_set);
 	}
+
+	if(state_set)
+		g_object_unref(state_set);
 
 	return child_found;
 
@@ -453,28 +493,21 @@ char *generate_trait(AtspiAccessible * obj)
 		snprintf(trait, HOVERSEL_TRAIT_SIZE, _("IDS_TRAIT_PD_HOVERSEL"), children_count);
 		strncat(ret, trait, sizeof(ret) - strlen(ret) - 1);
 	} else if (role == ATSPI_ROLE_LIST_ITEM) {
-		if (atspi_state_set_contains(state_set, ATSPI_STATE_EXPANDABLE)) {
 
-			int children_count = atspi_accessible_get_child_count(obj, NULL);
-			gboolean child_found = false;
+		gboolean child_found = list_item_childs_trait(obj, ret, sizeof(ret));
 
-			if(children_count > 0)
-			{
-				child_found = find_group_index_child(obj, ret, sizeof(ret));
+		if (!child_found && atspi_state_set_contains(state_set, ATSPI_STATE_EXPANDABLE))
+		{
+			strncat(ret, _("IDS_TRAIT_GROUP_INDEX"), sizeof(ret) - strlen(ret) - 1);
+			strncat(ret, ", ", sizeof(ret) - strlen(ret) - 1);
+			if (atspi_state_set_contains(state_set, ATSPI_STATE_EXPANDED)) {
+				strncat(ret, _("IDS_TRAIT_GROUP_INDEX_EXPANDED"), sizeof(ret) - strlen(ret) - 1);
+			} else {
+				strncat(ret, _("IDS_TRAIT_GROUP_INDEX_COLLAPSED"), sizeof(ret) - strlen(ret) - 1);
 			}
-
-			if (!child_found || children_count == 0) {
-				strncat(ret, _("IDS_TRAIT_GROUP_INDEX"), sizeof(ret) - strlen(ret) - 1);
-				strncat(ret, ", ", sizeof(ret) - strlen(ret) - 1);
-				if (atspi_state_set_contains(state_set, ATSPI_STATE_EXPANDED)) {
-					strncat(ret, _("IDS_TRAIT_GROUP_INDEX_EXPANDED"), sizeof(ret) - strlen(ret) - 1);
-				} else {
-					strncat(ret, _("IDS_TRAIT_GROUP_INDEX_COLLAPSED"), sizeof(ret) - strlen(ret) - 1);
-				}
-			}
-		} else {
+		} else if(!child_found)
 			return NULL;
-		}
+
 	} else if ((role == ATSPI_ROLE_CHECK_BOX) || (role == ATSPI_ROLE_RADIO_BUTTON)) {
 		if (atspi_state_set_contains(state_set, ATSPI_STATE_CHECKED)) {
 			strncat(ret, _("IDS_TRAIT_CHECK_BOX_SELECTED"), sizeof(ret) - strlen(ret) - 1);
