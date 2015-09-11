@@ -87,6 +87,8 @@ struct _Cover {
 		Eina_Bool finger_out[3];	// finger is out of the finger boundary
 		Eina_Bool return_flick[3];
 		Eina_Bool flick_to_scroll;
+		int flick_to_scroll_last_x;
+		int flick_to_scroll_last_y;
 	} flick_gesture;
 
 	struct {
@@ -347,11 +349,21 @@ static void _flick_gesture_mouse_up(Ecore_Event_Mouse_Button * ev, Cover * cov)
 			cov->flick_gesture.state = GESTURE_ABORTED;
 			goto end;
 		}
-		if (ev->multi.device == 1 && cov->flick_gesture.flick_to_scroll)	//we react only on second finger
+		if (cov->flick_gesture.flick_to_scroll)
 		{
+			if (ev->multi.device == 1) {
+				//if it is second finger then update x and y,
+				//We use last x and y coordinates in end_scroll.
+				//So if the first finger is up before
+				//the second one we will use latest x and y of second finger
+				//because second was the finger that scroll follows.
+				//Else we can encounter that delta between last continue_scroll
+				//coordinates and end_scroll coordinates will be high.
+				cov->flick_gesture.flick_to_scroll_last_x = ev->x;
+				cov->flick_gesture.flick_to_scroll_last_y = ev->y;
+			}
+
 			DEBUG("Flick gesture was interpreted as scroll so we aborting it.");
-			end_scroll(ev->x, ev->y);
-			cov->flick_gesture.flick_to_scroll = EINA_FALSE;
 			cov->flick_gesture.state = GESTURE_ABORTED;
 			goto end;
 		}
@@ -400,9 +412,13 @@ static void _flick_gesture_mouse_up(Ecore_Event_Mouse_Button * ev, Cover * cov)
 
  end:
 	// if no finger is touching a screen, gesture will be reseted.
-	if ((cov->flick_gesture.state == GESTURE_ABORTED) && (cov->n_taps == 0)) {
-		DEBUG("Restet flick gesture");
-		cov->flick_gesture.state = GESTURE_NOT_STARTED;
+	if (cov->flick_gesture.state == GESTURE_ABORTED) {
+		if (cov->flick_gesture.flick_to_scroll) {
+			end_scroll(cov->flick_gesture.flick_to_scroll_last_x, cov->flick_gesture.flick_to_scroll_last_y);
+			cov->flick_gesture.flick_to_scroll = EINA_FALSE;
+		}
+		if (cov->n_taps == 0)
+			cov->flick_gesture.state = GESTURE_NOT_STARTED;
 	}
 }
 
@@ -456,6 +472,8 @@ static void _flick_gesture_mouse_move(Ecore_Event_Mouse_Move * ev, Cover * cov)
 				} else {
 					continue_scroll(ev->x, ev->y);
 				}
+				cov->flick_gesture.flick_to_scroll_last_x = ev->x;
+				cov->flick_gesture.flick_to_scroll_last_y = ev->y;
 				return;
 			}
 		}
