@@ -96,7 +96,7 @@ char *generate_description_for_subtree(AtspiAccessible * obj)
 		if (name && strncmp(name, "\0", 1)) {
 			strncat(ret, name, sizeof(ret) - strlen(ret) - 1);
 		}
-		strncat(ret, " ", 1);
+		strncat(ret, " ", sizeof(ret) - strlen(ret) - 1);
 		below = generate_description_for_subtree(child);
 		if (strncmp(below, "\0", 1)) {
 			strncat(ret, below, sizeof(ret) - strlen(ret) - 1);
@@ -134,7 +134,7 @@ static char *spi_on_state_changed_get_text(AtspiEvent * event, void *user_data)
 
 	if (names) {
 		strncat(ret, names, sizeof(ret) - strlen(ret) - 1);
-		strncat(ret, ", ", 2);
+		strncat(ret, ", ", sizeof(ret) - strlen(ret) - 1);
 	}
 
 	if (role_name)
@@ -142,7 +142,7 @@ static char *spi_on_state_changed_get_text(AtspiEvent * event, void *user_data)
 
 	if (description) {
 		if (strncmp(description, "\0", 1))
-			strncat(ret, ", ", 2);
+			strncat(ret, ", ", sizeof(ret) - strlen(ret) - 1);
 		strncat(ret, description, sizeof(ret) - strlen(ret) - 1);
 	}
 
