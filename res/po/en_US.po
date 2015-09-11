@@ -212,3 +212,8 @@ msgstr "The Tick box for the entire group"
 msgid "IDS_TRAIT_LIST_ITEM_ICON"
 msgstr "icon"
 
+msgid "IDS_TRAIT_ITEM_SELECTED"
+msgstr "selected"
+
+msgid "IDS_TRAIT_ITEM_SELECTED_COUNT"
+msgstr "%d selected in total"

@@ -183,8 +183,13 @@ char *state_to_char(AtspiStateType state)
 
 }
 
-static void display_info_about_object(AtspiAccessible * obj)
+static void display_info_about_object(AtspiAccessible * obj, bool display_parent_info)
 {
+	if(!obj)
+	{
+		return;
+	}
+
 	DEBUG("START");
 	DEBUG("------------------------");
 	const char *name = atspi_accessible_get_name(obj, NULL);
@@ -198,9 +203,15 @@ static void display_info_about_object(AtspiAccessible * obj)
 	AtspiRect *rect_screen = atspi_component_get_extents(comp, ATSPI_COORD_TYPE_SCREEN, NULL);
 	AtspiRect *rect_win = atspi_component_get_extents(comp, ATSPI_COORD_TYPE_WINDOW, NULL);
 
+	if(display_parent_info) {
+		AtspiAccessible *parent = atspi_accessible_get_parent(obj, true);
+		display_info_about_object(parent, false);
+		g_object_unref(parent);
+	}
+
 	DEBUG("NAME:%s", name);
 	DEBUG("ROLE:%s", role)
-		DEBUG("DESCRIPTION:%s", description);
+	DEBUG("DESCRIPTION:%s", description);
 	DEBUG("CHILDS:%d", atspi_accessible_get_child_count(obj, NULL));
 	DEBUG("HIGHLIGHT_INDEX:%d", atspi_component_get_highlight_index(comp, NULL));
 	DEBUG("INDEX IN PARENT:%d", atspi_accessible_get_index_in_parent(obj, NULL));
@@ -498,17 +509,56 @@ char *generate_trait(AtspiAccessible * obj)
 		g_object_unref(parent);
 	} else if (role == ATSPI_ROLE_LIST_ITEM) {
 
+		AtspiAccessible *parent = atspi_accessible_get_parent(obj, NULL);
+		AtspiRole parent_role = atspi_accessible_get_role(parent, NULL);
 		gboolean child_found = list_item_childs_trait(obj, ret, sizeof(ret));
 
-		if (!child_found && atspi_state_set_contains(state_set, ATSPI_STATE_EXPANDABLE))
-		{
+		if(parent_role == ATSPI_ROLE_TREE_TABLE) {
+
+			AtspiStateSet *state_set = atspi_accessible_get_state_set(obj);
+			gboolean is_selected = atspi_state_set_contains(state_set, ATSPI_STATE_SELECTED);
+			g_object_unref(state_set);
+
+			if(is_selected) {
+				strncat(ret, _("IDS_TRAIT_ITEM_SELECTED"), sizeof(ret) - strlen(ret) - 1);
+			}
+
+			AtspiStateSet *parent_state_set = atspi_accessible_get_state_set(parent);
+			bool is_parent_multiselectable = atspi_state_set_contains(parent_state_set, ATSPI_STATE_MULTISELECTABLE);
+
+			g_object_unref(parent_state_set);
+			g_object_unref(parent);
+
+			if(is_parent_multiselectable) {
+
+				AtspiAccessible *child = NULL;
+				char buf[200];
+
+				AtspiSelection *parent_selection = atspi_accessible_get_selection(parent);
+				int selected_children_count = atspi_selection_get_n_selected_children(parent_selection, NULL);
+
+				if(is_selected) {
+					strncat(ret, ", ", sizeof(ret) - strlen(ret) - 1);
+				}
+
+				snprintf(buf, 200, _("IDS_TRAIT_ITEM_SELECTED_COUNT"), selected_children_count);
+				strncat(ret, buf, sizeof(ret) - strlen(ret) - 1);
+
+				g_object_unref(parent_selection);
+			}
+
+		} else if (!child_found && atspi_state_set_contains(state_set, ATSPI_STATE_EXPANDABLE)) {
 			if (atspi_state_set_contains(state_set, ATSPI_STATE_EXPANDED)) {
 				strncat(ret, _("IDS_TRAIT_GROUP_INDEX_EXPANDED"), sizeof(ret) - strlen(ret) - 1);
 			} else {
 				strncat(ret, _("IDS_TRAIT_GROUP_INDEX_COLLAPSED"), sizeof(ret) - strlen(ret) - 1);
 			}
-		} else if(!child_found)
+		} else if(!child_found) {
+			g_object_unref(parent);
 			return NULL;
+		}
+
+		g_object_unref(parent);
 
 	} else if ((role == ATSPI_ROLE_CHECK_BOX) || (role == ATSPI_ROLE_RADIO_BUTTON)) {
 		if (atspi_state_set_contains(state_set, ATSPI_STATE_CHECKED)) {
@@ -587,7 +637,7 @@ static char *generate_what_to_read(AtspiAccessible * obj)
 	DEBUG("->->->->->-> WIDGET GAINED HIGHLIGHT: %s <-<-<-<-<-<-<-", name);
 	DEBUG("->->->->->-> FROM SUBTREE HAS NAME:  %s <-<-<-<-<-<-<-", other);
 
-	display_info_about_object(obj);
+	display_info_about_object(obj, false);
 
 	if (name && strncmp(name, "\0", 1))
 		names = strdup(name);
@@ -1093,7 +1143,7 @@ static void _activate_widget(void)
 		return;
 	}
 
-	display_info_about_object(current_widget);
+	display_info_about_object(current_widget, false);
 
 	edit = atspi_accessible_get_editable_text_iface(current_widget);
 	if (edit) {
