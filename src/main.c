@@ -148,8 +148,14 @@ void posix_signal_handler(int sig, siginfo_t * siginfo, void *context)
 	if (log_file) {
 		(void)context;
 		print_warning(sig, siginfo, stderr);
-		print_warning(sig, siginfo, log_file);
-		posix_print_stack_trace(log_file);
+
+		/* check file if it is symbolic link */
+		struct stat lstat_info;
+		if (lstat(file_name, &lstat_info) != -1) {
+			print_warning(sig, siginfo, log_file);
+			posix_print_stack_trace(log_file);
+		}
+
 		fclose(log_file);
 		log_file = NULL;
 	}
