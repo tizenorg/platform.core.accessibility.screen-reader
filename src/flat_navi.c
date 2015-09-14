@@ -160,6 +160,8 @@ static Eina_Bool _accept_object(AtspiAccessible * obj)
 	AtspiText *text = NULL;
 	AtspiValue *value = NULL;
 	AtspiStateSet *ss = NULL;
+	AtspiComponent *component;
+	AtspiRect *extent;
 
 	AtspiRole r = atspi_accessible_get_role(obj, NULL);
 
@@ -191,6 +193,17 @@ static Eina_Bool _accept_object(AtspiAccessible * obj)
 		g_object_unref(relation);
 		return EINA_FALSE;
 	}
+
+	/* Extent of candidate object could be 0 */
+	component = atspi_accessible_get_component_iface(obj);
+	extent = atspi_component_get_extents(component, ATSPI_COORD_TYPE_SCREEN, NULL);
+
+	if (extent->width <= 0 || extent->height <= 0) ret = EINA_FALSE;
+
+	g_free(extent);
+
+	if (!ret)
+		return ret;
 
 	ss = atspi_accessible_get_state_set(obj);
 	if (ss) {
