@@ -15,6 +15,7 @@
  */
 
 #include "app_tracker.h"
+#include "screen_reader_tts.h"
 #include "logger.h"
 
 typedef struct {
@@ -149,7 +150,7 @@ static void _on_atspi_event_cb(const AtspiEvent * event)
 
 	_print_event_object_info(event);
 
-	if (!strcmp(event->type, "object:property-change:accessible-name")) {
+	if (!strcmp(event->type, "object:property-change:accessible-name") && _object_has_highlighted_state(event->source)) {
 		gchar *name = atspi_accessible_get_name(event->source, NULL);
 		DEBUG("New name for object, read:%s", name);
 		tts_speak (name, EINA_TRUE);
