@@ -359,10 +359,17 @@ static gboolean list_item_childs_trait(AtspiAccessible *obj, char *trait, unsign
 	for (i = 0; i < children_count && child_found == FALSE; ++i)
 	{
 		child = atspi_accessible_get_child_at_index(obj, i, NULL);
+		if (!child) continue;
+
 		child_role = atspi_accessible_get_role(child, NULL);
 		child_state_set = atspi_accessible_get_state_set(child);
+		if (!child_state_set)
+		{
+			g_object_unref(child);
+			continue;
+		}
 
-		if(child_role == ATSPI_ROLE_CHECK_BOX && atspi_state_set_contains(state_set, ATSPI_STATE_EXPANDABLE))
+		if (child_role == ATSPI_ROLE_CHECK_BOX && atspi_state_set_contains(state_set, ATSPI_STATE_EXPANDABLE))
 		{
 			strncat(trait, ", ", trait_size - strlen(trait) - 1);
 			strncat(trait, _("IDS_TRAIT_GROUP_INDEX_CHECK_BOX"), trait_size - strlen(trait) - 1);
@@ -403,10 +410,8 @@ static gboolean list_item_childs_trait(AtspiAccessible *obj, char *trait, unsign
 
 		}
 
-		if(child)
-			g_object_unref(child);
-		if(child_state_set)
-			g_object_unref(child_state_set);
+		g_object_unref(child);
+		g_object_unref(child_state_set);
 	}
 
 	if(state_set)
