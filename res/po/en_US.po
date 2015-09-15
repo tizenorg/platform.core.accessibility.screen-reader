@@ -1,3 +1,10 @@
+
+msgid "IDS_VISUAL_KEYBOARD_DISABLED"
+msgstr "Visual keyboard disabled"
+
+msgid "IDS_VISUAL_KEYBOARD_ENABLED"
+msgstr "Visual keyboard enabled"
+
 msgid "IDS_REACHED_MAX_VAL"
 msgstr ", maximum value reached"
 
@@ -198,3 +205,4 @@ msgstr "The Tick box for the entire group"
 
 msgid "IDS_TRAIT_LIST_ITEM_ICON"
 msgstr "icon"
+
