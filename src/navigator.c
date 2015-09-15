@@ -204,7 +204,7 @@ static void display_info_about_object(AtspiAccessible * obj, bool display_parent
 	AtspiRect *rect_win = atspi_component_get_extents(comp, ATSPI_COORD_TYPE_WINDOW, NULL);
 
 	if(display_parent_info) {
-		AtspiAccessible *parent = atspi_accessible_get_parent(obj, true);
+		AtspiAccessible *parent = atspi_accessible_get_parent(obj, NULL);
 		display_info_about_object(parent, false);
 		g_object_unref(parent);
 	}
@@ -531,7 +531,6 @@ char *generate_trait(AtspiAccessible * obj)
 
 			if(is_parent_multiselectable) {
 
-				AtspiAccessible *child = NULL;
 				char buf[200];
 
 				AtspiSelection *parent_selection = atspi_accessible_get_selection(parent);
@@ -1207,8 +1206,14 @@ static void _activate_widget(void)
 			index = atspi_accessible_get_index_in_parent(current_widget, NULL);
 			selection = atspi_accessible_get_selection_iface(parent);
 			if (selection) {
-				DEBUG("SELECT CHILD NO:%d\n", index);
-				atspi_selection_select_child(selection, index, NULL);
+				if(atspi_state_set_contains(ss, ATSPI_STATE_SELECTED)) {
+					atspi_selection_deselect_child (selection, index, NULL);
+
+				} else {
+					DEBUG("SELECT CHILD NO:%d\n", index);
+					atspi_selection_select_child(selection, index, NULL);
+				}
+
 				g_object_unref(selection);
 				g_object_unref(parent);
 				g_object_unref(ss);
