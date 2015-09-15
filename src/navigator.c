@@ -442,6 +442,7 @@ char *generate_trait(AtspiAccessible * obj)
 		char tab_index[MENU_ITEM_TAB_INDEX_SIZE];
 		snprintf(tab_index, MENU_ITEM_TAB_INDEX_SIZE, _("IDS_TRAIT_MENU_ITEM_TAB_INDEX"), index + 1, children_count);
 		strncat(ret, tab_index, sizeof(ret) - strlen(ret) - 1);
+		g_object_unref(parent);
 	} else if (role == ATSPI_ROLE_POPUP_MENU) {
 		int children_count = atspi_accessible_get_child_count(obj, NULL);
 		char trait[HOVERSEL_TRAIT_SIZE];
@@ -494,6 +495,7 @@ char *generate_trait(AtspiAccessible * obj)
 		char trait[HOVERSEL_TRAIT_SIZE];
 		snprintf(trait, HOVERSEL_TRAIT_SIZE, _("IDS_TRAIT_PD_HOVERSEL"), children_count);
 		strncat(ret, trait, sizeof(ret) - strlen(ret) - 1);
+		g_object_unref(parent);
 	} else if (role == ATSPI_ROLE_LIST_ITEM) {
 
 		gboolean child_found = list_item_childs_trait(obj, ret, sizeof(ret));
@@ -699,7 +701,10 @@ void test_debug(AtspiAccessible * current_widget)
 	GERROR_CHECK(err)
 		DEBUG("Total childs in parent: %d\n", count_child);
 	if (!count_child)
+	{
+		g_object_unref(parent);
 		return;
+	}
 
 	for (jdx = 0; jdx < count_child; jdx++) {
 		child_iter = atspi_accessible_get_child_at_index(parent, jdx, &err);
@@ -715,6 +720,7 @@ void test_debug(AtspiAccessible * current_widget)
 		g_free(role);
 		GERROR_CHECK(err)
 	}
+	g_object_unref(parent);
 }
 
 static void _focus_widget(Gesture_Info * info)
@@ -1159,6 +1165,8 @@ static void _activate_widget(void)
 				return;
 			} else
 				ERROR("no selection iterface in parent");
+
+			g_object_unref(parent);
 		}
 	}
 	g_object_unref(ss);
@@ -1489,6 +1497,8 @@ static void _direct_scroll_back(void)
 
 	if (role != ATSPI_ROLE_LIST) {
 		DEBUG("That operation can be done only on list, it is:%s", atspi_accessible_get_role_name(parent, NULL));
+		g_object_unref(parent);
+		g_object_unref(current);
 		return;
 	}
 
@@ -1497,6 +1507,8 @@ static void _direct_scroll_back(void)
 
 	if (children_count <= 0) {
 		ERROR("NO visible element on list");
+		g_object_unref(parent);
+		g_object_unref(current);
 		return;
 	}
 
@@ -1520,6 +1532,8 @@ static void _direct_scroll_back(void)
 		}
 		_current_highlight_object_set(obj);
 	}
+	g_object_unref(parent);
+	g_object_unref(current);
 }
 
 static void _direct_scroll_forward(void)
@@ -1542,6 +1556,8 @@ static void _direct_scroll_forward(void)
 
 	if (role != ATSPI_ROLE_LIST) {
 		DEBUG("That operation can be done only on list, it is:%s", atspi_accessible_get_role_name(parent, NULL));
+		g_object_unref(parent);
+		g_object_unref(current);
 		return;
 	}
 
@@ -1550,6 +1566,8 @@ static void _direct_scroll_forward(void)
 
 	if (children_count <= 0) {
 		ERROR("NO visible element on list");
+		g_object_unref(parent);
+		g_object_unref(current);
 		return;
 	}
 
@@ -1573,6 +1591,8 @@ static void _direct_scroll_forward(void)
 		}
 		_current_highlight_object_set(obj);
 	}
+	g_object_unref(parent);
+	g_object_unref(current);
 }
 
 static void _direct_scroll_to_first(void)
