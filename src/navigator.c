@@ -371,7 +371,6 @@ static gboolean list_item_childs_trait(AtspiAccessible *obj, char *trait, unsign
 
 		if (child_role == ATSPI_ROLE_CHECK_BOX && atspi_state_set_contains(state_set, ATSPI_STATE_EXPANDABLE))
 		{
-			strncat(trait, ", ", trait_size - strlen(trait) - 1);
 			strncat(trait, _("IDS_TRAIT_GROUP_INDEX_CHECK_BOX"), trait_size - strlen(trait) - 1);
 			if (atspi_state_set_contains(child_state_set, ATSPI_STATE_CHECKED))
 			{
@@ -387,13 +386,11 @@ static gboolean list_item_childs_trait(AtspiAccessible *obj, char *trait, unsign
 
 			switch (child_role) {
 			case ATSPI_ROLE_ICON:
-				strncat(trait, ", ", trait_size - strlen(trait) - 1);
 				strncat(trait, _("IDS_TRAIT_LIST_ITEM_ICON"), trait_size - strlen(trait) - 1);
 				child_found = TRUE;
 				break;
 			case ATSPI_ROLE_RADIO_BUTTON:
 			case ATSPI_ROLE_CHECK_BOX:
-
 				if (atspi_state_set_contains(child_state_set, ATSPI_STATE_CHECKED))
 				{
 					strncat(trait, ", ", trait_size - strlen(trait) - 1);
@@ -503,8 +500,6 @@ char *generate_trait(AtspiAccessible * obj)
 
 		if (!child_found && atspi_state_set_contains(state_set, ATSPI_STATE_EXPANDABLE))
 		{
-			strncat(ret, _("IDS_TRAIT_GROUP_INDEX"), sizeof(ret) - strlen(ret) - 1);
-			strncat(ret, ", ", sizeof(ret) - strlen(ret) - 1);
 			if (atspi_state_set_contains(state_set, ATSPI_STATE_EXPANDED)) {
 				strncat(ret, _("IDS_TRAIT_GROUP_INDEX_EXPANDED"), sizeof(ret) - strlen(ret) - 1);
 			} else {
