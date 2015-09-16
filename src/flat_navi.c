@@ -183,6 +183,15 @@ static Eina_Bool _accept_object(AtspiAccessible * obj)
 		break;
 	}
 
+	// When given accessibility object is controlled by other object we consider
+	// it as not "user-presentable" on and skip it in navigation tree
+	AtspiAccessible *relation = _get_object_in_relation(obj, ATSPI_RELATION_CONTROLLED_BY);
+	if (relation)
+	{
+		g_object_unref(relation);
+		return EINA_FALSE;
+	}
+
 	ss = atspi_accessible_get_state_set(obj);
 	if (ss) {
 		if (_object_is_item(obj)) {
