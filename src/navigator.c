@@ -14,6 +14,8 @@
  * limitations under the License.
  */
 
+#define _GNU_SOURCE
+#include <stdio.h>
 #include <Ecore_X.h>
 #include <Ecore.h>
 #include <math.h>
@@ -349,86 +351,6 @@ static int _find_popup_list_children_count(AtspiAccessible * obj)
 	return 0;
 }
 
-static gboolean list_item_childs_trait(AtspiAccessible *obj, char *trait, unsigned trait_size)
-{
-	AtspiAccessible *child;
-	AtspiRole child_role;
-	AtspiStateSet *child_state_set;
-	gboolean child_found = FALSE;
-	AtspiStateSet* state_set = atspi_accessible_get_state_set(obj);
-
-
-	int children_count = atspi_accessible_get_child_count(obj, NULL);
-	if (children_count == 0)
-	{
-		if(state_set)
-			g_object_unref(state_set);
-		return FALSE;
-	}
-
-	int i;
-	for (i = 0; i < children_count && child_found == FALSE; ++i)
-	{
-		child = atspi_accessible_get_child_at_index(obj, i, NULL);
-		if (!child) continue;
-
-		child_role = atspi_accessible_get_role(child, NULL);
-		child_state_set = atspi_accessible_get_state_set(child);
-		if (!child_state_set)
-		{
-			g_object_unref(child);
-			continue;
-		}
-
-		if (child_role == ATSPI_ROLE_CHECK_BOX && atspi_state_set_contains(state_set, ATSPI_STATE_EXPANDABLE))
-		{
-			strncat(trait, _("IDS_TRAIT_GROUP_INDEX_CHECK_BOX"), trait_size - strlen(trait) - 1);
-			if (atspi_state_set_contains(child_state_set, ATSPI_STATE_CHECKED))
-			{
-				strncat(trait, ", ", trait_size - strlen(trait) - 1);
-				strncat(trait, _("IDS_TRAIT_CHECK_BOX_SELECTED"), trait_size - strlen(trait) - 1);
-			} else {
-				strncat(trait, ", ", trait_size - strlen(trait) - 1);
-				strncat(trait, _("IDS_TRAIT_CHECK_BOX_NOT_SELECTED"), trait_size - strlen(trait) - 1);
-			}
-			child_found = TRUE;
-
-		} else {
-
-			switch (child_role) {
-			case ATSPI_ROLE_ICON:
-				strncat(trait, _("IDS_TRAIT_LIST_ITEM_ICON"), trait_size - strlen(trait) - 1);
-				child_found = TRUE;
-				break;
-			case ATSPI_ROLE_RADIO_BUTTON:
-			case ATSPI_ROLE_CHECK_BOX:
-				if (atspi_state_set_contains(child_state_set, ATSPI_STATE_CHECKED))
-				{
-					strncat(trait, ", ", trait_size - strlen(trait) - 1);
-					strncat(trait, _("IDS_TRAIT_CHECK_BOX_SELECTED"), trait_size - strlen(trait) - 1);
-				} else {
-					strncat(trait, ", ", trait_size - strlen(trait) - 1);
-					strncat(trait, _("IDS_TRAIT_CHECK_BOX_NOT_SELECTED"), trait_size - strlen(trait) - 1);
-				}
-				child_found = TRUE;
-				break;
-			default:
-				break;
-			}
-
-		}
-
-		g_object_unref(child);
-		g_object_unref(child_state_set);
-	}
-
-	if(state_set)
-		g_object_unref(state_set);
-
-	return child_found;
-
-}
-
 char *generate_trait(AtspiAccessible * obj)
 {
 	if (!obj)
@@ -511,7 +433,6 @@ char *generate_trait(AtspiAccessible * obj)
 
 		AtspiAccessible *parent = atspi_accessible_get_parent(obj, NULL);
 		AtspiRole parent_role = atspi_accessible_get_role(parent, NULL);
-		gboolean child_found = list_item_childs_trait(obj, ret, sizeof(ret));
 
 		if(parent_role == ATSPI_ROLE_TREE_TABLE) {
 
@@ -546,13 +467,13 @@ char *generate_trait(AtspiAccessible * obj)
 				g_object_unref(parent_selection);
 			}
 
-		} else if (!child_found && atspi_state_set_contains(state_set, ATSPI_STATE_EXPANDABLE)) {
+		} else if (atspi_state_set_contains(state_set, ATSPI_STATE_EXPANDABLE)) {
 			if (atspi_state_set_contains(state_set, ATSPI_STATE_EXPANDED)) {
 				strncat(ret, _("IDS_TRAIT_GROUP_INDEX_EXPANDED"), sizeof(ret) - strlen(ret) - 1);
 			} else {
 				strncat(ret, _("IDS_TRAIT_GROUP_INDEX_COLLAPSED"), sizeof(ret) - strlen(ret) - 1);
 			}
-		} else if(!child_found) {
+		} else {
 			g_object_unref(parent);
 			return NULL;
 		}
@@ -599,9 +520,7 @@ char *generate_trait(AtspiAccessible * obj)
 		}
 		g_object_unref(parent);
 	} else if (role == ATSPI_ROLE_HEADING) {
-
-		return NULL;
-
+		return strdup("");
 	} else {
 		char *role_name = atspi_accessible_get_localized_role_name(obj, NULL);
 		strncat(ret, role_name, sizeof(ret) - strlen(ret) - 1);
@@ -614,6 +533,78 @@ char *generate_trait(AtspiAccessible * obj)
 	return strdup(ret);
 }
 
+char *generate_text_for_relation_objects(AtspiAccessible * obj, AtspiRelationType search, char *(*text_generate_cb)(AtspiAccessible *obj))
+{
+	GError *err = NULL;
+	GArray *relations;
+	AtspiRelation *relation;
+	AtspiRelationType type;
+	Eina_Strbuf *buf;
+	int i, j;
+	char *ret = NULL;
+
+	if (!obj || !text_generate_cb) return NULL;
+
+	relations = atspi_accessible_get_relation_set(obj, &err);
+	if (err || !relations)
+	{
+		if (err) g_error_free(err);
+		return NULL;
+	}
+
+	buf = eina_strbuf_new();
+
+	for (i = 0; i < relations->len; i++)
+	{
+		relation = g_array_index(relations, AtspiRelation *, i);
+		type = atspi_relation_get_relation_type(relation);
+		if (type == search)
+		{
+			for (j = 0; j < atspi_relation_get_n_targets(relation); j++)
+			{
+				AtspiAccessible *target = atspi_relation_get_target(relation, j);
+				char *text = text_generate_cb(target);
+				if (j == 0)
+					eina_strbuf_append_printf(buf, "%s", text);
+				else
+					eina_strbuf_append_printf(buf, ", %s", text);
+				g_object_unref(target);
+				free(text);
+			}
+		}
+		g_object_unref(relation);
+	}
+	g_array_free(relations, TRUE);
+	ret = eina_strbuf_string_steal(buf);
+	eina_strbuf_free(buf);
+
+	return ret;
+}
+
+static char *generate_description_from_relation_object(AtspiAccessible *obj)
+{
+	GError *err = NULL;
+	char *ret = generate_trait(obj);
+	char *desc = atspi_accessible_get_description(obj, &err);
+
+	if (err)
+	{
+		g_error_free(err);
+		g_free(desc);
+		return ret;
+	}
+	if (desc[0] != '\0')
+	{
+		char *tmp = ret;
+		if (asprintf(&ret, "%s, %s", desc, ret) < 0)
+			ERROR("asprintf failed.");
+		free(tmp);
+	}
+
+	g_free(desc);
+	return ret;
+}
+
 static char *generate_what_to_read(AtspiAccessible * obj)
 {
 	char *name;
@@ -623,10 +614,13 @@ static char *generate_what_to_read(AtspiAccessible * obj)
 	char *other;
 	char *text = NULL;
 	char ret[TTS_MAX_TEXT_SIZE] = "\0";
+	char *description_from_relation;
+
 	description = atspi_accessible_get_description(obj, NULL);
 	name = atspi_accessible_get_name(obj, NULL);
 	role_name = generate_trait(obj);
 	other = generate_description_for_subtrees(obj);
+	description_from_relation = generate_text_for_relation_objects(obj, ATSPI_RELATION_DESCRIBED_BY, generate_description_from_relation_object);
 	AtspiText *iface_text = atspi_accessible_get_text_iface(obj);
 	if (iface_text) {
 		text = atspi_text_get_text(iface_text, 0, atspi_text_get_character_count(iface_text, NULL), NULL);
@@ -667,12 +661,19 @@ static char *generate_what_to_read(AtspiAccessible * obj)
 		strncat(ret, description, sizeof(ret) - strlen(ret) - 1);
 	}
 
+	if (description_from_relation && (description_from_relation[0] != '\n')) {
+		if (strlen(ret) > 0)
+			strncat(ret, ", ", sizeof(ret) - strlen(ret) - 1);
+		strncat(ret, description_from_relation, sizeof(ret) - strlen(ret) - 1);
+	}
+
 	free(text);
 	free(name);
 	free(names);
 	free(description);
 	free(role_name);
 	free(other);
+	free(description_from_relation);
 
 	return strdup(ret);
 }
