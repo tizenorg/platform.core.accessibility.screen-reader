@@ -2058,24 +2058,26 @@ static AtspiAccessible *_get_modal_descendant(AtspiAccessible * root)
 	GError *err = NULL;
 	AtspiStateSet *states = atspi_state_set_new(NULL);
 	atspi_state_set_add(states, ATSPI_STATE_MODAL);
+	atspi_state_set_add(states, ATSPI_STATE_SHOWING);
+	atspi_state_set_add(states, ATSPI_STATE_VISIBLE);
 	DEBUG("GET MODAL: STATE SET PREPARED");
 	AtspiMatchRule *rule = atspi_match_rule_new(states,
-												ATSPI_Collection_MATCH_ANY,
+												ATSPI_Collection_MATCH_ALL,
 												NULL,
 												ATSPI_Collection_MATCH_INVALID,
 												NULL,
 												ATSPI_Collection_MATCH_INVALID,
 												NULL,
 												ATSPI_Collection_MATCH_INVALID,
-												0);
+												FALSE);
 	DEBUG("GET MODAL: MATCHING RULE PREPARED");
 	AtspiAccessible *ret = NULL;
 	AtspiCollection *col_iface = atspi_accessible_get_collection_iface(root);
 	GArray *result = atspi_collection_get_matches(col_iface,
 												  rule,
-												  ATSPI_Collection_SORT_ORDER_INVALID,
+												  ATSPI_Collection_SORT_ORDER_CANONICAL,
 												  1,
-												  1,
+												  TRUE,
 												  &err);
 	GERROR_CHECK(err);
 	DEBUG("GET MODAL: QUERY PERFORMED");
