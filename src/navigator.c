@@ -61,6 +61,8 @@
      error = NULL;\
    }
 
+static void on_window_activate(void *data, AtspiAccessible * window);
+
 typedef struct {
 	int x, y;
 } last_focus_t;
@@ -1097,14 +1099,12 @@ static void _value_dec(void)
 	ERROR("No value interface supported!\n");
 }
 
-static bool _check_if_widget_is_enabled(AtspiAccessible * obj)
+static bool _widget_has_state(AtspiAccessible * obj, AtspiStateType type)
 {
 	Eina_Bool ret = EINA_FALSE;
 	AtspiStateSet *st = atspi_accessible_get_state_set(obj);
-
-	if (atspi_state_set_contains(st, ATSPI_STATE_ENABLED))
+	if (atspi_state_set_contains(st, type))
 		ret = EINA_TRUE;
-
 	g_object_unref(st);
 	return ret;
 }
@@ -1134,7 +1134,7 @@ static void _activate_widget(void)
 	if (!current_obj)
 		return;
 
-	if (!_check_if_widget_is_enabled(current_obj)) {
+	if (!_widget_has_state(current_obj, ATSPI_STATE_ENABLED)) {
 		DEBUG("Widget is disabled so cannot be activated");
 		return;
 	}
@@ -1713,7 +1713,7 @@ static Eina_Bool _is_enabled(void)
 		return EINA_FALSE;
 	}
 
-	return _check_if_widget_is_enabled(current_obj);
+	return _widget_has_state(current_obj, ATSPI_STATE_ENABLED);
 }
 
 static Eina_Bool _is_active_entry(void)
@@ -1792,7 +1792,7 @@ static void _move_slider(Gesture_Info * gi)
 		return;
 	}
 
-	if (!_check_if_widget_is_enabled(obj)) {
+	if (!_widget_has_state(obj, ATSPI_STATE_ENABLED)) {
 		DEBUG("Slider is disabled");
 		prepared = false;
 		return;
@@ -2029,13 +2029,16 @@ static void on_gesture_detected(void *data, Gesture_Info * info)
 
 static void _view_content_changed(AtspiAccessible * root, void *user_data)
 {
-	DEBUG("START");
 	if (flat_navi_is_valid(context, root))
 		return;
+	if (!_widget_has_state(root, ATSPI_STATE_SHOWING))
+	{
+		on_window_activate(NULL, top_window);
+		return;
+	}
 	flat_navi_context_free(context);
 	context = flat_navi_context_create(root);
 	_current_highlight_object_set(flat_navi_context_current_get(context));
-	DEBUG("END");
 }
 
 static void _new_highlighted_obj_changed(AtspiAccessible * new_highlighted_obj, void *user_data)
