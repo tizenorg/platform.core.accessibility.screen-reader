@@ -198,12 +198,11 @@ static Eina_Bool _accept_object(AtspiAccessible * obj)
 	component = atspi_accessible_get_component_iface(obj);
 	extent = atspi_component_get_extents(component, ATSPI_COORD_TYPE_SCREEN, NULL);
 
-	if (extent->width <= 0 || extent->height <= 0) ret = EINA_FALSE;
-
+	if (extent->width <= 0 || extent->height <= 0) {
+		g_free(extent);
+		return EINA_FALSE;
+	}
 	g_free(extent);
-
-	if (!ret)
-		return ret;
 
 	ss = atspi_accessible_get_state_set(obj);
 	if (ss) {
