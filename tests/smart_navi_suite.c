@@ -460,9 +460,8 @@ END_TEST START_TEST(spi_flat_navi_context_prev_valid_parameter3)
 	prev = flat_navi_context_prev(ctx);
 	fail_if(!prev || prev != child19);
 }
-
 END_TEST
-/*
+
 START_TEST(spi_flat_navi_context_last_null_parameter)
 {
    AtspiAccessible *last = flat_navi_context_last(NULL);
@@ -473,7 +472,7 @@ END_TEST
 START_TEST(spi_flat_navi_context_last_valid_parameter)
 {
    AtspiAccessible *last = flat_navi_context_last(ctx);
-   fail_if(!last || last != child2);
+   fail_if(!last || last != child6);
 }
 END_TEST
 
@@ -487,7 +486,7 @@ END_TEST
 START_TEST(spi_flat_navi_context_first_valid_parameter)
 {
    AtspiAccessible *first = flat_navi_context_first(ctx);
-   fail_if(!first || first != child1);
+   fail_if(!first || first != child5);
 }
 END_TEST
 
@@ -512,66 +511,7 @@ START_TEST(spi_flat_navi_context_current_set_valid_parameters)
 }
 END_TEST
 
-START_TEST(spi_flat_navi_context_line_prev_null_parameter)
-{
-   AtspiAccessible *prev = flat_navi_context_line_prev(NULL);
-   fail_if(prev);
-}
-END_TEST
-
-START_TEST(spi_flat_navi_context_line_prev_valid_parameter)
-{
-   AtspiAccessible *prev = flat_navi_context_line_prev(ctx);
-   fail_if(prev);
-   flat_navi_context_current_set(ctx, child4);
-   prev = flat_navi_context_line_prev(ctx);
-   fail_if(!prev || prev != child1);
-}
-END_TEST
-
-START_TEST(spi_flat_navi_context_line_next_null_parameter)
-{
-   AtspiAccessible *next = flat_navi_context_line_next(NULL);
-   fail_if(next);
-}
-END_TEST
-
-START_TEST(spi_flat_navi_context_line_next_valid_parameter)
-{
-   AtspiAccessible *next = flat_navi_context_line_next(ctx);
-   fail_if(!next || next != child3);
-}
-END_TEST
-
-START_TEST(spi_flat_navi_context_line_first_null_parameter)
-{
-   AtspiAccessible *first = flat_navi_context_line_first(NULL);
-   fail_if(first);
-}
-END_TEST
-
-START_TEST(spi_flat_navi_context_line_first_valid_parameter)
-{
-   AtspiAccessible *first = flat_navi_context_line_first(ctx);
-   fail_if(!first || first != child1);
-}
-END_TEST
-
-START_TEST(spi_flat_navi_context_line_last_null_parameter)
-{
-   AtspiAccessible *last = flat_navi_context_line_last(NULL);
-   fail_if(last);
-}
-END_TEST
-
-START_TEST(spi_flat_navi_context_line_last_valid_parameter)
-{
-   AtspiAccessible *last = flat_navi_context_line_last(ctx);
-   fail_if(!last || last != child3);
-}
-END_TEST
-*/
-	Suite * screen_reader_suite(void)
+Suite * screen_reader_suite(void)
 {
 	Suite *s;
 	TCase *tc_spi_screen_reader_init;
@@ -603,6 +543,7 @@ END_TEST
 	tcase_add_test(tc_spi_screen_reader_on_state_changed, spi_on_state_change_role);
 	tcase_add_test(tc_spi_screen_reader_on_caret_move, spi_on_caret_move);
 	tcase_add_test(tc_spi_screen_reader_on_access_value, spi_on_value_changed);
+
 	tcase_add_test(tc_spi_screen_reader_flat_navi, spi_flat_navi_context_create_null_parameter);
 	tcase_add_test(tc_spi_screen_reader_flat_navi, spi_flat_navi_context_create_valid_parameter);
 
@@ -621,22 +562,14 @@ END_TEST
 	tcase_add_test(tc_spi_screen_reader_flat_navi, spi_flat_navi_context_prev_valid_parameter);
 	tcase_add_test(tc_spi_screen_reader_flat_navi2, spi_flat_navi_context_prev_valid_parameter2);
 	tcase_add_test(tc_spi_screen_reader_flat_navi2, spi_flat_navi_context_prev_valid_parameter3);
-	/*
-	   tcase_add_test(tc_spi_screen_reader_flat_navi, spi_flat_navi_context_last_null_parameter);
-	   tcase_add_test(tc_spi_screen_reader_flat_navi, spi_flat_navi_context_last_valid_parameter);
-	   tcase_add_test(tc_spi_screen_reader_flat_navi, spi_flat_navi_context_first_null_parameter);
-	   tcase_add_test(tc_spi_screen_reader_flat_navi, spi_flat_navi_context_first_valid_parameter);
-	   tcase_add_test(tc_spi_screen_reader_flat_navi, spi_flat_navi_context_current_set_null_parameters);
-	   tcase_add_test(tc_spi_screen_reader_flat_navi, spi_flat_navi_context_current_set_valid_parameters);
-	   tcase_add_test(tc_spi_screen_reader_flat_navi, spi_flat_navi_context_line_prev_null_parameter);
-	   tcase_add_test(tc_spi_screen_reader_flat_navi, spi_flat_navi_context_line_prev_valid_parameter);
-	   tcase_add_test(tc_spi_screen_reader_flat_navi, spi_flat_navi_context_line_next_null_parameter);
-	   tcase_add_test(tc_spi_screen_reader_flat_navi, spi_flat_navi_context_line_next_valid_parameter);
-	   tcase_add_test(tc_spi_screen_reader_flat_navi, spi_flat_navi_context_line_first_null_parameter);
-	   tcase_add_test(tc_spi_screen_reader_flat_navi, spi_flat_navi_context_line_first_valid_parameter);
-	   tcase_add_test(tc_spi_screen_reader_flat_navi, spi_flat_navi_context_line_last_null_parameter);
-	   tcase_add_test(tc_spi_screen_reader_flat_navi, spi_flat_navi_context_line_last_valid_parameter);
-	 */
+
+	tcase_add_test(tc_spi_screen_reader_flat_navi, spi_flat_navi_context_last_null_parameter);
+	tcase_add_test(tc_spi_screen_reader_flat_navi, spi_flat_navi_context_last_valid_parameter);
+	tcase_add_test(tc_spi_screen_reader_flat_navi, spi_flat_navi_context_first_null_parameter);
+	tcase_add_test(tc_spi_screen_reader_flat_navi, spi_flat_navi_context_first_valid_parameter);
+	tcase_add_test(tc_spi_screen_reader_flat_navi, spi_flat_navi_context_current_set_null_parameters);
+	tcase_add_test(tc_spi_screen_reader_flat_navi, spi_flat_navi_context_current_set_valid_parameters);
+
 	suite_add_tcase(s, tc_spi_screen_reader_init);
 	suite_add_tcase(s, tc_spi_screen_reader_on_state_changed);
 	suite_add_tcase(s, tc_spi_screen_reader_on_caret_move);
@@ -656,7 +589,7 @@ int main()
 	s = screen_reader_suite();
 	sr = srunner_create(s);
 
-	srunner_run_all(sr, CK_NORMAL);
+	srunner_run_all(sr, CK_VERBOSE);
 	number_failed = srunner_ntests_failed(sr);
 	srunner_free(sr);
 	return (number_failed == 0) ? EXIT_SUCCESS : EXIT_FAILURE;

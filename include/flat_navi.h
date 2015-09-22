@@ -106,54 +106,6 @@ AtspiAccessible *flat_navi_context_current_get(FlatNaviContext *ctx);
 Eina_Bool flat_navi_context_current_set(FlatNaviContext *ctx, AtspiAccessible *target);
 
 /**
- * Advances to previous line in natural reading order and returns
- * new current element.
- *
- * @param ctx FlatNaviContext
- *
- * @return AtspiAccessible* pointer to current object
- *
- * @note If current line is first one, function returns NULL
- * @note current element will be first of line.
- */
-AtspiAccessible *flat_navi_context_line_prev(FlatNaviContext *ctx);
-
-/**
- * Advances to next line in natural reading order and returns
- * new current element.
- *
- * @param ctx FlatNaviContext
- *
- * @return AtspiAccessible* pointer to current object
- *
- * @note If current line is last one, function returns NULL
- * @note current element will be first of line.
- */
-AtspiAccessible *flat_navi_context_line_next(FlatNaviContext *ctx);
-
-/**
- * Advances to first line.
- *
- * @param ctx FlatNaviContext
- *
- * @return AtspiAccessible* pointer to current object
- *
- * @note current element will be first of line.
- */
-AtspiAccessible *flat_navi_context_line_first(FlatNaviContext *ctx);
-
-/**
- * Advances to last line.
- *
- * @param ctx FlatNaviContext
- *
- * @return AtspiAccessible* pointer to current object
- *
- * @note current element will be first of line.
- */
-AtspiAccessible *flat_navi_context_line_last(FlatNaviContext *ctx);
-
-/**
  * Set current context at given position.
  *
  * @param ctx FlatNaviContext
@@ -169,15 +121,6 @@ AtspiAccessible *flat_navi_context_line_last(FlatNaviContext *ctx);
  * @note current element will be first of line.
  */
 Eina_Bool flat_navi_context_current_at_x_y_set( FlatNaviContext *ctx, gint x_cord, gint y_cord , AtspiAccessible **obj);
-
-/**
- * Give the number of visible items in context.
- *
- * @param ctx FlatNaviContext
- *
- * @return int number of visible items in context
- */
-int flat_navi_context_current_children_count_visible_get( FlatNaviContext *ctx);
 
 /**
  * Returns the first item in context;

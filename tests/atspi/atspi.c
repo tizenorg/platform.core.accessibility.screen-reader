@@ -348,6 +348,16 @@ AtspiRect *atspi_component_get_extents(AtspiComponent * component, AtspiCoordTyp
 		rect.y = 50;
 		rect.width = 50;
 		rect.height = 50;
+	} else if (*(component->role) == ATSPI_ROLE_WINDOW) {
+		rect.x = 0;
+		rect.y = 0;
+		rect.width = 100;
+		rect.height = 100;
+	} else if (*(component->role) == ATSPI_ROLE_FILLER) {
+		rect.x = 50;
+		rect.y = 50;
+		rect.width = 50;
+		rect.height = 50;
 	} else {
 		rect.x = 0;
 		rect.y = 0;
@@ -393,6 +403,7 @@ void atspi_accessible_add_child(AtspiAccessible * obj, AtspiAccessible * child)
 {
 	child->index_in_parent = obj->child_count;
 	child->accessible_parent = obj;
+
 	obj->children = g_list_append(obj->children, child);
 	obj->child_count++;
 }
@@ -479,7 +490,7 @@ AtspiAccessible *atspi_relation_get_target(AtspiRelation * obj, gint i)
 
 AtspiAccessible *atspi_accessible_get_parent(AtspiAccessible * obj, GError ** error)
 {
-	return obj->accessible_parent;
+	return g_object_ref (obj->accessible_parent);
 }
 
 int atspi_component_get_highlight_index(AtspiComponent * obj, GError ** error)
