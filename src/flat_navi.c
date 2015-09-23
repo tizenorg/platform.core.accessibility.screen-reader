@@ -194,16 +194,6 @@ static Eina_Bool _accept_object(AtspiAccessible * obj)
 		return EINA_FALSE;
 	}
 
-	/* Extent of candidate object could be 0 */
-	component = atspi_accessible_get_component_iface(obj);
-	extent = atspi_component_get_extents(component, ATSPI_COORD_TYPE_SCREEN, NULL);
-
-	if (extent->width <= 0 || extent->height <= 0) {
-		g_free(extent);
-		return EINA_FALSE;
-	}
-	g_free(extent);
-
 	ss = atspi_accessible_get_state_set(obj);
 	if (ss) {
 		if (_object_is_item(obj)) {
@@ -215,10 +205,23 @@ static Eina_Bool _accept_object(AtspiAccessible * obj)
 					ret = atspi_state_set_contains(pss, ATSPI_STATE_SHOWING) && atspi_state_set_contains(pss, ATSPI_STATE_VISIBLE) && !_is_collapsed(pss);
 					DEBUG("ITEM HAS SHOWING && VISIBLE && NOT COLLAPSED PARENT %d", ret);
 					g_object_unref(pss);
+					g_object_unref(ss);
 					return ret;
 				}
 			}
 		} else {
+			/* Extent of candidate object could be 0 */
+			component = atspi_accessible_get_component_iface(obj);
+			extent = atspi_component_get_extents(component, ATSPI_COORD_TYPE_SCREEN, NULL);
+			g_object_unref(component);
+
+			if (extent->width <= 0 || extent->height <= 0) {
+				g_free(extent);
+				g_object_unref(ss);
+				return EINA_FALSE;
+			}
+			g_free(extent);
+
 			ret = atspi_state_set_contains(ss, ATSPI_STATE_SHOWING) && atspi_state_set_contains(ss, ATSPI_STATE_VISIBLE);
 		}
 		g_object_unref(ss);
