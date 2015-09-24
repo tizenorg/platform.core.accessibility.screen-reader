@@ -357,6 +357,64 @@ static int _find_popup_list_children_count(AtspiAccessible * obj)
 	return 0;
 }
 
+static bool _widget_has_state(AtspiAccessible * obj, AtspiStateType type)
+{
+	Eina_Bool ret = EINA_FALSE;
+	AtspiStateSet *st = atspi_accessible_get_state_set(obj);
+	if (atspi_state_set_contains(st, type))
+		ret = EINA_TRUE;
+	g_object_unref(st);
+	return ret;
+}
+
+int get_accuracy(double val, int max_accuracy)
+{
+	char val_str[HOVERSEL_TRAIT_SIZE] = "";
+	int position;
+	int accuracy;
+
+	snprintf(val_str, HOVERSEL_TRAIT_SIZE, "%.*f", max_accuracy, val);
+	accuracy = max_accuracy;
+	position = strlen(val_str) - 1;
+	while ( position > 0 && val_str[position] == '0' ) {
+		--position;
+		--accuracy;
+	}
+	return accuracy;
+}
+
+void add_slider_description(char *dest, uint dest_size, AtspiAccessible *obj)
+{
+	gchar *role_name;
+	AtspiValue *value_iface;
+	double val;
+	double min_val;
+	double max_val;
+	char trait[HOVERSEL_TRAIT_SIZE] = "";
+	int accuracy;
+
+	role_name = atspi_accessible_get_localized_role_name(obj, NULL);
+	strncat(dest, role_name, dest_size - strlen(dest) - 1);
+	g_free(role_name);
+
+	value_iface = atspi_accessible_get_value_iface(obj);
+	if (!value_iface) {
+		return;
+	}
+
+	accuracy = get_accuracy( atspi_value_get_minimum_increment(value_iface, NULL), 3 );
+	val = atspi_value_get_current_value(value_iface, NULL);
+	max_val = atspi_value_get_maximum_value(value_iface, NULL);
+	min_val = atspi_value_get_minimum_value(value_iface, NULL);
+	snprintf(trait, HOVERSEL_TRAIT_SIZE, _("IDS_TRAIT_SLIDER_VALUE"), accuracy, min_val, accuracy, max_val, accuracy, val);
+	strncat(dest, trait, dest_size - strlen(dest) - 1);
+
+	if (_widget_has_state(obj, ATSPI_STATE_ENABLED)) {
+		strncat(dest, _("IDS_TRAIT_SLIDER_SWIPE_COMMUNICATE"), dest_size - strlen(dest) - 1);
+	}
+	g_object_unref(value_iface);
+}
+
 char *generate_trait(AtspiAccessible * obj)
 {
 	if (!obj)
@@ -549,6 +607,10 @@ char *generate_trait(AtspiAccessible * obj)
 		} else {
 			strncat(ret, _("IDS_TRAIT_TOGGLE_BUTTON_OFF"), sizeof(ret) - strlen(ret) - 1);
 		}
+		break;
+	}
+	case ATSPI_ROLE_SLIDER: {
+		add_slider_description(ret, sizeof(ret), obj);
 		break;
 	}
 	case ATSPI_ROLE_HEADING:
@@ -1156,16 +1218,6 @@ static void _value_dec(void)
 		return;
 	}
 	ERROR("No value interface supported!\n");
-}
-
-static bool _widget_has_state(AtspiAccessible * obj, AtspiStateType type)
-{
-	Eina_Bool ret = EINA_FALSE;
-	AtspiStateSet *st = atspi_accessible_get_state_set(obj);
-	if (atspi_state_set_contains(st, type))
-		ret = EINA_TRUE;
-	g_object_unref(st);
-	return ret;
 }
 
 static void _activate_widget(void)
