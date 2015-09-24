@@ -37,6 +37,7 @@ BuildRequires:  pkgconfig(capi-network-wifi)
 %if "%{?profile}" != "tv"
 BuildRequires:  pkgconfig(tapi)
 %endif
+BuildRequires:  pkgconfig(lua)
 
 %description
 An utility library for developers of the menu screen.
@@ -84,3 +85,4 @@ rm -rf %{buildroot}
 %{AppInstallPath}/res/icons/screen-reader.png
 %{AppInstallPath}/res/locale/*/LC_MESSAGES/*
 /usr/share/packages/%{name}.xml
+%{AppInstallPath}/res/scripts/*

@@ -16,6 +16,7 @@
 
 #include "screen_reader_spi.h"
 #include "flat_navi.h"
+#include "lua_engine.h"
 #include <check.h>
 #include <stdio.h>
 #include <atspi/atspi.h>
@@ -65,14 +66,17 @@ void setup(void)
 	data->update_language_list = false;
 
 	data->text_to_say_info = NULL;
+	data->lua_script_path = "./res/scripts/mobile.lua";
+	spi_init(data);
 }
 
 void teardown(void)
 {
+	Service_Data *data = get_pointer_to_service_data_struct();
+	spi_shutdown(data);
 }
 
-void setup_flat_navi()
-{
+void setup_flat_navi() {
 	setup();
 	root = atspi_create_accessible();
 	root->role = ATSPI_ROLE_APPLICATION;
@@ -259,18 +263,7 @@ void teardown_flat_navi()
 	teardown();
 }
 
-START_TEST(spi_init_null_parameter)
-{
-	spi_init(NULL);
-}
-
-END_TEST START_TEST(spi_init_service_data_parameter)
-{
-	Service_Data *data = get_pointer_to_service_data_struct();
-	spi_init(data);
-}
-
-END_TEST START_TEST(spi_on_state_change_name)
+START_TEST(spi_on_state_change_name)
 {
 	Service_Data *sd = get_pointer_to_service_data_struct();
 	AtspiEvent event;
@@ -514,7 +507,6 @@ END_TEST
 Suite * screen_reader_suite(void)
 {
 	Suite *s;
-	TCase *tc_spi_screen_reader_init;
 	TCase *tc_spi_screen_reader_on_state_changed;
 	TCase *tc_spi_screen_reader_on_caret_move;
 	TCase *tc_spi_screen_reader_on_access_value;
@@ -522,25 +514,23 @@ Suite * screen_reader_suite(void)
 	TCase *tc_spi_screen_reader_flat_navi2;
 
 	s = suite_create("Screen reader");
-	tc_spi_screen_reader_init = tcase_create("tc_spi_screen_reader_init");
 	tc_spi_screen_reader_on_state_changed = tcase_create("tc_spi_screen_reader_on_state_changed");
 	tc_spi_screen_reader_on_caret_move = tcase_create("tc_spi_screen_reader_on_caret_move");
 	tc_spi_screen_reader_on_access_value = tcase_create("tc_spi_screen_reader_on_access_value");
 	tc_spi_screen_reader_flat_navi = tcase_create("tc_scpi_screen_reader_flat_navi");
 	tc_spi_screen_reader_flat_navi2 = tcase_create("tc_scpi_screen_reader_flat_navi2");
 
-	tcase_add_checked_fixture(tc_spi_screen_reader_init, setup, teardown);
 	tcase_add_checked_fixture(tc_spi_screen_reader_on_state_changed, setup, teardown);
 	tcase_add_checked_fixture(tc_spi_screen_reader_on_caret_move, setup, teardown);
 	tcase_add_checked_fixture(tc_spi_screen_reader_on_access_value, setup, teardown);
 	tcase_add_checked_fixture(tc_spi_screen_reader_flat_navi, setup_flat_navi2, teardown_flat_navi);
 	tcase_add_checked_fixture(tc_spi_screen_reader_flat_navi2, setup_flat_navi3, teardown_flat_navi);
 
-	tcase_add_test(tc_spi_screen_reader_init, spi_init_null_parameter);
-	tcase_add_test(tc_spi_screen_reader_init, spi_init_service_data_parameter);
+#if 1
 	tcase_add_test(tc_spi_screen_reader_on_state_changed, spi_on_state_change_name);
 	tcase_add_test(tc_spi_screen_reader_on_state_changed, spi_on_state_change_description);
 	tcase_add_test(tc_spi_screen_reader_on_state_changed, spi_on_state_change_role);
+#endif
 	tcase_add_test(tc_spi_screen_reader_on_caret_move, spi_on_caret_move);
 	tcase_add_test(tc_spi_screen_reader_on_access_value, spi_on_value_changed);
 
@@ -570,7 +560,6 @@ Suite * screen_reader_suite(void)
 	tcase_add_test(tc_spi_screen_reader_flat_navi, spi_flat_navi_context_current_set_null_parameters);
 	tcase_add_test(tc_spi_screen_reader_flat_navi, spi_flat_navi_context_current_set_valid_parameters);
 
-	suite_add_tcase(s, tc_spi_screen_reader_init);
 	suite_add_tcase(s, tc_spi_screen_reader_on_state_changed);
 	suite_add_tcase(s, tc_spi_screen_reader_on_caret_move);
 	suite_add_tcase(s, tc_spi_screen_reader_on_access_value);

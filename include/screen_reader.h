@@ -63,6 +63,7 @@ typedef struct _Service_Data
    char **available_apps;
 
    const char *text_from_dbus;
+   const char *lua_script_path;
 } Service_Data;
 
 Service_Data *get_pointer_to_service_data_struct();

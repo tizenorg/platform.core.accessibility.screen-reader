@@ -21,6 +21,7 @@ pkg_check_modules(tests REQUIRED
     check
     vconf
     elementary
+    lua
 )
 
 FOREACH(flag ${tests_CFLAGS})
@@ -35,6 +36,7 @@ SET(TESTED_SRCS ${CMAKE_SOURCE_DIR}/src/screen_reader.c
                 ${CMAKE_SOURCE_DIR}/src/screen_reader_vconf.c
                 ${CMAKE_SOURCE_DIR}/src/screen_reader_spi.c
                 ${CMAKE_SOURCE_DIR}/src/screen_reader_tts.c
+                ${CMAKE_SOURCE_DIR}/src/lua_engine.c
                 ${CMAKE_SOURCE_DIR}/src/flat_navi.c)
 ADD_DEFINITIONS(-DSCREEN_READER_FLAT_NAVI_TEST_DUMMY_IMPLEMENTATION)
 

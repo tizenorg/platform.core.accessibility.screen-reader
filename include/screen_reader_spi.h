@@ -7,5 +7,6 @@
 void spi_init(Service_Data *sd);
 void spi_event_listener_cb(AtspiEvent *event, void *user_data);
 char *spi_event_get_text_to_read(AtspiEvent *event, void *user_data);
+void spi_shutdown(Service_Data *sd);
 
 #endif /* SCREEN_READER_SPI_H_ */

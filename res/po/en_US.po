@@ -51,7 +51,7 @@ msgid "IDS_TRAIT_GROUP_INDEX_COLLAPSED"
 msgstr "Expandable list, Double tap to expand"
 
 msgid "IDS_TRAIT_MENU_ITEM_TAB_INDEX"
-msgstr "Tab %1$d of %2$d"
+msgstr "Tab %d of %d"
 
 msgid "IDS_TRAIT_TEXT_EDIT"
 msgstr "Double tap to edit"

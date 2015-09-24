@@ -517,3 +517,29 @@ int atspi_exit(void)
 {
 	return 1;
 }
+
+AtspiAccessible* atspi_get_desktop (gint i)
+{
+	return NULL;
+}
+
+gdouble atspi_value_get_minimum_increment (AtspiValue *obj, GError **error)
+{
+	return 0.0;
+}
+
+gint
+atspi_selection_get_n_selected_children (AtspiSelection *obj, GError **error)
+{
+	return 0;
+}
+
+gboolean atspi_selection_is_child_selected (AtspiSelection *obj, gint child_index, GError **error)
+{
+	return FALSE;
+}
+
+AtspiSelection * atspi_accessible_get_selection_iface (AtspiAccessible *obj)
+{
+	return NULL;
+}

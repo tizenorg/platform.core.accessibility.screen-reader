@@ -16,6 +16,7 @@ SET(SRCS ${CMAKE_SOURCE_DIR}/src/app_tracker.c
 	 ${CMAKE_SOURCE_DIR}/src/screen_reader_tts.c
 	 ${CMAKE_SOURCE_DIR}/src/screen_reader_vconf.c
 	 ${CMAKE_SOURCE_DIR}/src/smart_notification.c
+	 ${CMAKE_SOURCE_DIR}/src/lua_engine.c
 )
 
 
@@ -23,6 +24,7 @@ SET(SRCS ${CMAKE_SOURCE_DIR}/src/app_tracker.c
 INCLUDE(CMakeLists.sub)
 SET(RESOURCE_DIR "${CMAKE_SOURCE_DIR}/res")
 SET(LOCALEDIR "/usr/apps/org.tizen.screen-reader/res/locale")
+ADD_DEFINITIONS(-DSCRIPTDIR="/usr/apps/org.tizen.screen-reader/res/scripts")
 
 IF("${SEC_FEATURE_TAPI_ENABLE}" STREQUAL "1")
     MESSAGE("SEC_FEATURE_TAPI_ENABLE: ${SEC_FEATURE_TAPI_ENABLE}")
@@ -65,6 +67,7 @@ pkg_check_modules(pkgs REQUIRED
 	capi-network-bluetooth
 	notification
 	capi-network-wifi
+	lua
 	${TAPI_REQUIRED_PKG}
 	${CONDITIONAL_PACKAGES}
 )
@@ -85,6 +88,7 @@ TARGET_LINK_LIBRARIES(${PROJECT_NAME} ${pkgs_LDFLAGS} ${SLP_LD_PATH_FLAGS} ${SLP
 # Install 
 INSTALL(TARGETS ${PROJECT_NAME} DESTINATION bin)
 INSTALL(DIRECTORY ${RESOURCE_DIR}/icons DESTINATION res) 
+INSTALL(DIRECTORY ${RESOURCE_DIR}/scripts DESTINATION res)
 # Install Manifest File
 INSTALL(FILES org.tizen.screen-reader.xml DESTINATION /usr/share/packages)
 

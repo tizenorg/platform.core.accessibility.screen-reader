@@ -42,6 +42,7 @@ Service_Data service_data = {
 
 	//Actions to do when tts state is 'ready'
 	.update_language_list = false,
+	.lua_script_path = SCRIPTDIR "/mobile.lua",
 
 	.text_to_say_info = NULL
 };
@@ -76,6 +77,10 @@ int screen_reader_terminate_service(void *data)
 	DEBUG("Service Terminate Callback \n");
 
 	Service_Data *service_data = data;
+
+#ifdef SCREEN_READER_TV
+        spi_shutdown(service_data);
+#endif
 
 	tts_stop(service_data->tts);
 	tts_unprepare(service_data->tts);
