@@ -526,6 +526,8 @@ char *generate_trait(AtspiAccessible * obj)
 		}
 	} else if (role == ATSPI_ROLE_HEADING) {
 		return strdup("");
+	} else if (role == ATSPI_ROLE_GROUPING) {
+		return NULL;
 	} else {
 		char *role_name = atspi_accessible_get_localized_role_name(obj, NULL);
 		strncat(ret, role_name, sizeof(ret) - strlen(ret) - 1);
