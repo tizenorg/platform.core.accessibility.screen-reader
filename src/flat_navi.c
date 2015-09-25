@@ -401,6 +401,8 @@ static Eina_Bool _has_next_sibling(AtspiAccessible * obj, int next_sibling_idx_m
 AtspiAccessible *_directional_depth_first_search(AtspiAccessible * root, AtspiAccessible * start, int next_sibling_idx_modifier, Eina_Bool(*stop_condition) (AtspiAccessible *))
 {
 	Eina_Bool start_is_not_defunct = EINA_FALSE;
+	AtspiStateSet *ss;
+
 	if (start) {
 		AtspiStateSet *ss = atspi_accessible_get_state_set(start);
 		start_is_not_defunct = !atspi_state_set_contains(ss, ATSPI_STATE_DEFUNCT);
@@ -457,7 +459,9 @@ AtspiAccessible *_directional_depth_first_search(AtspiAccessible * root, AtspiAc
 			g_object_unref(next_related_in_direction);
 			relation_mode = EINA_FALSE;
 			int cc = atspi_accessible_get_child_count(node, NULL);
-			if (cc > 0)			// walk down
+			ss = atspi_accessible_get_state_set(node);
+
+			if (cc > 0 && atspi_state_set_contains(ss, ATSPI_STATE_SHOWING))			// walk down
 			{
 				int idx = next_sibling_idx_modifier > 0 ? 0 : cc - 1;
 				g_object_unref(node);
@@ -470,6 +474,7 @@ AtspiAccessible *_directional_depth_first_search(AtspiAccessible * root, AtspiAc
 					if (!node || node == root) {
 						DEBUG("DFS END");
 						g_object_unref(node);
+						g_object_unref(ss);
 						return NULL;
 					}
 					g_object_unref(node);
@@ -481,6 +486,7 @@ AtspiAccessible *_directional_depth_first_search(AtspiAccessible * root, AtspiAc
 				node = atspi_accessible_get_child_at_index(atspi_accessible_get_parent(node, NULL), idx + next_sibling_idx_modifier, NULL);	//... and next
 				DEBUG("DFS NEXT %d", idx + next_sibling_idx_modifier);
 			}
+			g_object_unref(ss);
 		}
 	}
 	DEBUG("DFS END");
