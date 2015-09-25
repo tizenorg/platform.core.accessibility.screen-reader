@@ -2057,10 +2057,7 @@ static void _view_content_changed(AtspiAccessible * root, void *user_data)
 	if (flat_navi_is_valid(context, root))
 		return;
 	if (!_widget_has_state(root, ATSPI_STATE_SHOWING))
-	{
-		on_window_activate(NULL, top_window);
 		return;
-	}
 	flat_navi_context_free(context);
 	context = flat_navi_context_create(root);
 	_current_highlight_object_set(flat_navi_context_current_get(context));
