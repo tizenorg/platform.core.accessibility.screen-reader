@@ -612,6 +612,21 @@ static char *generate_description_from_relation_object(AtspiAccessible *obj)
 	return ret;
 }
 
+static char *generate_name_from_relation_object(AtspiAccessible *obj)
+{
+	GError *err = NULL;
+	char *name = atspi_accessible_get_name(obj, &err);
+
+	if(err)
+	{
+		g_error_free(err);
+		g_free(name);
+		return NULL;
+	}
+
+	return name;
+}
+
 static char *generate_what_to_read(AtspiAccessible * obj)
 {
 	char *name;
@@ -622,12 +637,14 @@ static char *generate_what_to_read(AtspiAccessible * obj)
 	char *text = NULL;
 	char ret[TTS_MAX_TEXT_SIZE] = "\0";
 	char *description_from_relation;
+	char *name_from_relation;
 
 	description = atspi_accessible_get_description(obj, NULL);
 	name = atspi_accessible_get_name(obj, NULL);
 	role_name = generate_trait(obj);
 	other = generate_description_for_subtrees(obj);
 	description_from_relation = generate_text_for_relation_objects(obj, ATSPI_RELATION_DESCRIBED_BY, generate_description_from_relation_object);
+	name_from_relation = generate_text_for_relation_objects(obj, ATSPI_RELATION_LABELLED_BY, generate_name_from_relation_object);
 	AtspiText *iface_text = atspi_accessible_get_text_iface(obj);
 	if (iface_text) {
 		text = atspi_text_get_text(iface_text, 0, atspi_text_get_character_count(iface_text, NULL), NULL);
@@ -656,6 +673,11 @@ static char *generate_what_to_read(AtspiAccessible * obj)
 		strncat(ret, names, sizeof(ret) - strlen(ret) - 1);
 	}
 
+	if (name_from_relation && strlen(name_from_relation) > 0)
+		if(strlen(ret) > 0)
+			strncat(ret, ", ", sizeof(ret) - strlen(ret) - 1);
+		strncat(ret, name_from_relation, sizeof(ret) - strlen(ret) - 1);
+
 	if (role_name && strlen(role_name) > 0) {
 		if (strlen(ret) > 0)
 			strncat(ret, ", ", sizeof(ret) - strlen(ret) - 1);
@@ -677,6 +699,7 @@ static char *generate_what_to_read(AtspiAccessible * obj)
 	free(text);
 	free(name);
 	free(names);
+	free(name_from_relation);
 	free(description);
 	free(role_name);
 	free(other);
