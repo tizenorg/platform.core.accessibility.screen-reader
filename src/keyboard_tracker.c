@@ -156,7 +156,6 @@ static gboolean device_cb(const AtspiDeviceEvent * stroke, void *data)
 
 void keyboard_tracker_init(void)
 {
-	atspi_init();
 	listener = atspi_device_listener_new(device_cb, NULL, NULL);
 	atspi_register_keystroke_listener(listener, NULL, 0, ATSPI_KEY_PRESSED, ATSPI_KEYLISTENER_SYNCHRONOUS | ATSPI_KEYLISTENER_CANCONSUME, NULL);
 	active_xwindow_property_tracker_register();

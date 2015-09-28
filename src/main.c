@@ -212,6 +212,7 @@ void set_signal_handler()
 static int app_create(void *data)
 {
 	elm_init(0, NULL);
+	atspi_init();
 
 	logger_init();
 	screen_reader_create_service(data);
@@ -239,6 +240,10 @@ static int app_terminate(void *data)
 	DEBUG("terminate logger");
 	logger_shutdown();
 	DEBUG("screen reader terminated");
+
+	DEBUG("libatspi terminated");
+	atspi_exit();
+
 	return 0;
 }
 
