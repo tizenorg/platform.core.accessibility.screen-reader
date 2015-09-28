@@ -230,7 +230,6 @@ static char *spi_on_value_changed_get_text(AtspiEvent * event, void *user_data)
 char *spi_event_get_text_to_read(AtspiEvent * event, void *user_data)
 {
 	DEBUG("START");
-
 	Service_Data *sd = (Service_Data *) user_data;
 	char *text_to_read;
 
@@ -258,8 +257,8 @@ char *spi_event_get_text_to_read(AtspiEvent * event, void *user_data)
 
 void spi_event_listener_cb(AtspiEvent * event, void *user_data)
 {
-	DEBUG("START")
-		display_info(event);
+	DEBUG("START");
+	display_info(event);
 
 	if (!user_data) {
 		ERROR("Invalid parameter");
@@ -271,11 +270,11 @@ void spi_event_listener_cb(AtspiEvent * event, void *user_data)
 		ERROR("Can not prepare text to read");
 		return;
 	}
-	DEBUG("SPEAK: %s", text_to_read)
+	DEBUG("SPEAK: %s", text_to_read);
 	tts_speak(text_to_read, EINA_TRUE);
 
 	free(text_to_read);
-	DEBUG("END")
+	DEBUG("END");
 }
 
 /**
@@ -297,7 +296,7 @@ void spi_init(Service_Data * sd)
 
 	sd->spi_listener = atspi_event_listener_new(spi_event_listener_cb, service_data, NULL);
 	if (sd->spi_listener == NULL) {
-		DEBUG("FAILED TO CREATE spi state changed listener")
+		DEBUG("FAILED TO CREATE spi state changed listener");
 	}
 	// ---------------------------------------------------------------------------------------------------
 

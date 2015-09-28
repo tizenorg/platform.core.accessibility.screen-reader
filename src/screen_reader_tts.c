@@ -296,8 +296,8 @@ Eina_Bool update_supported_voices(void *data)
 		sd->update_language_list = EINA_TRUE;
 	}
 
-	DEBUG("END")
-		return EINA_TRUE;
+	DEBUG("END");
+	return EINA_TRUE;
 }
 
 void state_changed_cb(tts_h tts, tts_state_e previous, tts_state_e current, void *user_data)

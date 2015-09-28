@@ -214,7 +214,7 @@ static void display_info_about_object(AtspiAccessible * obj, bool display_parent
 	}
 
 	DEBUG("NAME:%s", name);
-	DEBUG("ROLE:%s", role)
+	DEBUG("ROLE:%s", role);
 	DEBUG("DESCRIPTION:%s", description);
 	DEBUG("CHILDS:%d", atspi_accessible_get_child_count(obj, NULL));
 	DEBUG("HIGHLIGHT_INDEX:%d", atspi_component_get_highlight_index(comp, NULL));
@@ -1265,7 +1265,10 @@ static void _quickpanel_change_state(gboolean quickpanel_switch)
 	DEBUG("START");
 	Ecore_X_Window xwin = 0;
 
-	ERROR(quickpanel_switch ? "QUICKPANEL STATE ON" : "QUICKPANEL STATE OFF");
+	if (quickpanel_switch)
+		DEBUG("QUICKPANEL STATE ON");
+	else
+		DEBUG("QUICKPANEL STATE OFF");
 
 	Ecore_X_Illume_Quickpanel_State state;
 
@@ -1847,7 +1850,7 @@ static void _move_slider(Gesture_Info * gi)
 
 	if (gi->state == 1) {
 		counter++;
-		DEBUG("SCROLLING but not meet counter:%d", counter)
+		DEBUG("SCROLLING but not meet counter:%d", counter);
 			if (counter >= GESTURE_LIMIT) {
 			counter = 0;
 			DEBUG("Scroll on point %d %d", gi->x_end, gi->y_end);

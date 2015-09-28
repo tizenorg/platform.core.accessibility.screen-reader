@@ -16,6 +16,7 @@
 
 #include <string.h>
 #include <atspi/atspi.h>
+#include <Ecore.h>
 #include <Ecore_X.h>
 #include "keyboard_tracker.h"
 #include "logger.h"

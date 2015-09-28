@@ -538,10 +538,8 @@ void device_missed_events_get(void)
 	}
 
 	if (noti_count == 0) {
-		DEBUG(_("IDS_SYSTEM_NOTIFICATIONS_UNREAD_0"));
 		tts_speak(_("IDS_SYSTEM_NOTIFICATIONS_UNREAD_0"), EINA_FALSE);
 	} else if (noti_count == 1) {
-		DEBUG(_("IDS_SYSTEM_NOTIFICATIONS_UNREAD_1"));
 		tts_speak(_("IDS_SYSTEM_NOTIFICATIONS_UNREAD_1"), EINA_FALSE);
 	} else {
 		DEBUG("%d %s", noti_count, _("IDS_SYSTEM_NOTIFICATIONS_UNREAD_MANY"));

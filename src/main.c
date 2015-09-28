@@ -214,7 +214,6 @@ static int app_create(void *data)
 	elm_init(0, NULL);
 	atspi_init();
 
-	logger_init();
 	screen_reader_create_service(data);
 #ifndef SCREEN_READER_TV
 	screen_reader_gestures_init();
@@ -237,8 +236,6 @@ static int app_terminate(void *data)
 	screen_reader_terminate_service(data);
 	DEBUG("clear ScreenReaderEnabled property");
 	screen_reader_switch_enabled_set(EINA_FALSE);
-	DEBUG("terminate logger");
-	logger_shutdown();
 	DEBUG("screen reader terminated");
 
 	DEBUG("libatspi terminated");
