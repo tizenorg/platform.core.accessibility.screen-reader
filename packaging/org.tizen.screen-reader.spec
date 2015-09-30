@@ -4,7 +4,7 @@
 
 Name:       org.tizen.screen-reader
 Summary:    Screen Reader Assistive Technology
-Version:    0.0.6
+Version:    0.0.7
 Release:    1
 License:    Flora-1.1
 Source0:    %{name}-%{version}.tar.gz
