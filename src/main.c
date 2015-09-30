@@ -21,6 +21,8 @@
 #include <appcore-efl.h>
 #include <Elementary.h>
 #include <eldbus-1/Eldbus.h>
+#include <service_app.h>
+#include <vconf.h>
 #include "navigator.h"
 #include "window_tracker.h"
 #include "logger.h"
@@ -209,21 +211,27 @@ void set_signal_handler()
 	}
 }
 
-static int app_create(void *data)
+static bool app_create(void *data)
 {
-	elm_init(0, NULL);
+	if (vconf_set_bool(VCONFKEY_SETAPPL_ACCESSIBILITY_TTS, 1))
+		ERROR("Can't set value of %s vconf key to 1", VCONFKEY_SETAPPL_ACCESSIBILITY_TTS);
+	DEBUG("atspi_init");
 	atspi_init();
-
+	DEBUG("logger_init");
+	DEBUG("screen_reader_create_service");
 	screen_reader_create_service(data);
 #ifndef SCREEN_READER_TV
+	DEBUG("screen_reader_gestures_init");
 	screen_reader_gestures_init();
+	DEBUG("navigator_init");
 	navigator_init();
 #endif
+	DEBUG("screen_reader_switch_enabled_set");
 	screen_reader_switch_enabled_set(EINA_TRUE);
-	return 0;
+	return true;
 }
 
-static int app_terminate(void *data)
+static void app_terminate(void *data)
 {
 	DEBUG("screen reader terminating");
 #ifndef SCREEN_READER_TV
@@ -237,11 +245,15 @@ static int app_terminate(void *data)
 	DEBUG("clear ScreenReaderEnabled property");
 	screen_reader_switch_enabled_set(EINA_FALSE);
 	DEBUG("screen reader terminated");
-
+	if (vconf_set_bool(VCONFKEY_SETAPPL_ACCESSIBILITY_TTS, 0))
+		ERROR("Can't set value of %s vconf key to 0", VCONFKEY_SETAPPL_ACCESSIBILITY_TTS);
 	DEBUG("libatspi terminated");
 	atspi_exit();
+}
 
-	return 0;
+static void app_control(app_control_h app_control, void *data)
+{
+	return;
 }
 
 int main(int argc, char **argv)
@@ -249,14 +261,12 @@ int main(int argc, char **argv)
 	set_signal_handler();
 	unsetenv("ELM_ATSPI_MODE");
 
-	struct appcore_ops ops = {
-		.create = app_create,
-		.terminate = app_terminate,
-		.pause = NULL,
-		.resume = NULL,
-		.reset = NULL
-	};
-	ops.data = get_pointer_to_service_data_struct();
 
-	return appcore_efl_main("screen-reader", &argc, &argv, &ops);
+	service_app_lifecycle_callback_s event_callback;
+
+	event_callback.create = app_create;
+	event_callback.terminate = app_terminate;
+	event_callback.app_control = app_control;
+
+	return service_app_main(argc, argv, &event_callback, get_pointer_to_service_data_struct());
 }

@@ -35,6 +35,7 @@ pkg_check_modules(pkgs REQUIRED
 	capi-network-bluetooth
 	notification
 	capi-network-wifi
+	capi-appfw-service-application
 	${TAPI_REQUIRED_PKG}
 )
 
