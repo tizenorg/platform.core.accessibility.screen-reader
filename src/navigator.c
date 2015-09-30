@@ -365,7 +365,8 @@ char *generate_trait(AtspiAccessible * obj)
 	AtspiRole role = atspi_accessible_get_role(obj, NULL);
 	AtspiStateSet *state_set = atspi_accessible_get_state_set(obj);
 	char ret[TTS_MAX_TEXT_SIZE] = "\0";
-	if (role == ATSPI_ROLE_ENTRY) {
+	switch (role) {
+	case ATSPI_ROLE_ENTRY: {
 		gchar *role_name = atspi_accessible_get_localized_role_name(obj, NULL);
 		strncat(ret, role_name, sizeof(ret) - strlen(ret) - 1);
 		strncat(ret, ", ", sizeof(ret) - strlen(ret) - 1);
@@ -374,7 +375,9 @@ char *generate_trait(AtspiAccessible * obj)
 		else
 			strncat(ret, _("IDS_TRAIT_TEXT_EDIT"), sizeof(ret) - strlen(ret) - 1);
 		g_free(role_name);
-	} else if (role == ATSPI_ROLE_MENU_ITEM) {
+		break;
+	}
+	case ATSPI_ROLE_MENU_ITEM: {
 		AtspiAccessible *parent = atspi_accessible_get_parent(obj, NULL);
 		int children_count = atspi_accessible_get_child_count(parent, NULL);
 		int index = atspi_accessible_get_index_in_parent(obj, NULL);
@@ -382,7 +385,9 @@ char *generate_trait(AtspiAccessible * obj)
 		snprintf(tab_index, MENU_ITEM_TAB_INDEX_SIZE, _("IDS_TRAIT_MENU_ITEM_TAB_INDEX"), index + 1, children_count);
 		strncat(ret, tab_index, sizeof(ret) - strlen(ret) - 1);
 		g_object_unref(parent);
-	} else if (role == ATSPI_ROLE_POPUP_MENU) {
+		break;
+	}
+	case ATSPI_ROLE_POPUP_MENU: {
 		int children_count = atspi_accessible_get_child_count(obj, NULL);
 		char trait[HOVERSEL_TRAIT_SIZE];
 
@@ -404,7 +409,9 @@ char *generate_trait(AtspiAccessible * obj)
 
 		snprintf(trait, HOVERSEL_TRAIT_SIZE, _("IDS_TRAIT_POPUP_CLOSE"));
 		strncat(ret, trait, sizeof(ret) - strlen(ret) - 1);
-	} else if (role == ATSPI_ROLE_DIALOG) {
+		break;
+	}
+	case ATSPI_ROLE_DIALOG: {
 		int children_count = _find_popup_list_children_count(obj);
 		char trait[HOVERSEL_TRAIT_SIZE];
 
@@ -428,15 +435,18 @@ char *generate_trait(AtspiAccessible * obj)
 
 		snprintf(trait, HOVERSEL_TRAIT_SIZE, _("IDS_TRAIT_POPUP_CLOSE"));
 		strncat(ret, trait, sizeof(ret) - strlen(ret) - 1);
-	} else if (role == ATSPI_ROLE_GLASS_PANE) {
+		break;
+	}
+	case ATSPI_ROLE_GLASS_PANE: {
 		AtspiAccessible *parent = atspi_accessible_get_parent(obj, NULL);
 		int children_count = atspi_accessible_get_child_count(parent, NULL);
 		char trait[HOVERSEL_TRAIT_SIZE];
 		snprintf(trait, HOVERSEL_TRAIT_SIZE, _("IDS_TRAIT_PD_HOVERSEL"), children_count);
 		strncat(ret, trait, sizeof(ret) - strlen(ret) - 1);
 		g_object_unref(parent);
-	} else if (role == ATSPI_ROLE_LIST_ITEM) {
-
+		break;
+	}
+	case ATSPI_ROLE_LIST_ITEM: {
 		AtspiAccessible *parent = atspi_accessible_get_parent(obj, NULL);
 		AtspiRole parent_role = atspi_accessible_get_role(parent, NULL);
 
@@ -481,8 +491,10 @@ char *generate_trait(AtspiAccessible * obj)
 			}
 		}
 		g_object_unref(parent);
-
-	} else if ((role == ATSPI_ROLE_CHECK_BOX) || (role == ATSPI_ROLE_RADIO_BUTTON)) {
+		break;
+	}
+	case ATSPI_ROLE_CHECK_BOX:
+	case ATSPI_ROLE_RADIO_BUTTON: {
 		if (atspi_state_set_contains(state_set, ATSPI_STATE_CHECKED)) {
 			strncat(ret, _("IDS_TRAIT_CHECK_BOX_SELECTED"), sizeof(ret) - strlen(ret) - 1);
 		} else {
@@ -504,9 +516,13 @@ char *generate_trait(AtspiAccessible * obj)
 			}
 			g_object_unref(parent);
 		}
-	} else if (role == ATSPI_ROLE_PUSH_BUTTON) {
+		break;
+	}
+	case ATSPI_ROLE_PUSH_BUTTON: {
 		strncat(ret, _("IDS_TRAIT_PUSH_BUTTON"), sizeof(ret) - strlen(ret) - 1);
-	} else if (role == ATSPI_ROLE_PROGRESS_BAR) {
+		break;
+	}
+	case ATSPI_ROLE_PROGRESS_BAR: {
 		AtspiValue *value = atspi_accessible_get_value_iface(obj);
 		if (value) {
 			double val = atspi_value_get_current_value(value, NULL);
@@ -519,7 +535,9 @@ char *generate_trait(AtspiAccessible * obj)
 			}
 			g_object_unref(value);
 		}
-	} else if (role == ATSPI_ROLE_TOGGLE_BUTTON) {
+		break;
+	}
+	case ATSPI_ROLE_TOGGLE_BUTTON: {
 		strncat(ret, _("IDS_TRAIT_TOGGLE_BUTTON"), sizeof(ret) - strlen(ret) - 1);
 		strncat(ret, ", ", sizeof(ret) - strlen(ret) - 1);
 		if (atspi_state_set_contains(state_set, ATSPI_STATE_CHECKED)) {
@@ -527,14 +545,17 @@ char *generate_trait(AtspiAccessible * obj)
 		} else {
 			strncat(ret, _("IDS_TRAIT_TOGGLE_BUTTON_OFF"), sizeof(ret) - strlen(ret) - 1);
 		}
-	} else if (role == ATSPI_ROLE_HEADING) {
-		return strdup("");
-	} else if (role == ATSPI_ROLE_GROUPING) {
-		return NULL;
-	} else {
+		break;
+	}
+	case ATSPI_ROLE_HEADING:
+	case ATSPI_ROLE_GROUPING: {
+		break;
+	}
+	default: {
 		gchar *role_name = atspi_accessible_get_localized_role_name(obj, NULL);
 		strncat(ret, role_name, sizeof(ret) - strlen(ret) - 1);
 		g_free(role_name);
+	}
 	}
 
 	if (state_set)
