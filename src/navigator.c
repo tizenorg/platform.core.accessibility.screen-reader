@@ -368,13 +368,15 @@ char *generate_trait(AtspiAccessible * obj)
 	switch (role) {
 	case ATSPI_ROLE_ENTRY: {
 		gchar *role_name = atspi_accessible_get_localized_role_name(obj, NULL);
-		strncat(ret, role_name, sizeof(ret) - strlen(ret) - 1);
-		strncat(ret, ", ", sizeof(ret) - strlen(ret) - 1);
-		if (atspi_state_set_contains(state_set, ATSPI_STATE_FOCUSED))
-			strncat(ret, _("IDS_TRAIT_TEXT_EDIT_FOCUSED"), sizeof(ret) - strlen(ret) - 1);
-		else
-			strncat(ret, _("IDS_TRAIT_TEXT_EDIT"), sizeof(ret) - strlen(ret) - 1);
-		g_free(role_name);
+		if (role_name) {
+			strncat(ret, role_name, sizeof(ret) - strlen(ret) - 1);
+			strncat(ret, ", ", sizeof(ret) - strlen(ret) - 1);
+			if (atspi_state_set_contains(state_set, ATSPI_STATE_FOCUSED))
+				strncat(ret, _("IDS_TRAIT_TEXT_EDIT_FOCUSED"), sizeof(ret) - strlen(ret) - 1);
+			else
+				strncat(ret, _("IDS_TRAIT_TEXT_EDIT"), sizeof(ret) - strlen(ret) - 1);
+			g_free(role_name);
+		}
 		break;
 	}
 	case ATSPI_ROLE_MENU_ITEM: {
@@ -510,9 +512,11 @@ char *generate_trait(AtspiAccessible * obj)
 			if (parent_role != ATSPI_ROLE_COLOR_CHOOSER) {
 				gchar *role_name;
 				role_name = atspi_accessible_get_localized_role_name(obj, NULL);
-				strncat(ret, ", ", sizeof(ret) - strlen(ret) - 1);
-				strncat(ret, role_name, sizeof(ret) - strlen(ret) - 1);
-				g_free(role_name);
+				if (role_name) {
+					strncat(ret, ", ", sizeof(ret) - strlen(ret) - 1);
+					strncat(ret, role_name, sizeof(ret) - strlen(ret) - 1);
+					g_free(role_name);
+				}
 			}
 			g_object_unref(parent);
 		}
@@ -553,8 +557,10 @@ char *generate_trait(AtspiAccessible * obj)
 	}
 	default: {
 		gchar *role_name = atspi_accessible_get_localized_role_name(obj, NULL);
-		strncat(ret, role_name, sizeof(ret) - strlen(ret) - 1);
-		g_free(role_name);
+		if (role_name) {
+			strncat(ret, role_name, sizeof(ret) - strlen(ret) - 1);
+			g_free(role_name);
+		}
 	}
 	}
 
@@ -624,15 +630,18 @@ static char *generate_description_from_relation_object(AtspiAccessible *obj)
 		g_free(desc);
 		return ret;
 	}
-	if (desc[0] != '\0')
-	{
-		char *tmp = ret;
-		if (asprintf(&ret, "%s, %s", desc, ret) < 0)
-			ERROR("asprintf failed.");
-		free(tmp);
+
+	if (desc) {
+ 		if (desc[0] != '\0') {
+			char *tmp = ret;
+			if (asprintf(&ret, "%s, %s", desc, ret) < 0)
+				ERROR("asprintf failed.");
+			free(tmp);
+		}
+		g_free(desc);
 	}
 
-	g_free(desc);
+
 	return ret;
 }
 

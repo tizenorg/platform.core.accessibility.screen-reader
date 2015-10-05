@@ -233,17 +233,23 @@ static Eina_Bool _accept_object(AtspiAccessible * obj)
 	name = atspi_accessible_get_name(obj, NULL);
 
 	ret = EINA_FALSE;
-	if (strncmp(name, "\0", 1)) {
-		DEBUG("Has name:[%s]", name);
-		ret = EINA_TRUE;
+	if (name) {
+		if (strncmp(name, "\0", 1)) {
+			DEBUG("Has name:[%s]", name);
+			ret = EINA_TRUE;
+		}
+		g_free(name);
 	}
-	g_free(name);
-	desc = atspi_accessible_get_description(obj, NULL);
-	if (!ret && strncmp(desc, "\0", 1)) {
-		DEBUG("Has description:[%s]", desc);
-		ret = EINA_TRUE;
+	if (!ret) {
+		desc = atspi_accessible_get_description(obj, NULL);
+		if (desc) {
+			if (strncmp(desc, "\0", 1)) {
+				DEBUG("Has description:[%s]", desc);
+				ret = EINA_TRUE;
+			}
+			g_free(desc);
+		}
 	}
-	g_free(desc);
 	if (!ret) {
 		action = atspi_accessible_get_action_iface(obj);
 		if (action) {
@@ -386,6 +392,8 @@ AtspiAccessible *_get_child(AtspiAccessible * obj, int i)
 static Eina_Bool _has_next_sibling(AtspiAccessible * obj, int next_sibling_idx_modifier)
 {
 	Eina_Bool ret = EINA_FALSE;
+	if (!obj) return ret;
+
 	int idx = atspi_accessible_get_index_in_parent(obj, NULL);
 	if (idx >= 0) {
 		AtspiAccessible *parent = atspi_accessible_get_parent(obj, NULL);
