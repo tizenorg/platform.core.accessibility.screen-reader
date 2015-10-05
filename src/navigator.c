@@ -697,10 +697,11 @@ static char *generate_what_to_read(AtspiAccessible * obj)
 		strncat(ret, names, sizeof(ret) - strlen(ret) - 1);
 	}
 
-	if (name_from_relation && strlen(name_from_relation) > 0)
+	if (name_from_relation && strlen(name_from_relation) > 0) {
 		if(strlen(ret) > 0)
 			strncat(ret, ", ", sizeof(ret) - strlen(ret) - 1);
 		strncat(ret, name_from_relation, sizeof(ret) - strlen(ret) - 1);
+	}
 
 	if (role_name && strlen(role_name) > 0) {
 		if (strlen(ret) > 0)
