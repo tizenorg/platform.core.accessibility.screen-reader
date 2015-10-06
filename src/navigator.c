@@ -394,8 +394,10 @@ void add_slider_description(char *dest, uint dest_size, AtspiAccessible *obj)
 	int accuracy;
 
 	role_name = atspi_accessible_get_localized_role_name(obj, NULL);
-	strncat(dest, role_name, dest_size - strlen(dest) - 1);
-	g_free(role_name);
+	if (role_name) {
+		strncat(dest, role_name, dest_size - strlen(dest) - 1);
+		g_free(role_name);
+	}
 
 	value_iface = atspi_accessible_get_value_iface(obj);
 	if (!value_iface) {
