@@ -2218,9 +2218,9 @@ static void on_window_activate(void *data, AtspiAccessible * window)
 
 	if (window) {
 		DEBUG("Window name: %s", atspi_accessible_get_name(window, NULL));
-		app_tracker_callback_register(window, _view_content_changed, NULL);
 		// TODO: modal descendant of window should be used (if exists) otherwise window
 		AtspiAccessible *modal_descendant = _get_modal_descendant(window);
+		app_tracker_callback_register(modal_descendant ? modal_descendant : window, _view_content_changed, NULL);
 		_view_content_changed(modal_descendant ? modal_descendant : window, NULL);
 		g_object_unref(modal_descendant);
 	} else {
