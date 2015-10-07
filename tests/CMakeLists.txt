@@ -21,7 +21,6 @@ pkg_check_modules(tests REQUIRED
     check
     vconf
     elementary
-    capi-appfw-service-application
 )
 
 FOREACH(flag ${tests_CFLAGS})

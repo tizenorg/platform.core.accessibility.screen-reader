@@ -16,7 +16,6 @@
 
 #include <Elementary.h>
 #include <vconf.h>
-#include <service_app.h>
 #include "screen_reader_vconf.h"
 #include "screen_reader_spi.h"
 #include "logger.h"
@@ -43,7 +42,7 @@ void app_termination_cb(keynode_t * node, void *user_data)
 	service_data->run_service = node->value.i;
 
 	if (service_data->run_service == 0) {
-		service_app_exit();
+		elm_exit();
 	}
 
 	DEBUG("END");

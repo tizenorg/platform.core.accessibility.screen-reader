@@ -28,7 +28,6 @@ BuildRequires:  pkgconfig(check)
 BuildRequires:  pkgconfig(capi-network-bluetooth)
 BuildRequires:  pkgconfig(notification)
 BuildRequires:  pkgconfig(capi-network-wifi)
-BuildRequires:  pkgconfig(capi-appfw-service-application)
 %if "%{?tizen_profile_name}" != "tv"
 BuildRequires:  pkgconfig(tapi)
 %endif
