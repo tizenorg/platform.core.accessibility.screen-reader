@@ -188,5 +188,5 @@ static void _smart_notification_realized_items(int start_idx, int end_idx)
 
 	snprintf(buf, sizeof(buf), _("IDS_REACHED_ITEMS_NOTIFICATION"), start_idx, end_idx);
 
-	tts_speak(strdup(buf), EINA_FALSE);
+	tts_speak(buf, EINA_FALSE);
 }

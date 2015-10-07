@@ -1164,7 +1164,7 @@ static void _read_value(AtspiValue * value)
 	char buf[256] = "\0";
 	snprintf(buf, sizeof(buf), "%d percent", proc);
 	DEBUG("has value %s", buf);
-	tts_speak(strdup(buf), EINA_TRUE);
+	tts_speak(buf, EINA_TRUE);
 }
 
 static void _value_inc(void)
