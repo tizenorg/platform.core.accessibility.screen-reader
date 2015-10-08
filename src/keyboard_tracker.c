@@ -20,7 +20,7 @@
 #include <Ecore_X.h>
 #include "keyboard_tracker.h"
 #include "logger.h"
-
+#include "screen_reader_tts.h"
 static AtspiDeviceListener *listener;
 static Keyboard_Tracker_Cb user_cb;
 static void *user_data;

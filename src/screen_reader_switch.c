@@ -69,8 +69,8 @@ Eina_Bool screen_reader_switch_enabled_set(Eina_Bool value)
 	Eldbus_Connection *conn;
 	Eldbus_Object *dobj;
 	Eldbus_Proxy *proxy;
-	Eldbus_Message *req, *reply;
-	const char *errname = NULL, *errmsg = NULL;
+	Eldbus_Message *req;
+
 	Eina_Bool ret = EINA_FALSE;
 	Eldbus_Message_Iter *iter;
 
