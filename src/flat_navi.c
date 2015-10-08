@@ -436,12 +436,19 @@ AtspiAccessible *_directional_depth_first_search(AtspiAccessible * root, AtspiAc
 		g_object_unref(next_related_in_direction);
 	}
 
+	Eina_Bool all_children_visited = (start && start != root && next_sibling_idx_modifier < 0)?EINA_TRUE:EINA_FALSE;
+
 	while (node) {
 		AtspiAccessible *prev_related_in_direction = (next_sibling_idx_modifier > 0)
 			? _get_object_in_relation(node, ATSPI_RELATION_FLOWS_FROM)
 			: _get_object_in_relation(node, ATSPI_RELATION_FLOWS_TO);
 
-		if (node != start && (relation_mode || !prev_related_in_direction) && stop_condition(node)) {
+		int cc = atspi_accessible_get_child_count(node, NULL);
+		// do not accept:
+		// 1. start node
+		// 2. internal nodes of flow relation chains
+		// 3. parent before children in backward traversing
+		if (node != start && (relation_mode || !prev_related_in_direction) && !(cc > 0 && next_sibling_idx_modifier < 0 && !all_children_visited) && stop_condition(node)) {
 			g_object_unref(prev_related_in_direction);
 			return node;
 		}
@@ -466,16 +473,19 @@ AtspiAccessible *_directional_depth_first_search(AtspiAccessible * root, AtspiAc
 			g_object_unref(prev_related_in_direction);
 			g_object_unref(next_related_in_direction);
 			relation_mode = EINA_FALSE;
-			int cc = atspi_accessible_get_child_count(node, NULL);
+
 			ss = atspi_accessible_get_state_set(node);
 
-			if (cc > 0 && atspi_state_set_contains(ss, ATSPI_STATE_SHOWING))			// walk down
+			if (cc > 0 && !all_children_visited && atspi_state_set_contains(ss, ATSPI_STATE_SHOWING))			// walk down
 			{
 				int idx = next_sibling_idx_modifier > 0 ? 0 : cc - 1;
 				g_object_unref(node);
 				node = atspi_accessible_get_child_at_index(node, idx, NULL);
 				DEBUG("DFS DOWN");
 			} else {
+				all_children_visited = EINA_TRUE;
+				DEBUG("ALL CHILD VISITED (TRUE)");
+				Eina_Bool up_node_found = EINA_FALSE;
 				while (!_has_next_sibling(node, next_sibling_idx_modifier) || node == root)	// no next sibling
 				{
 					DEBUG("DFS NO SIBLING");
@@ -488,11 +498,20 @@ AtspiAccessible *_directional_depth_first_search(AtspiAccessible * root, AtspiAc
 					g_object_unref(node);
 					node = atspi_accessible_get_parent(node, NULL);	// walk up...
 					DEBUG("DFS UP");
+					// in backward traversing stop the walk up on parent
+					if (next_sibling_idx_modifier < 0) {
+						up_node_found = EINA_TRUE;
+						break;
+					}
 				}
-				int idx = atspi_accessible_get_index_in_parent(node, NULL);
-				g_object_unref(node);
-				node = atspi_accessible_get_child_at_index(atspi_accessible_get_parent(node, NULL), idx + next_sibling_idx_modifier, NULL);	//... and next
-				DEBUG("DFS NEXT %d", idx + next_sibling_idx_modifier);
+				if (!up_node_found) {
+					int idx = atspi_accessible_get_index_in_parent(node, NULL);
+					g_object_unref(node);
+					node = atspi_accessible_get_child_at_index(atspi_accessible_get_parent(node, NULL), idx + next_sibling_idx_modifier, NULL);	//... and next
+					all_children_visited = EINA_FALSE;
+					DEBUG("RESET ALL CHILD VISITED (FALSE) FOR NEW SIBLING");
+					DEBUG("DFS NEXT %d", idx + next_sibling_idx_modifier);
+				}
 			}
 			g_object_unref(ss);
 		}
