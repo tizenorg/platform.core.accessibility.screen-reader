@@ -36,10 +36,10 @@ keylist_t *keys = NULL;
 void app_termination_cb(keynode_t * node, void *user_data)
 {
 	DEBUG("START");
-	DEBUG("Application terminate %d", !node->value.i);
+	DEBUG("Application terminate %d", !vconf_keynode_get_int(node));
 
 	Service_Data *service_data = user_data;
-	service_data->run_service = node->value.i;
+	service_data->run_service = vconf_keynode_get_int(node);
 
 	if (service_data->run_service == 0) {
 		elm_exit();
@@ -51,10 +51,10 @@ void app_termination_cb(keynode_t * node, void *user_data)
 void display_language_cb(keynode_t * node, void *user_data)
 {
 	DEBUG("START");
-	DEBUG("Trying to set LC_MESSAGES to: %s", node->value.s);
+	DEBUG("Trying to set LC_MESSAGES to: %s", vconf_keynode_get_str(node));
 
 	Service_Data *sd = user_data;
-	snprintf(sd->display_language, LANGUAGE_NAME_SIZE, "%s", node->value.s);
+	snprintf(sd->display_language, LANGUAGE_NAME_SIZE, "%s", vconf_keynode_get_str(node));
 	//to make gettext work
 	setenv("LC_MESSAGES", sd->display_language, 1);
 

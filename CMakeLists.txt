@@ -2,7 +2,22 @@ CMAKE_MINIMUM_REQUIRED(VERSION 2.6)
 ENABLE_TESTING()
 
 # FIND ALL SOURCE IN A SOURCE DIRECTORY
-AUX_SOURCE_DIRECTORY(${CMAKE_SOURCE_DIR}/src SRCS)
+#AUX_SOURCE_DIRECTORY(${CMAKE_SOURCE_DIR}/src SRCS)
+
+SET(SRCS ${CMAKE_SOURCE_DIR}/src/app_tracker.c
+	 ${CMAKE_SOURCE_DIR}/src/flat_navi.c
+	 ${CMAKE_SOURCE_DIR}/src/main.c
+	 ${CMAKE_SOURCE_DIR}/src/pivot_chooser.c
+	 ${CMAKE_SOURCE_DIR}/src/screen_reader.c
+	 ${CMAKE_SOURCE_DIR}/src/screen_reader_haptic.c
+	 ${CMAKE_SOURCE_DIR}/src/screen_reader_spi.c
+	 ${CMAKE_SOURCE_DIR}/src/screen_reader_switch.c
+	 ${CMAKE_SOURCE_DIR}/src/screen_reader_system.c
+	 ${CMAKE_SOURCE_DIR}/src/screen_reader_tts.c
+	 ${CMAKE_SOURCE_DIR}/src/screen_reader_vconf.c
+	 ${CMAKE_SOURCE_DIR}/src/smart_notification.c
+)
+
 
 #INCLUDE FILE
 INCLUDE(CMakeLists.sub)
@@ -12,9 +27,22 @@ SET(LOCALEDIR "/usr/apps/org.tizen.screen-reader/res/locale")
 IF("${SEC_FEATURE_TAPI_ENABLE}" STREQUAL "1")
     MESSAGE("SEC_FEATURE_TAPI_ENABLE: ${SEC_FEATURE_TAPI_ENABLE}")
     SET(TAPI_REQUIRED_PKG "tapi")
+    SET(SRCS ${SRCS}
+	${CMAKE_SOURCE_DIR}/src/dbus_gesture_adapter.c
+	${CMAKE_SOURCE_DIR}/src/elm_access_adapter.c
+	${CMAKE_SOURCE_DIR}/src/screen_reader_gestures.c
+	${CMAKE_SOURCE_DIR}/src/navigator.c
+	${CMAKE_SOURCE_DIR}/src/keyboard_tracker.c
+	${CMAKE_SOURCE_DIR}/src/window_tracker.c)
 ELSE()
     MESSAGE("SEC_FEATURE_TAPI_ENABLE: ${SEC_FEATURE_TAPI_ENABLE}")
     ADD_DEFINITIONS("-DSCREEN_READER_TV")
+ENDIF()
+
+IF("${X11_ENABLED}" STREQUAL "1")
+    MESSSAGE("X11 is enabled")
+    SET(CONDITIONAL_PACKAGES ${CONDITIONAL_PACKAGES} "ecore-x")
+    ADD_DEFINITIONS("-DX11_ENABLED")
 ENDIF()
 
 INCLUDE(FindPkgConfig)
@@ -26,7 +54,6 @@ pkg_check_modules(pkgs REQUIRED
 	ecore
 	atspi-2
 	gobject-2.0
-	ecore-x
 	dlog
 	vconf
 	tts
@@ -36,6 +63,7 @@ pkg_check_modules(pkgs REQUIRED
 	notification
 	capi-network-wifi
 	${TAPI_REQUIRED_PKG}
+	${CONDITIONAL_PACKAGES}
 )
 
 FOREACH(flag ${pkgs_CFLAGS})

@@ -14,7 +14,9 @@ BuildRequires:  at-spi2-core-devel
 BuildRequires:  cmake
 BuildRequires:  pkgconfig(appcore-efl)
 BuildRequires:  pkgconfig(ecore)
+%if %{with x}
 BuildRequires:  pkgconfig(ecore-x)
+%endif
 BuildRequires:  pkgconfig(eina)
 BuildRequires:  pkgconfig(eldbus)
 BuildRequires:  pkgconfig(elementary)
@@ -28,7 +30,7 @@ BuildRequires:  pkgconfig(check)
 BuildRequires:  pkgconfig(capi-network-bluetooth)
 BuildRequires:  pkgconfig(notification)
 BuildRequires:  pkgconfig(capi-network-wifi)
-%if "%{?tizen_profile_name}" != "tv"
+%if "%{?profile}" != "tv"
 BuildRequires:  pkgconfig(tapi)
 %endif
 
@@ -41,16 +43,19 @@ An utility library for developers of the menu screen.
 %build
 rm -rf CMakeFiles CMakeCache.txt
 
-%if "%{?tizen_profile_name}" != "tv"
+%if "%{profile}" != "tv"
         export SEC_FEATURE_TAPI_ENABLE="1"
+        export CFLAGS+=" -DELM_ACCESS_KEYBOARD"
 %else
         export SEC_FEATURE_TAPI_ENABLE="0"
 %endif
-export CFLAGS+=" -DELM_ACCESS_KEYBOARD"
 
 cmake . -DCMAKE_INSTALL_PREFIX="%{AppInstallPath}" \
         -DCMAKE_TARGET="%{Exec}" \
         -DCMAKE_PACKAGE="%{name}" \
+%if %{with x}
+	-DX11_ENABLED=1 \
+%endif
         -DSEC_FEATURE_TAPI_ENABLE=${SEC_FEATURE_TAPI_ENABLE}
 
 make %{?jobs:-j%jobs} \

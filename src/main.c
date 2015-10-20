@@ -22,11 +22,12 @@
 #include <Elementary.h>
 #include <eldbus-1/Eldbus.h>
 #include <vconf.h>
+#ifndef SCREEN_READER_TV
 #include "navigator.h"
-#include "window_tracker.h"
+#include "screen_reader_gestures.h"
+#endif
 #include "logger.h"
 #include "screen_reader.h"
-#include "screen_reader_gestures.h"
 #include "screen_reader_switch.h"
 
 #define MAX_STACK_FRAMES 64
