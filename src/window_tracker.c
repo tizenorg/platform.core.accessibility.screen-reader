@@ -17,8 +17,11 @@
 #include <string.h>
 #include "window_tracker.h"
 #include "logger.h"
+
+#ifdef X11_ENABLED
 #include <Ecore_X.h>
 #include <Ecore_X_Atoms.h>
+#endif
 
 static Window_Tracker_Cb user_cb;
 static void *user_data;
@@ -49,8 +52,10 @@ static AtspiAccessible *_get_active_win(void)
 		return NULL;
 	}
 
-	Ecore_X_Window focus_window = ecore_x_window_focus_get();
 	unsigned int active_window_pid = 0;
+#ifdef X11_ENABLED
+	Ecore_X_Window focus_window = ecore_x_window_focus_get();
+
 	if (focus_window) {
 		//invoking atspi_accessible_get_child_count for non active apps results in very long screen-reader startup
 		//not active apps have low priority and dbus calls take a lot of time (a few hundred ms per call)
@@ -60,6 +65,7 @@ static AtspiAccessible *_get_active_win(void)
 		if (active_window_pid)
 			DEBUG("First we will try filter apps by PID: %i", active_window_pid);
 	}
+#endif
 	desktop_children_count = atspi_accessible_get_child_count(desktop, NULL);
 	for (i = 0; i < desktop_children_count; i++) {
 		AtspiAccessible *app = atspi_accessible_get_child_at_index(desktop, i, NULL);

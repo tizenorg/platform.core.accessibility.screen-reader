@@ -19,11 +19,21 @@
 
 #include <Ecore.h>
 #include <Ecore_Input.h>
+#ifdef X11_ENABLED
 #include <Ecore_X.h>
+#else
+#include <Ecore_Wayland.h>
+#endif
 
 static GestureCB _global_cb;
 static void *_global_data;
-static Ecore_Window win;
+
+#ifdef X11_ENABLED
+static Ecore_X_Window win;
+#else
+static Ecore_Wl_Window *win;
+#endif
+
 static Ecore_Event_Handler *property_changed_hld;
 
 struct _Gestures_Config {
@@ -70,7 +80,11 @@ typedef enum {
 } gesture_type_e;
 
 struct _Cover {
+#ifdef X11_ENABLED
 	Ecore_X_Window win;	 /**< Input window covering given zone */
+#else
+	Ecore_Wl_Window *win;	 /**< Input window covering given zone */
+#endif
 	unsigned int n_taps;   /**< Number of fingers touching screen */
 	unsigned int event_time;
 
@@ -115,8 +129,10 @@ struct _Cover {
 typedef struct _Cover Cover;
 
 Gestures_Config *_e_mod_config;
+#ifdef X11_ENABLED
 static Ecore_X_Window scrolled_win;
 static int rx, ry;
+#endif
 static Eina_List *handlers;
 static Cover *cov;
 static int win_angle;
@@ -126,24 +142,25 @@ static unsigned int _win_angle_get(void);
 
 void __transform_coordinates(int *ax, int *ay)
 {
-	Ecore_X_Window root;
 	int w;
 	int h;
 	int tmp;
+#ifdef X11_ENABLED
+	ecore_x_window_geometry_get(ecore_x_window_root_first_get(), NULL, NULL, &w, &h);
+#else
+	ecore_wl_screen_size_get(&w, &h);
+#endif
 
 	win_angle = _win_angle_get();
 
 	switch (win_angle) {
 	case 90:
-		root = ecore_x_window_root_first_get();
-		ecore_x_window_geometry_get(root, NULL, NULL, &w, &h);
 		tmp = *ax;
 		*ax = h - *ay;
 		*ay = tmp;
 		break;
 	case 270:
-		root = ecore_x_window_root_first_get();
-		ecore_x_window_geometry_get(root, NULL, NULL, &w, &h);
+
 		tmp = *ax;
 		*ax = *ay;
 		*ay = w - tmp;
@@ -615,7 +632,7 @@ static void _hover_gesture_mouse_up(Ecore_Event_Mouse_Button * ev, Cover * cov)
 	if (cov->n_taps == 0)
 		cov->hover_gesture.state = GESTURE_NOT_STARTED;
 }
-
+#ifdef X11_ENABLED
 static void _get_root_coords(Ecore_X_Window win, int *x, int *y)
 {
 	Ecore_X_Window root = ecore_x_window_root_first_get();
@@ -648,9 +665,17 @@ Ecore_X_Window top_window_get(int x, int y)
 	}
 	return 0;
 }
+#else
+Ecore_Wl_Window *top_window_get(int x, int y)
+{
+	return 0;
+}
+#endif
+
 
 void start_scroll(int x, int y)
 {
+#ifdef X11_ENABLED
 	Ecore_X_Window wins[1] = { win };
 	Ecore_X_Window under = ecore_x_window_at_xy_with_skip_get(x, y, wins, sizeof(wins) / sizeof(wins[0]));
 	_get_root_coords(under, &rx, &ry);
@@ -658,25 +683,31 @@ void start_scroll(int x, int y)
 	ecore_x_window_focus(under);
 	ecore_x_mouse_down_send(under, x - rx, y - ry, 1);
 	scrolled_win = under;
+#endif
 }
 
 void continue_scroll(int x, int y)
 {
+#ifdef X11_ENABLED
 	ecore_x_mouse_move_send(scrolled_win, x - rx, y - ry);
+#endif
 }
 
 void end_scroll(int x, int y)
 {
-	ecore_x_mouse_up_send(scrolled_win, x - rx, y - ry, 1);
+#ifdef X11_ENABLED
+	ecore_x_mouse_up_send(scrolled_win, x - rx, y - ry, 1);	
 	ecore_x_mouse_out_send(scrolled_win, x - rx, y - ry);
+#endif
 }
 
 static unsigned int _win_angle_get(void)
 {
+	int angle = 0;
+#ifdef X11_ENABLED
 	Ecore_X_Window root, first_root;
 	int ret;
 	int count;
-	int angle = 0;
 	unsigned char *prop_data = NULL;
 
 	first_root = ecore_x_window_root_first_get();
@@ -688,7 +719,9 @@ static unsigned int _win_angle_get(void)
 
 	if (prop_data)
 		free(prop_data);
+#else
 
+#endif
 	return angle;
 }
 
@@ -1025,25 +1058,34 @@ static Eina_Bool _gesture_input_win_create(void)
 	int w, h;
 
 	if (!win) {
+#ifdef X11_ENABLED
 		Ecore_Window root = ecore_x_window_root_first_get();
 		if (!root)
 			return EINA_FALSE;
 		ecore_x_window_geometry_get(root, NULL, NULL, &w, &h);
 		win = ecore_x_window_input_new(root, 0, 0, w, h);
+#else
+		ecore_wl_screen_size_get(&w, &h);
+		win = ecore_wl_window_new(NULL, 0, 0, w, h, ECORE_WL_WINDOW_BUFFER_TYPE_EGL_WINDOW);
+#endif
 	}
 	if (!win)
 		return EINA_FALSE;
 
+#ifdef X11_ENABLED
 	ecore_x_input_multi_select(win);
 	ecore_x_window_show(win);
 	ecore_x_window_raise(win);
-
+#else
+	ecore_wl_window_show(win);
+	ecore_wl_window_raise(win);
+#endif
 	// restet gestures
 	memset(cov, 0x0, sizeof(Cover));
 
 	return EINA_TRUE;
 }
-
+#ifdef X11_ENABLED
 static Eina_Bool _win_property_changed(void *data, int type, void *event)
 {
 	Ecore_X_Event_Window_Property *wp = event;
@@ -1055,9 +1097,11 @@ static Eina_Bool _win_property_changed(void *data, int type, void *event)
 
 	return EINA_TRUE;
 }
+#endif
 
 static Eina_Bool _gestures_input_window_init(void)
 {
+#ifdef X11_ENABLED
 	Ecore_Window root = ecore_x_window_root_first_get();
 	if (!root) {
 		ERROR("No root window found. Is Window manager running?");
@@ -1065,7 +1109,7 @@ static Eina_Bool _gestures_input_window_init(void)
 	}
 	ecore_x_event_mask_set(root, ECORE_X_EVENT_MASK_WINDOW_PROPERTY);
 	property_changed_hld = ecore_event_handler_add(ECORE_X_EVENT_WINDOW_PROPERTY, _win_property_changed, NULL);
-
+#endif
 	return _gesture_input_win_create();
 }
 
@@ -1073,15 +1117,22 @@ static void _gestures_input_widnow_shutdown(void)
 {
 	ecore_event_handler_del(property_changed_hld);
 	if (win)
+#ifdef X11_ENABLED
 		ecore_x_window_free(win);
+#else
+		ecore_wl_window_free(win);
+#endif
 	win = 0;
 }
 
 Eina_Bool screen_reader_gestures_init(void)
 {
 	ecore_init();
+#ifdef X11_ENABLED
 	ecore_x_init(NULL);
-
+#else
+	ecore_wl_init(NULL);
+#endif
 	cov = calloc(sizeof(Cover), 1);
 
 	if (!_gestures_input_window_init()) {
@@ -1112,8 +1163,11 @@ void screen_reader_gestures_shutdown(void)
 		ecore_event_handler_del(hdlr);
 	}
 	_gestures_input_widnow_shutdown();
-
+#ifdef X11_ENABLED
 	ecore_x_shutdown();
+#else
+	ecore_wl_shutdown();
+#endif
 	ecore_shutdown();
 	free(_e_mod_config);
 	free(cov);

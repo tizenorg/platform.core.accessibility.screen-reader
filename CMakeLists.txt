@@ -40,9 +40,12 @@ ELSE()
 ENDIF()
 
 IF("${X11_ENABLED}" STREQUAL "1")
-    MESSSAGE("X11 is enabled")
+    MESSAGE(STATUS "X11 is enabled")
     SET(CONDITIONAL_PACKAGES ${CONDITIONAL_PACKAGES} "ecore-x")
     ADD_DEFINITIONS("-DX11_ENABLED")
+ELSE()
+    MESSAGE(STATUS "X11 is disabled - using wayland")
+    SET(CONDITIONAL_PACKAGES ${CONDITIONAL_PACKAGES} "ecore-wayland")
 ENDIF()
 
 INCLUDE(FindPkgConfig)

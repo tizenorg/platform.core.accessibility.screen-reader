@@ -17,13 +17,16 @@
 #include <string.h>
 #include <atspi/atspi.h>
 #include <Ecore.h>
+#ifdef X11_ENABLED
 #include <Ecore_X.h>
+#endif
 #include "keyboard_tracker.h"
 #include "logger.h"
 #include "screen_reader_tts.h"
 static AtspiDeviceListener *listener;
 static Keyboard_Tracker_Cb user_cb;
 static void *user_data;
+#ifdef X11_ENABLED
 static Ecore_Event_Handler *root_xwindow_property_changed_hld = NULL;
 static Ecore_Event_Handler *active_xwindow_property_changed_hld = NULL;
 
@@ -134,7 +137,7 @@ void root_xwindow_property_tracker_unregister()
 		root_xwindow_property_changed_hld = NULL;
 	}
 }
-
+#endif
 static gboolean device_cb(const AtspiDeviceEvent * stroke, void *data)
 {
 	Key k;
@@ -159,8 +162,10 @@ void keyboard_tracker_init(void)
 {
 	listener = atspi_device_listener_new(device_cb, NULL, NULL);
 	atspi_register_keystroke_listener(listener, NULL, 0, ATSPI_KEY_PRESSED, ATSPI_KEYLISTENER_SYNCHRONOUS | ATSPI_KEYLISTENER_CANCONSUME, NULL);
+#ifdef X11_ENABLED
 	active_xwindow_property_tracker_register();
 	root_xwindow_property_tracker_register();
+#endif
 	DEBUG("keyboard tracker init");
 }
 
@@ -173,7 +178,9 @@ void keyboard_tracker_register(Keyboard_Tracker_Cb cb, void *data)
 void keyboard_tracker_shutdown(void)
 {
 	atspi_deregister_keystroke_listener(listener, NULL, 0, ATSPI_KEY_PRESSED, NULL);
+#ifdef X11_ENABLED
 	root_xwindow_property_tracker_unregister();
 	active_xwindow_property_tracker_unregister();
+#endif
 	DEBUG("keyboard tracker shutdown");
 }

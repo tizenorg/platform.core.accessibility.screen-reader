@@ -16,7 +16,11 @@
 
 #define _GNU_SOURCE
 #include <stdio.h>
+#ifdef X11_ENABLED
 #include <Ecore_X.h>
+#else
+#include <Ecore_Wayland.h>
+#endif
 #include <Ecore.h>
 #include <math.h>
 #include <atspi/atspi.h>
@@ -1348,6 +1352,7 @@ static void _activate_widget(void)
 static void _quickpanel_change_state(gboolean quickpanel_switch)
 {
 	DEBUG("START");
+#ifdef X11_ENABLED
 	Ecore_X_Window xwin = 0;
 
 	if (quickpanel_switch)
@@ -1366,6 +1371,7 @@ static void _quickpanel_change_state(gboolean quickpanel_switch)
 	ecore_x_e_illume_quickpanel_state_send(ecore_x_e_illume_zone_get(xwin), state);
 
 	ecore_main_loop_iterate();
+#endif
 }
 
 /**
@@ -2018,7 +2024,9 @@ static void _start_stop_signal_send(void)
 
 static void on_gesture_detected(void *data, Gesture_Info * info)
 {
+#ifdef X11_ENABLED
 	Ecore_X_Window keyboard_win;
+#endif
 	_on_auto_review_stop();
 
 	if (info->type == ONE_FINGER_SINGLE_TAP && info->state == 3) {
@@ -2039,7 +2047,7 @@ static void on_gesture_detected(void *data, Gesture_Info * info)
 			if ((info->event_time - _last_hover_event_time) < ONGOING_HOVER_GESTURE_INTERPRETATION_INTERVAL && info->state == 1)
 				return;
 			_last_hover_event_time = info->state != 1 ? -1 : info->event_time;
-#ifdef ELM_ACCESS_KEYBOARD
+#if defined(ELM_ACCESS_KEYBOARD) && defined(X11_ENABLED)
 			keyboard_win = top_window_get(info->x_end, info->y_end);
 			if (keyboard_win && ecore_x_e_virtual_keyboard_get(keyboard_win)) {
 				elm_access_adaptor_emit_read(keyboard_win, info->x_end, info->y_end);
@@ -2075,7 +2083,7 @@ static void on_gesture_detected(void *data, Gesture_Info * info)
 			_focus_next();
 		break;
 	case ONE_FINGER_SINGLE_TAP:
-#ifdef ELM_ACCESS_KEYBOARD
+#if defined(ELM_ACCESS_KEYBOARD) && defined(X11_ENABLED)
 		keyboard_win = top_window_get(info->x_end, info->y_end);
 		if (keyboard_win && ecore_x_e_virtual_keyboard_get(keyboard_win)) {
 			elm_access_adaptor_emit_read(keyboard_win, info->x_end, info->y_end);
@@ -2086,7 +2094,7 @@ static void on_gesture_detected(void *data, Gesture_Info * info)
 			_focus_widget(info);
 		break;
 	case ONE_FINGER_DOUBLE_TAP:
-#ifdef ELM_ACCESS_KEYBOARD
+#if defined(ELM_ACCESS_KEYBOARD) && defined(X11_ENABLED)
 		keyboard_win = top_window_get(info->x_end, info->y_end);
 		if (keyboard_win && ecore_x_e_virtual_keyboard_get(keyboard_win)) {
 			elm_access_adaptor_emit_activate(keyboard_win, info->x_end, info->y_end);

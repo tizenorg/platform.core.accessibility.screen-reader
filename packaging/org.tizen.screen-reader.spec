@@ -1,6 +1,7 @@
 %define AppInstallPath /usr/apps/%{name}
 %define Exec screen-reader
-
+%bcond_with x
+%bcond_with wayland
 
 Name:       org.tizen.screen-reader
 Summary:    Screen Reader Assistive Technology
@@ -16,6 +17,9 @@ BuildRequires:  pkgconfig(appcore-efl)
 BuildRequires:  pkgconfig(ecore)
 %if %{with x}
 BuildRequires:  pkgconfig(ecore-x)
+%endif
+%if %{with wayland}
+BuildRequires:  pkgconfig(ecore-wayland)
 %endif
 BuildRequires:  pkgconfig(eina)
 BuildRequires:  pkgconfig(eldbus)

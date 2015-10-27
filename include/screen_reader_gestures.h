@@ -2,8 +2,11 @@
 #define SCREEN_READER_GESTURES_H_
 
 #include <Ecore.h>
+#ifdef X11_ENABLED
 #include <Ecore_X.h>
-
+#else
+#include <Ecore_Wayland.h>
+#endif
 /**
  * @brief Accessibility gestures
  */
@@ -70,8 +73,11 @@ Eina_Bool screen_reader_gestures_init(void);
  * @brief Shutdown gesture navigation profile.
  */
 void screen_reader_gestures_shutdown(void);
-
+#ifdef X11_ENABLED
 Eina_Bool screen_reader_gesture_x_grab_touch_devices(Ecore_X_Window win);
+#else
+Eina_Bool screen_reader_gesture_wl_grab_touch_devices(Ecore_Wl_Window win);
+#endif
 
 typedef void (*GestureCB)(void *data, Gesture_Info *info);
 
@@ -103,5 +109,10 @@ void end_scroll(int x, int y);
  *
  * @return Ecore_X_Window Object which represents top window on which gesture occure
  */
+#ifdef X11_ENABLED
 Ecore_X_Window top_window_get (int x, int y);
+#else
+Ecore_Wl_Window *top_window_get (int x, int y);
+#endif
+
 #endif

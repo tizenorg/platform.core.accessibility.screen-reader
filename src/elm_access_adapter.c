@@ -17,6 +17,7 @@
 #include "elm_access_adapter.h"
 #include "logger.h"
 
+#ifdef X11_ENABLED
 static void _get_root_coords(Ecore_X_Window win, int *x, int *y)
 {
 	Ecore_X_Window root = ecore_x_window_root_first_get();
@@ -37,7 +38,6 @@ static void _get_root_coords(Ecore_X_Window win, int *x, int *y)
 		parent = ecore_x_window_parent_get(parent);
 	}
 }
-
 static void _send_ecore_x_client_msg(Ecore_X_Window win, int x, int y, Eina_Bool activate)
 {
 	int x_win, y_win;
@@ -63,3 +63,14 @@ void elm_access_adaptor_emit_read(Ecore_X_Window win, int x, int y)
 {
 	_send_ecore_x_client_msg(win, x, y, EINA_FALSE);
 }
+#else
+void elm_access_adaptor_emit_activate(Ecore_Wl_Window *win, int x, int y)
+{
+
+}
+
+void elm_access_adaptor_emit_read(Ecore_Wl_Window *win, int x, int y)
+{
+
+}
+#endif
