@@ -358,7 +358,11 @@ Eina_Bool flat_navi_context_current_at_x_y_set(FlatNaviContext * ctx, gint x_cor
 	}
 
 	if (youngest_ancestor_in_context && !_object_has_modal_state(youngest_ancestor_in_context)) {
-		if (youngest_ancestor_in_context == current_obj || flat_navi_context_current_set(ctx, youngest_ancestor_in_context)) {
+
+		Eina_Bool update_target = youngest_ancestor_in_context == current_obj;
+		if (!update_target)
+			update_target = flat_navi_context_current_set(ctx, youngest_ancestor_in_context);
+		if (update_target) {
 			DEBUG("Setting highlight to object %s with role %s", atspi_accessible_get_name(youngest_ancestor_in_context, NULL), atspi_accessible_get_role_name(youngest_ancestor_in_context, NULL));
 			*target = youngest_ancestor_in_context;
 			ret = EINA_TRUE;
