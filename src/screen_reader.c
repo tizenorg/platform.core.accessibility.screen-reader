@@ -62,13 +62,6 @@ int screen_reader_create_service(void *data)
 #ifdef SCREEN_READER_TV
 	spi_init(service_data);
 #endif
-
-	/* XML TEST */
-#ifdef RUN_IPC_TEST_SUIT
-	run_xml_tests();
-	test_suite_init();
-#endif
-
 	return 0;
 }
 
