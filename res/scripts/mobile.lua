@@ -114,16 +114,44 @@ function trait(obj)
 	end
 end
 
+function stringArrayAppend(strings, string)
+	if string ~= "" then
+		table.insert(strings, string)
+	end
+end
+
+function generateStringArray(objects, createFunc)
+	local ret = {}
+	for k, target in ipairs(objects) do
+		stringArrayAppend(ret, createFunc(target))
+	end
+	return ret
+end
+
 function describeObject(obj)
-	local related_trait = {}
-	for k, target in ipairs(obj:inRelation(RELATION_DESCRIBED_BY)) do
-		table.insert(related_trait, trait(target))
+	local labels = generateStringArray(obj:inRelation(RELATION_LABELLED_BY), function(x) return x:name() end)
+	local descriptions = generateStringArray(obj:inRelation(RELATION_DESCRIBED_BY), function(x) return x:description() end)
+	local traits = generateStringArray(obj:inRelation(RELATION_DESCRIBED_BY), trait)
+
+	-- use original object name if related objects do not provide other
+	if table.getn(labels) == 0 then
+		stringArrayAppend(labels, obj:name())
 	end
-	local ret = {obj:name(), trait(obj), obj:description(), table.concat(related_trait, ", ")}
-	for i=#ret,1,-1 do
-		if ret[i] == nil or ret[i] == "" then
-			table.remove(ret, i)
-		end
+
+	-- use original object description if related objects do not provide other
+	if table.getn(descriptions) == 0 then
+		stringArrayAppend(descriptions, obj:description())
 	end
+
+	-- use original object trait if related objects do not provide other
+	if table.getn(traits) == 0 then
+		stringArrayAppend(traits, trait(obj))
+	end
+
+	local ret = {}
+	stringArrayAppend(ret, table.concat(labels, ", "))
+	stringArrayAppend(ret, table.concat(traits, ", "))
+	stringArrayAppend(ret, table.concat(descriptions, ", "))
+
 	return table.concat(ret, ", ")
 end
