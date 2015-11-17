@@ -68,6 +68,7 @@ make %{?jobs:-j%jobs} \
 -e 's%^.*: error: .*$%\x1b[37;41m&\x1b[m%' \
 -e 's%^.*: warning: .*$%\x1b[30;43m&\x1b[m%'
 export LD_LIBRARY_PATH=/emul/ia32-linux/lib:/emul/ia32-linux/usr/lib:$LD_LIBRARY_PATH
+export CTEST_OUTPUT_ON_FAILURE=1
 make test
 
 %install
