@@ -28,7 +28,6 @@
 #include "navigator.h"
 #include "window_tracker.h"
 #include "keyboard_tracker.h"
-#include "pivot_chooser.h"
 #include "flat_navi.h"
 #include "app_tracker.h"
 #include "smart_notification.h"
