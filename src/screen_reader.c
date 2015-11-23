@@ -42,7 +42,11 @@ Service_Data service_data = {
 
 	//Actions to do when tts state is 'ready'
 	.update_language_list = false,
+#ifdef SCREEN_READER_TV
+	.lua_script_path = SCRIPTDIR "/tv.lua",
+#else
 	.lua_script_path = SCRIPTDIR "/mobile.lua",
+#endif
 
 	.text_to_say_info = NULL
 };

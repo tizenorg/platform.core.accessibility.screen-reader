@@ -47,14 +47,23 @@ msgstr "group index"
 msgid "IDS_TRAIT_GROUP_INDEX_EXPANDED"
 msgstr "Expandable list, Double tap to collapse"
 
+msgid "IDS_TRAIT_GROUP_INDEX_EXPANDED_TV"
+msgstr "Expandable list, press OK button to collapse"
+
 msgid "IDS_TRAIT_GROUP_INDEX_COLLAPSED"
 msgstr "Expandable list, Double tap to expand"
+
+msgid "IDS_TRAIT_GROUP_INDEX_COLLAPSED_TV"
+msgstr "Expandable list, press OK button to expand"
 
 msgid "IDS_TRAIT_MENU_ITEM_TAB_INDEX"
 msgstr "Tab %d of %d"
 
 msgid "IDS_TRAIT_TEXT_EDIT"
 msgstr "Double tap to edit"
+
+msgid "IDS_TRAIT_TEXT_EDIT_TV"
+msgstr "press OK button to edit"
 
 msgid "IDS_TRAIT_CTX_POPUP"
 msgstr "Contextual popup"
@@ -71,8 +80,14 @@ msgstr "Items"
 msgid "IDS_TRAIT_POPUP_CLOSE"
 msgstr "double tap to close it"
 
+msgid "IDS_TRAIT_POPUP_CLOSE_TV"
+msgstr "press OK button to close it"
+
 msgid "IDS_TRAIT_TEXT_EDIT_FOCUSED"
 msgstr "Editing, flick up and down to adjust position."
+
+msgid "IDS_TRAIT_TEXT_EDIT_FOCUSED_TV"
+msgstr "Editing, press right and left button to adjust position."
 
 msgid "IDS_TRAIT_PD_PROGRESSBAR"
 msgstr "Progressing"
