@@ -24,6 +24,7 @@
 #include "logger.h"
 #include "screen_reader_tts.h"
 static AtspiDeviceListener *listener;
+static AtspiDeviceListener *async_listener;
 static Keyboard_Tracker_Cb user_cb;
 static void *user_data;
 #ifdef X11_ENABLED
@@ -158,10 +159,23 @@ static gboolean device_cb(const AtspiDeviceEvent * stroke, void *data)
 	return TRUE;
 }
 
+static gboolean async_keyboard_cb(const AtspiDeviceEvent * stroke, void *data)
+{
+	if (!strcmp(stroke->event_string, "XF86Back"))
+	{
+		tts_speak(_("IDS_BACK_BUTTON"), EINA_TRUE);
+		return TRUE;
+	}
+	else
+		return FALSE;
+}
+
 void keyboard_tracker_init(void)
 {
 	listener = atspi_device_listener_new(device_cb, NULL, NULL);
-	atspi_register_keystroke_listener(listener, NULL, 0, ATSPI_KEY_PRESSED, ATSPI_KEYLISTENER_SYNCHRONOUS | ATSPI_KEYLISTENER_CANCONSUME, NULL);
+	atspi_register_keystroke_listener(listener, NULL, 0, 1 << ATSPI_KEY_PRESSED_EVENT, ATSPI_KEYLISTENER_SYNCHRONOUS | ATSPI_KEYLISTENER_CANCONSUME, NULL);
+	async_listener = atspi_device_listener_new(async_keyboard_cb, NULL, NULL);
+	atspi_register_keystroke_listener(async_listener, NULL, 0, 1 << ATSPI_KEY_RELEASED_EVENT, ATSPI_KEYLISTENER_NOSYNC, NULL);
 #ifdef X11_ENABLED
 	active_xwindow_property_tracker_register();
 	root_xwindow_property_tracker_register();
@@ -177,7 +191,8 @@ void keyboard_tracker_register(Keyboard_Tracker_Cb cb, void *data)
 
 void keyboard_tracker_shutdown(void)
 {
-	atspi_deregister_keystroke_listener(listener, NULL, 0, ATSPI_KEY_PRESSED, NULL);
+	atspi_deregister_keystroke_listener(listener, NULL, 0, 1 << ATSPI_KEY_PRESSED, NULL);
+	atspi_deregister_keystroke_listener(async_listener, NULL, 0, 1 << ATSPI_KEY_RELEASED_EVENT, NULL);
 #ifdef X11_ENABLED
 	root_xwindow_property_tracker_unregister();
 	active_xwindow_property_tracker_unregister();

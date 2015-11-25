@@ -1,4 +1,7 @@
 
+msgid "IDS_BACK_BUTTON"
+msgstr "back button"
+
 msgid "IDS_TRAIT_SLIDER_SWIPE_COMMUNICATE"
 msgstr "flick up and down to adjust the position. "
 
