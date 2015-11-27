@@ -48,6 +48,9 @@
 #define TTS_MAX_TEXT_SIZE  2000
 #define GESTURE_LIMIT 10
 
+#define HAPTIC_VIBRATE_DURATION 50
+#define HAPTIC_VIBRATE_INTENSITY 50
+
 //Timeout in ms which will be used as interval for handling ongoing
 //hoved gesture updates. It is introduced to improve performance.
 //Even if user makes many mouse move events within hover gesture
@@ -1634,6 +1637,9 @@ static void _new_highlighted_obj_changed(AtspiAccessible * new_highlighted_obj, 
 	if (context && flat_navi_context_current_get(context) != new_highlighted_obj) {
 		flat_navi_context_current_set(context, g_object_ref(new_highlighted_obj));
 	}
+
+	haptic_vibrate_start(HAPTIC_VIBRATE_DURATION, HAPTIC_VIBRATE_INTENSITY);
+
 }
 
 void clear(gpointer d)

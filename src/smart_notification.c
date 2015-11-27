@@ -141,7 +141,9 @@ void smart_notification_init(void)
 	atspi_event_listener_register(listener, "object:scroll-start", NULL);
 	atspi_event_listener_register(listener, "object:scroll-end", NULL);
 
+#ifndef SCREEN_READER_TV
 	haptic_module_init();
+#endif
 
 	status = EINA_TRUE;
 }
@@ -152,6 +154,9 @@ void smart_notification_init(void)
  */
 void smart_notification_shutdown(void)
 {
+#ifndef SCREEN_READER_TV
+	haptic_module_disconnect();
+#endif
 	status = EINA_FALSE;
 }
 

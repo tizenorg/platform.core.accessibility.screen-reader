@@ -67,13 +67,13 @@ void haptic_module_disconnect(void)
  * @brief Start vibrations
  *
  */
-void haptic_vibrate_start(void)
+void haptic_vibrate_start(int duration, int feedback)
 {
 	if (!handle) {
 		ERROR("Haptic handle lost");
 		return;
 	}
-	if (!device_haptic_vibrate(handle, 1000, 100, &effect_handle)) {
+	if (!device_haptic_vibrate(handle, duration, feedback, &effect_handle)) {
 		DEBUG(RED "Vibrations started!" RESET);
 	} else {
 		ERROR("Cannot start vibration");
