@@ -26,6 +26,7 @@
 #include "navigator.h"
 #include "screen_reader_gestures.h"
 #endif
+#include "keyboard_tracker.h"
 #include "logger.h"
 #include "screen_reader.h"
 #include "screen_reader_switch.h"
@@ -223,6 +224,7 @@ static int app_create(void *data)
 	screen_reader_gestures_init();
 	navigator_init();
 #endif
+	keyboard_tracker_init();
 	screen_reader_switch_enabled_set(EINA_TRUE);
 	return 0;
 }

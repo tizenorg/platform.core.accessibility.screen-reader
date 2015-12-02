@@ -1711,20 +1711,6 @@ static void on_window_activate(void *data, AtspiAccessible * window)
 	DEBUG("END");
 }
 
-void kb_tracker(void *data, Key k)
-{
-	switch (k) {
-	case KEY_LEFT:
-		_focus_prev();
-		break;
-	case KEY_RIGHT:
-		_focus_next();
-		break;
-	default:
-		DEBUG("Key %d not supported \n", k);
-	}
-}
-
 void navigator_init(void)
 {
 	DEBUG("START");
@@ -1745,8 +1731,6 @@ void navigator_init(void)
 #ifndef SCREEN_READER_TV
 	system_notifications_init();
 #endif
-	keyboard_tracker_init();
-	keyboard_tracker_register(kb_tracker, NULL);
 }
 
 void navigator_shutdown(void)

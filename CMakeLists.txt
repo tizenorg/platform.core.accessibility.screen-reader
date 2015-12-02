@@ -16,6 +16,7 @@ SET(SRCS ${CMAKE_SOURCE_DIR}/src/app_tracker.c
 	 ${CMAKE_SOURCE_DIR}/src/screen_reader_vconf.c
 	 ${CMAKE_SOURCE_DIR}/src/smart_notification.c
 	 ${CMAKE_SOURCE_DIR}/src/lua_engine.c
+	 ${CMAKE_SOURCE_DIR}/src/keyboard_tracker.c
 )
 
 
@@ -33,7 +34,6 @@ IF("${SEC_FEATURE_TAPI_ENABLE}" STREQUAL "1")
 	${CMAKE_SOURCE_DIR}/src/elm_access_adapter.c
 	${CMAKE_SOURCE_DIR}/src/screen_reader_gestures.c
 	${CMAKE_SOURCE_DIR}/src/navigator.c
-	${CMAKE_SOURCE_DIR}/src/keyboard_tracker.c
 	${CMAKE_SOURCE_DIR}/src/window_tracker.c)
 ELSE()
     MESSAGE("SEC_FEATURE_TAPI_ENABLE: ${SEC_FEATURE_TAPI_ENABLE}")

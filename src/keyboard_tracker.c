@@ -139,26 +139,6 @@ void root_xwindow_property_tracker_unregister()
 	}
 }
 #endif
-static gboolean device_cb(const AtspiDeviceEvent * stroke, void *data)
-{
-	Key k;
-	if (!strcmp(stroke->event_string, "KP_Up"))
-		k = KEY_UP;
-	else if (!strcmp(stroke->event_string, "KP_Down"))
-		k = KEY_DOWN;
-	else if (!strcmp(stroke->event_string, "KP_Left"))
-		k = KEY_LEFT;
-	else if (!strcmp(stroke->event_string, "KP_Right"))
-		k = KEY_RIGHT;
-	else
-		return FALSE;
-
-	if (user_cb)
-		user_cb(user_data, k);
-
-	return TRUE;
-}
-
 static gboolean async_keyboard_cb(const AtspiDeviceEvent * stroke, void *data)
 {
 	if (!strcmp(stroke->event_string, "XF86Back"))
@@ -172,21 +152,14 @@ static gboolean async_keyboard_cb(const AtspiDeviceEvent * stroke, void *data)
 
 void keyboard_tracker_init(void)
 {
-	listener = atspi_device_listener_new(device_cb, NULL, NULL);
-	atspi_register_keystroke_listener(listener, NULL, 0, 1 << ATSPI_KEY_PRESSED_EVENT, ATSPI_KEYLISTENER_SYNCHRONOUS | ATSPI_KEYLISTENER_CANCONSUME, NULL);
 	async_listener = atspi_device_listener_new(async_keyboard_cb, NULL, NULL);
 	atspi_register_keystroke_listener(async_listener, NULL, 0, 1 << ATSPI_KEY_RELEASED_EVENT, ATSPI_KEYLISTENER_NOSYNC, NULL);
+
 #ifdef X11_ENABLED
 	active_xwindow_property_tracker_register();
 	root_xwindow_property_tracker_register();
 #endif
 	DEBUG("keyboard tracker init");
-}
-
-void keyboard_tracker_register(Keyboard_Tracker_Cb cb, void *data)
-{
-	user_cb = cb;
-	user_data = data;
 }
 
 void keyboard_tracker_shutdown(void)
