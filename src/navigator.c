@@ -1021,6 +1021,7 @@ static void _widget_scroll(Gesture_Info * gi)
 	g_object_unref(obj);
 }
 
+#ifndef SCREEN_READER_TV
 static void _read_quickpanel(void)
 {
 	DEBUG("START");
@@ -1034,6 +1035,7 @@ static void _read_quickpanel(void)
 	device_missed_events_get();
 	DEBUG("END");
 }
+#endif
 
 static void _set_pause(void)
 {
