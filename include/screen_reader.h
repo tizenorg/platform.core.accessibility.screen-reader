@@ -11,6 +11,9 @@
 #define HIGHLIGHT_CHANGED_SIG "object:state-change:highlighted"
 #define VALUE_CHANGED_SIG "object:property-change:accessible-value"
 #define CARET_MOVED_SIG "object:text-caret-moved"
+#define STATE_FOCUSED_SIG "object:state-changed:focused"
+#define TEXT_INSERT_SIG "object:text-changed:insert"
+#define TEXT_DELETE_SIG "object:text-changed:delete"
 
 typedef struct
 {

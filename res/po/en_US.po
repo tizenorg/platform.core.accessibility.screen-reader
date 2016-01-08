@@ -1,3 +1,11 @@
+msgid "IDS_REMOVED"
+msgstr " removed"
+
+msgid "IDS_TEXT_REMOVED"
+msgstr "text removed"
+
+msgid "IDS_TEXT_INSERTED"
+msgstr "text inserted"
 
 msgid "IDS_BACK_BUTTON"
 msgstr "back button"
@@ -90,7 +98,7 @@ msgid "IDS_TRAIT_TEXT_EDIT_FOCUSED"
 msgstr "Editing, flick up and down to adjust position."
 
 msgid "IDS_TRAIT_TEXT_EDIT_FOCUSED_TV"
-msgstr "Editing, press right and left button to adjust position."
+msgstr "editing"
 
 msgid "IDS_TRAIT_PD_PROGRESSBAR"
 msgstr "Progressing"

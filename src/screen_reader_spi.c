@@ -20,6 +20,7 @@
 #include "screen_reader_spi.h"
 #include "screen_reader_tts.h"
 #include "logger.h"
+#include "navigator.h"
 #include "lua_engine.h"
 #ifdef RUN_IPC_TEST_SUIT
 #include "test_suite/test_suite.h"
@@ -29,6 +30,8 @@
 
 /** @brief Service_Data used as screen reader internal data struct*/
 static Service_Data *service_data;
+static Eina_Bool ignore_next_caret_move = EINA_FALSE;
+static int last_caret_position = -1;
 
 /**
  * @brief Debug function. Print current toolkit version/event
@@ -67,6 +70,16 @@ static char *spi_on_caret_move_get_text(AtspiEvent * event, void *user_data)
 	char *added_text = NULL;
 	int ret = -1;
 
+	if (last_caret_position == event->detail1) {	// ignore fake moves, selection moves etc.
+		return NULL;
+	}
+	last_caret_position = event->detail1;
+
+	if (ignore_next_caret_move) {
+		ignore_next_caret_move = EINA_FALSE;
+		return NULL;
+	}
+
 	AtspiText *text_interface = atspi_accessible_get_text_iface(sd->currently_focused);
 	if (text_interface) {
 		DEBUG("->->->->->-> WIDGET CARET MOVED: %s <-<-<-<-<-<-<-", atspi_accessible_get_name(sd->currently_focused, NULL));
@@ -90,6 +103,20 @@ static char *spi_on_caret_move_get_text(AtspiEvent * event, void *user_data)
 		return NULL;
 	}
 	return return_text;
+}
+
+static int spi_get_text_interface_text_length(AtspiEvent * event, void *user_data)
+{
+	Service_Data *sd;
+	AtspiText *text_interface;
+
+	sd = (Service_Data *) user_data;
+	sd->currently_focused = event->source;
+	text_interface = atspi_accessible_get_text_iface(sd->currently_focused);
+	if (text_interface) {
+		return (int)atspi_text_get_character_count(text_interface, NULL);
+	}
+	return -1;
 }
 
 static char *spi_on_value_changed_get_text(AtspiEvent * event, void *user_data)
@@ -127,11 +154,34 @@ static char *spi_on_value_changed_get_text(AtspiEvent * event, void *user_data)
 	return text_to_read;
 }
 
+static char *spi_on_text_delete(AtspiEvent * event, void *user_data)
+{
+	char ret[TTS_MAX_TEXT_SIZE] = "\0";
+
+	if (event->detail2 == 1) {
+		strncpy(ret, g_value_get_string(&event->any_data), sizeof(ret) - 1);
+		strncat(ret, _("IDS_REMOVED"), sizeof(ret) - strlen(ret) - 1);
+	} else {
+		strncpy(ret, _("IDS_TEXT_REMOVED"), sizeof(ret) - 1);
+	}
+
+	if (event->detail1 != last_caret_position) {
+		if (event->detail1 == 0) {
+			strncat(ret, _("IDS_REACHED_MIN_POS"), sizeof(ret) - strlen(ret) - 1);
+		}
+		ignore_next_caret_move = EINA_TRUE;
+	} else if (event->detail1 == spi_get_text_interface_text_length(event, user_data)) {
+		strncat(ret, _("IDS_REACHED_MAX_POS"), sizeof(ret) - strlen(ret) - 1);
+	}
+
+	return strdup(ret);
+}
+
 char *spi_event_get_text_to_read(AtspiEvent * event, void *user_data)
 {
 	DEBUG("START");
 	Service_Data *sd = (Service_Data *) user_data;
-	char *text_to_read;
+	char *text_to_read = NULL;
 
 	DEBUG("TRACK SIGNAL:%s", sd->tracking_signal_name);
 	DEBUG("WENT EVENT:%s", event->type);
@@ -141,12 +191,30 @@ char *spi_event_get_text_to_read(AtspiEvent * event, void *user_data)
 		return NULL;
 	}
 
-	if (!strncmp(event->type, sd->tracking_signal_name, strlen(event->type)) && event->detail1 == 1) {
+	if (!strcmp(event->type, sd->tracking_signal_name) && event->detail1 == 1) {
 		text_to_read = spi_on_state_changed_get_text(event, user_data);
-	} else if (!strncmp(event->type, CARET_MOVED_SIG, strlen(event->type))) {
+
+	} else if (!strcmp(event->type, CARET_MOVED_SIG)) {
 		text_to_read = spi_on_caret_move_get_text(event, user_data);
-	} else if (!strncmp(event->type, VALUE_CHANGED_SIG, strlen(event->type))) {
+
+	} else if (!strcmp(event->type, TEXT_INSERT_SIG)) {
+		ignore_next_caret_move = EINA_TRUE;
+		if (event->detail2 == 1) {
+			text_to_read = strdup(g_value_get_string(&event->any_data));
+		} else {
+			text_to_read = strdup(_("IDS_TEXT_INSERTED"));
+		}
+
+	} else if (!strcmp(event->type, TEXT_DELETE_SIG)) {
+		text_to_read = spi_on_text_delete(event, user_data);
+
+	} else if (!strcmp(event->type, VALUE_CHANGED_SIG)) {
 		text_to_read = spi_on_value_changed_get_text(event, user_data);
+
+	} else if (!strcmp(event->type, STATE_FOCUSED_SIG)) {
+		ignore_next_caret_move = EINA_TRUE;
+		last_caret_position = -1;
+
 	} else {
 		ERROR("Unknown event type");
 		return NULL;
@@ -167,7 +235,7 @@ void spi_event_listener_cb(AtspiEvent * event, void *user_data)
 
 	char *text_to_read = spi_event_get_text_to_read(event, user_data);
 	if (!text_to_read) {
-		ERROR("Can not prepare text to read");
+		DEBUG("No text to read");
 		return;
 	}
 	DEBUG("SPEAK: %s", text_to_read);
@@ -175,6 +243,22 @@ void spi_event_listener_cb(AtspiEvent * event, void *user_data)
 
 	free(text_to_read);
 	DEBUG("END");
+}
+
+/**
+  * @brief Register new listener and log error if any
+**/
+static void spi_listener_register(AtspiEventListener *spi_listener, const char *signal_name)
+{
+	GError *error = NULL;
+
+	if (atspi_event_listener_register(spi_listener, signal_name, &error) == false) {
+		ERROR("FAILED TO REGISTER spi %s listener. Error: %s", signal_name, error ? error->message : "no error message");
+		if (error)
+			g_clear_error(&error);
+	} else {
+		DEBUG("spi %s listener REGISTERED", signal_name);
+	}
 }
 
 /**
@@ -206,28 +290,11 @@ void spi_init(Service_Data * sd)
 
 	DEBUG("TRACKING SIGNAL:%s", sd->tracking_signal_name);
 
-	gboolean ret1 = atspi_event_listener_register(sd->spi_listener, sd->tracking_signal_name, NULL);
-	if (ret1 == false) {
-		DEBUG("FAILED TO REGISTER spi focus/highlight listener");
-	}
-	GError *error = NULL;
-	gboolean ret2 = atspi_event_listener_register(sd->spi_listener, CARET_MOVED_SIG, &error);
-	if (ret2 == false) {
-		DEBUG("FAILED TO REGISTER spi caret moved listener: %s", error ? error->message : "no error message");
-		if (error)
-			g_clear_error(&error);
-	}
-
-	gboolean ret3 = atspi_event_listener_register(sd->spi_listener, VALUE_CHANGED_SIG, &error);
-	if (ret3 == false) {
-		DEBUG("FAILED TO REGISTER spi value changed listener: %s", error ? error->message : "no error message");
-		if (error)
-			g_clear_error(&error);
-	}
-
-	if (ret1 == true && ret2 == true && ret3 == true) {
-		DEBUG("spi listener REGISTERED");
-	}
+	spi_listener_register(sd->spi_listener, CARET_MOVED_SIG);
+	spi_listener_register(sd->spi_listener, VALUE_CHANGED_SIG);
+	spi_listener_register(sd->spi_listener, STATE_FOCUSED_SIG);
+	spi_listener_register(sd->spi_listener, TEXT_INSERT_SIG);
+	spi_listener_register(sd->spi_listener, TEXT_DELETE_SIG);
 
 	DEBUG("---------------------- SPI_init END ----------------------\n\n");
 }
