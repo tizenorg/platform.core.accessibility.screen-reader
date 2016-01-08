@@ -63,6 +63,9 @@ static char *spi_on_caret_move_get_text(AtspiEvent * event, void *user_data)
 	Service_Data *sd = (Service_Data *) user_data;
 	sd->currently_focused = event->source;
 	char *return_text;
+	gchar *text = NULL;
+	char *added_text = NULL;
+	int ret = -1;
 
 	AtspiText *text_interface = atspi_accessible_get_text_iface(sd->currently_focused);
 	if (text_interface) {
@@ -70,25 +73,19 @@ static char *spi_on_caret_move_get_text(AtspiEvent * event, void *user_data)
 
 		int char_count = (int)atspi_text_get_character_count(text_interface, NULL);
 		int caret_pos = atspi_text_get_caret_offset(text_interface, NULL);
+		text = atspi_text_get_text(text_interface, caret_pos, caret_pos + 1, NULL);
 		if (!caret_pos) {
 			DEBUG("MIN POSITION REACHED");
-			if (asprintf(&return_text, "%s %s", (char *)atspi_text_get_text(text_interface, caret_pos, caret_pos + 1, NULL), _("IDS_REACHED_MIN_POS")) < 0) {
-				ERROR(MEMORY_ERROR);
-				return NULL;
-			}
+			added_text = _("IDS_REACHED_MIN_POS");
 		} else if (char_count == caret_pos) {
 			DEBUG("MAX POSITION REACHED");
-			if (asprintf(&return_text, "%s %s", (char *)atspi_text_get_text(text_interface, caret_pos, caret_pos + 1, NULL), _("IDS_REACHED_MAX_POS")) < 0) {
-				ERROR(MEMORY_ERROR);
-				return NULL;
-			}
-		} else {
-			if (asprintf(&return_text, "%s", (char *)atspi_text_get_text(text_interface, caret_pos, caret_pos + 1, NULL)) < 0) {
-				ERROR(MEMORY_ERROR);
-				return NULL;
-			}
+			added_text = _("IDS_REACHED_MAX_POS");
 		}
-	} else {
+		if (added_text)	ret = asprintf(&return_text, "%s %s", (char *)text, added_text);
+		else ret = asprintf(&return_text, "%s", (char *)text);
+		g_free(text);
+	}
+	if (ret < 0) {
 		ERROR(MEMORY_ERROR);
 		return NULL;
 	}

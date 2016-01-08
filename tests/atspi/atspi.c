@@ -175,7 +175,7 @@ gchar *atspi_text_get_text(AtspiText * obj, gint start_offset, gint end_offset, 
 {
 	if (!obj)
 		return NULL;
-	return "AtspiText text";
+	return strdup("AtspiText text");
 }
 
 AtspiValue *atspi_accessible_get_value_iface(AtspiAccessible * obj)
