@@ -238,6 +238,7 @@ static int app_terminate(void *data)
 	DEBUG("terminate gestures");
 	screen_reader_gestures_shutdown();
 #endif
+	keyboard_tracker_shutdown();
 	DEBUG("terminate service");
 	screen_reader_terminate_service(data);
 	DEBUG("clear ScreenReaderEnabled property");

@@ -1757,5 +1757,4 @@ void navigator_shutdown(void)
 #ifndef SCREEN_READER_TV
 	system_notifications_shutdown();
 #endif
-	keyboard_tracker_shutdown();
 }
