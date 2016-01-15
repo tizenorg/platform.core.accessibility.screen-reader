@@ -289,7 +289,7 @@ static void _current_highlight_object_set(AtspiAccessible * obj)
 		current_obj = NULL;
 		if (current_comp) {
 			atspi_component_clear_highlight(current_comp, &err);
-			g_object_ref(current_comp);
+			g_object_unref(current_comp);
 			current_comp = NULL;
 		}
 
