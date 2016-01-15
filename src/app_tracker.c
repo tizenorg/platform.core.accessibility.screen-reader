@@ -127,7 +127,7 @@ static void _print_event_object_info(const AtspiEvent * event)
 {
 	gchar *name = atspi_accessible_get_name(event->source, NULL), *role = atspi_accessible_get_role_name(event->source, NULL);
 
-	DEBUG("signal:%s, name: %s, role: %s, detail1:%i, detail2: %i", event->type, role, name, event->detail1, event->detail2);
+	DEBUG("signal:%s, name: %s, role: %s, detail1:%i, detail2: %i", event->type, name, role, event->detail1, event->detail2);
 	g_free(name);
 	g_free(role);
 }
