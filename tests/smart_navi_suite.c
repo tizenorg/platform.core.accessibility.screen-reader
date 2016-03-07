@@ -259,7 +259,6 @@ void teardown_flat_navi()
 	atspi_free_memory();
 	eina_shutdown();
 	atspi_delete_accessible(root);
-	atspi_delete_accessible(app);
 	teardown();
 }
 
