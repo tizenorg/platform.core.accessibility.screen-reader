@@ -23,8 +23,8 @@ SET(SRCS ${CMAKE_SOURCE_DIR}/src/app_tracker.c
 #INCLUDE FILE
 INCLUDE(CMakeLists.sub)
 SET(RESOURCE_DIR "${CMAKE_SOURCE_DIR}/res")
-SET(LOCALEDIR "/usr/apps/org.tizen.screen-reader/res/locale")
-ADD_DEFINITIONS(-DSCRIPTDIR="/usr/apps/org.tizen.screen-reader/res/scripts")
+SET(LOCALEDIR "${TZ_SYS_RO_APP}/org.tizen.screen-reader/res/locale")
+ADD_DEFINITIONS(-DSCRIPTDIR="${TZ_SYS_RO_APP}/org.tizen.screen-reader/res/scripts")
 
 IF("${SEC_FEATURE_TAPI_ENABLE}" STREQUAL "1")
     MESSAGE("SEC_FEATURE_TAPI_ENABLE: ${SEC_FEATURE_TAPI_ENABLE}")
@@ -84,12 +84,13 @@ ADD_EXECUTABLE(${PROJECT_NAME} ${SRCS})
 
 TARGET_LINK_LIBRARIES(${PROJECT_NAME} ${pkgs_LDFLAGS} ${SLP_LD_PATH_FLAGS} ${SLP_LD_FLAGS} ${SLP_LINKER_FLAGS} "-pie")
 
-# Install 
+# Install
 INSTALL(TARGETS ${PROJECT_NAME} DESTINATION bin)
-INSTALL(DIRECTORY ${RESOURCE_DIR}/icons DESTINATION res) 
+INSTALL(DIRECTORY ${RESOURCE_DIR}/icons DESTINATION res)
 INSTALL(DIRECTORY ${RESOURCE_DIR}/scripts DESTINATION res)
 # Install Manifest File
-INSTALL(FILES org.tizen.screen-reader.xml DESTINATION /usr/share/packages)
+configure_file(${CMAKE_CURRENT_SOURCE_DIR}/org.tizen.screen-reader.xml.in ${CMAKE_CURRENT_BINARY_DIR}/org.tizen.screen-reader.xml)
+INSTALL(FILES ${CMAKE_CURRENT_BINARY_DIR}/org.tizen.screen-reader.xml DESTINATION ${TZ_SYS_RO_PACKAGES})
 
 ADD_SUBDIRECTORY(${CMAKE_SOURCE_DIR}/res/po)
 ADD_SUBDIRECTORY(${CMAKE_SOURCE_DIR}/tests)

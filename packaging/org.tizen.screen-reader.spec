@@ -1,8 +1,3 @@
-%define AppInstallPath /usr/apps/%{name}
-%define Exec screen-reader
-%bcond_with x
-%bcond_with wayland
-
 Name:       org.tizen.screen-reader
 Summary:    Screen Reader Assistive Technology
 Version:    0.0.7
@@ -38,6 +33,7 @@ BuildRequires:  pkgconfig(capi-network-wifi)
 BuildRequires:  pkgconfig(tapi)
 %endif
 BuildRequires:  pkgconfig(lua)
+BuildRequires:  pkgconfig(libtzplatform-config)
 
 %description
 An utility library for developers of the menu screen.
@@ -46,6 +42,12 @@ An utility library for developers of the menu screen.
 %setup -q
 
 %build
+%define DataDir %{?TZ_SYS_RO_SHARE:%TZ_SYS_RO_SHARE}%{!?TZ_SYS_RO_SHARE:/usr/share}
+%define AppDir %{TZ_SYS_RO_APP}/%{name}
+%define Exec screen-reader
+%bcond_with x
+%bcond_with wayland
+
 rm -rf CMakeFiles CMakeCache.txt
 
 %if "%{profile}" != "tv"
@@ -55,11 +57,13 @@ rm -rf CMakeFiles CMakeCache.txt
         export SEC_FEATURE_TAPI_ENABLE="0"
 %endif
 
-cmake . -DCMAKE_INSTALL_PREFIX="%{AppInstallPath}" \
+cmake . -DCMAKE_INSTALL_PREFIX="%{AppDir}" \
         -DCMAKE_TARGET="%{Exec}" \
         -DCMAKE_PACKAGE="%{name}" \
+        -DTZ_SYS_RO_APP=%{TZ_SYS_RO_APP} \
+        -DTZ_SYS_RO_PACKAGES=%{TZ_SYS_RO_PACKAGES} \
 %if %{with x}
-	-DX11_ENABLED=1 \
+        -DX11_ENABLED=1 \
 %endif
         -DSEC_FEATURE_TAPI_ENABLE=${SEC_FEATURE_TAPI_ENABLE}
 
@@ -75,15 +79,15 @@ make test
 rm -rf %{buildroot}
 %make_install
 
-%post 
+%post
 /sbin/ldconfig
 
 %postun -p /sbin/ldconfig
 
 %files
 %manifest org.tizen.screen-reader.manifest
-%{AppInstallPath}/bin/screen-reader
-%{AppInstallPath}/res/icons/screen-reader.png
-%{AppInstallPath}/res/locale/*/LC_MESSAGES/*
-/usr/share/packages/%{name}.xml
-%{AppInstallPath}/res/scripts/*
+%{AppDir}/bin/screen-reader
+%{AppDir}/res/icons/screen-reader.png
+%{AppDir}/res/locale/*/LC_MESSAGES/*
+%{DataDir}/packages/%{name}.xml
+%{AppDir}/res/scripts/*
