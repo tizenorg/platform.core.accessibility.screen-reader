@@ -21,7 +21,6 @@
 #include "screen_reader_tts.h"
 #include "logger.h"
 #include "navigator.h"
-#include "lua_engine.h"
 #ifdef RUN_IPC_TEST_SUIT
 #include "test_suite/test_suite.h"
 #endif
@@ -32,6 +31,11 @@
 static Service_Data *service_data;
 static Eina_Bool ignore_next_caret_move = EINA_FALSE;
 static int last_caret_position = -1;
+
+typedef struct {
+	char *key;
+	char *val;
+} Attr;
 
 /**
  * @brief Debug function. Print current toolkit version/event
@@ -53,12 +57,105 @@ static void display_info(const AtspiEvent * event)
 	DEBUG("--------------------------------------------------------");
 }
 
+Eina_Bool double_click_timer_cb(void *data)
+{
+	Service_Data *sd = data;
+	sd->clicked_widget = NULL;
+
+	return EINA_FALSE;
+}
+
+bool allow_recursive_name(AtspiAccessible * obj)
+{
+	AtspiRole r = atspi_accessible_get_role(obj, NULL);
+	if (r == ATSPI_ROLE_FILLER)
+		return true;
+	return false;
+}
+
+char *generate_description_for_subtree(AtspiAccessible * obj)
+{
+	DEBUG("START");
+	if (!allow_recursive_name(obj))
+		return strdup("");
+
+	if (!obj)
+		return strdup("");
+	int child_count = atspi_accessible_get_child_count(obj, NULL);
+
+	DEBUG("There is %d children inside this filler", child_count);
+	if (!child_count)
+		return strdup("");
+
+	int i;
+	char *name = NULL;
+	char *below = NULL;
+	char ret[256] = "\0";
+	AtspiAccessible *child = NULL;
+	for (i = 0; i < child_count; i++) {
+		child = atspi_accessible_get_child_at_index(obj, i, NULL);
+		name = atspi_accessible_get_name(child, NULL);
+		DEBUG("%d child name:%s", i, name);
+		if (name && strncmp(name, "\0", 1)) {
+			strncat(ret, name, sizeof(ret) - strlen(ret) - 1);
+		}
+		strncat(ret, " ", sizeof(ret) - strlen(ret) - 1);
+		below = generate_description_for_subtree(child);
+		if (strncmp(below, "\0", 1)) {
+			strncat(ret, below, sizeof(ret) - strlen(ret) - 1);
+		}
+		g_object_unref(child);
+		free(below);
+		free(name);
+	}
+	return strdup(ret);
+}
+
 static char *spi_on_state_changed_get_text(AtspiEvent * event, void *user_data)
 {
 	Service_Data *sd = (Service_Data *) user_data;
+	char *name;
+	char *names = NULL;
+	char *description;
+	char *role_name;
+	char *other;
+	char ret[256] = "\0";
 	sd->currently_focused = event->source;
 
-	return lua_engine_describe_object(sd->currently_focused);
+	description = atspi_accessible_get_description(sd->currently_focused, NULL);
+	name = atspi_accessible_get_name(sd->currently_focused, NULL);
+	role_name = atspi_accessible_get_localized_role_name(sd->currently_focused, NULL);
+	other = generate_description_for_subtree(sd->currently_focused);
+
+	DEBUG("->->->->->-> WIDGET GAINED HIGHLIGHT: %s <-<-<-<-<-<-<-", name);
+	DEBUG("->->->->->-> FROM SUBTREE HAS NAME:  %s <-<-<-<-<-<-<-", other);
+
+	if (name && strncmp(name, "\0", 1))
+		names = strdup(name);
+	else if (other && strncmp(other, "\0", 1))
+		names = strdup(other);
+
+	if (names) {
+		strncat(ret, names, sizeof(ret) - strlen(ret) - 1);
+		strncat(ret, ", ", sizeof(ret) - strlen(ret) - 1);
+	}
+
+	if (role_name)
+		strncat(ret, role_name, sizeof(ret) - strlen(ret) - 1);
+
+	if (description) {
+		if (strncmp(description, "\0", 1))
+			strncat(ret, ", ", sizeof(ret) - strlen(ret) - 1);
+		strncat(ret, description, sizeof(ret) - strlen(ret) - 1);
+	}
+
+	free(name);
+	free(names);
+	free(description);
+	free(role_name);
+	free(other);
+
+	return strdup(ret);
 }
 
 static char *spi_on_caret_move_get_text(AtspiEvent * event, void *user_data)
@@ -276,10 +373,6 @@ void spi_init(Service_Data * sd)
 	DEBUG("--------------------- SPI_init START ---------------------");
 	service_data = sd;
 
-	DEBUG(">>> Init lua engine<<<");
-	if (lua_engine_init(sd->lua_script_path))
-		ERROR("Failed to init lua engine.");
-
 	DEBUG(">>> Creating listeners <<<");
 
 	sd->spi_listener = atspi_event_listener_new(spi_event_listener_cb, service_data, NULL);
@@ -297,9 +390,4 @@ void spi_init(Service_Data * sd)
 	spi_listener_register(sd->spi_listener, TEXT_DELETE_SIG);
 
 	DEBUG("---------------------- SPI_init END ----------------------\n\n");
-}
-
-void spi_shutdown(Service_Data * sd)
-{
-	lua_engine_shutdown();
 }

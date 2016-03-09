@@ -32,7 +32,6 @@ BuildRequires:  pkgconfig(capi-network-wifi)
 %if "%{?profile}" != "tv"
 BuildRequires:  pkgconfig(tapi)
 %endif
-BuildRequires:  pkgconfig(lua)
 BuildRequires:  pkgconfig(libtzplatform-config)
 
 %description
@@ -90,4 +89,3 @@ rm -rf %{buildroot}
 %{AppDir}/res/icons/screen-reader.png
 %{AppDir}/res/locale/*/LC_MESSAGES/*
 %{DataDir}/packages/%{name}.xml
-%{AppDir}/res/scripts/*

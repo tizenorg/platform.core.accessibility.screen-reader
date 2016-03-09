@@ -37,7 +37,6 @@
 #include "screen_reader_gestures.h"
 #include "dbus_gesture_adapter.h"
 #include "elm_access_adapter.h"
-#include "lua_engine.h"
 
 #define QUICKPANEL_DOWN TRUE
 #define QUICKPANEL_UP FALSE
@@ -89,16 +88,6 @@ static struct {
 	bool auto_review_on;
 } s_auto_review = {
 .focused_object = NULL,.auto_review_on = false};
-
-static bool _widget_has_state(AtspiAccessible * obj, AtspiStateType type)
-{
-	Eina_Bool ret = EINA_FALSE;
-	AtspiStateSet *st = atspi_accessible_get_state_set(obj);
-	if (atspi_state_set_contains(st, type))
-		ret = EINA_TRUE;
-	g_object_unref(st);
-	return ret;
-}
 
 char *state_to_char(AtspiStateType state)
 {
@@ -273,9 +262,553 @@ static void display_info_about_object(AtspiAccessible * obj, bool display_parent
 	g_free(description);
 }
 
+char *generate_description_for_subtrees(AtspiAccessible * obj)
+{
+	DEBUG("START");
+
+	if (!obj)
+		return strdup("");
+	return strdup("");
+	/*
+	   AtspiRole role;
+	   int child_count;
+	   int i;
+	   char *name = NULL;
+	   char *below = NULL;
+	   char ret[TTS_MAX_TEXT_SIZE] = "\0";
+	   AtspiAccessible *child = NULL;
+
+	   int child_count = atspi_accessible_get_child_count(obj, NULL);
+
+	   role = atspi_accessible_get_role(obj, NULL);
+
+	   // Do not generate that for popups
+	   if (role == ATSPI_ROLE_POPUP_MENU || role == ATSPI_ROLE_DIALOG)
+	   return strdup("");
+
+	   child_count = atspi_accessible_get_child_count(obj, NULL);
+
+	   DEBUG("There is %d children inside this object", child_count);
+	   if (!child_count)
+	   return strdup("");
+
+	   for (i=0; i < child_count; i++)
+	   {
+	   child = atspi_accessible_get_child_at_index(obj, i, NULL);
+	   name = atspi_accessible_get_name(child, NULL);
+	   DEBUG("%d child name:%s", i, name);
+	   if (name && strncmp(name, "\0", 1))
+	   {
+	   strncat(ret, name, sizeof(ret) - strlen(ret) - 1);
+	   }
+	   strncat(ret, " ", sizeof(ret) - strlen(ret) - 1);
+	   below = generate_description_for_subtrees(child);
+	   DEBUG("%s from below", below);
+	   if (strncmp(below, "\0", 1))
+	   {
+	   strncat(ret, below, sizeof(ret) - strlen(ret) - 1);
+	   }
+
+	   g_object_unref(child);
+	   free(below);
+	   free(name);
+	   }
+	   return strdup(ret);
+	 */
+}
+
+static int _check_list_children_count(AtspiAccessible * obj)
+{
+	int list_count = 0;
+	int i;
+	AtspiAccessible *child = NULL;
+
+	if (!obj)
+		return 0;
+
+	if (atspi_accessible_get_role(obj, NULL) == ATSPI_ROLE_LIST) {
+		int children_count = atspi_accessible_get_child_count(obj, NULL);
+
+		for (i = 0; i < children_count; i++) {
+			child = atspi_accessible_get_child_at_index(obj, i, NULL);
+			if (atspi_accessible_get_role(child, NULL) == ATSPI_ROLE_LIST_ITEM)
+				list_count++;
+			g_object_unref(child);
+		}
+	}
+
+	return list_count;
+}
+
+static int _find_popup_list_children_count(AtspiAccessible * obj)
+{
+	int list_items_count = 0;
+	int children_count = atspi_accessible_get_child_count(obj, NULL);
+	int i;
+	AtspiAccessible *child = NULL;
+
+	list_items_count = _check_list_children_count(obj);
+	if (list_items_count > 0)
+		return list_items_count;
+
+	for (i = 0; i < children_count; i++) {
+		child = atspi_accessible_get_child_at_index(obj, i, NULL);
+		list_items_count = _find_popup_list_children_count(child);
+		if (list_items_count > 0)
+			return list_items_count;
+		g_object_unref(child);
+	}
+
+	return 0;
+}
+
+static bool _widget_has_state(AtspiAccessible * obj, AtspiStateType type)
+{
+	Eina_Bool ret = EINA_FALSE;
+	AtspiStateSet *st = atspi_accessible_get_state_set(obj);
+	if (atspi_state_set_contains(st, type))
+		ret = EINA_TRUE;
+	g_object_unref(st);
+	return ret;
+}
+
+int get_accuracy(double val, int max_accuracy)
+{
+	char val_str[HOVERSEL_TRAIT_SIZE] = "";
+	int position;
+	int accuracy;
+
+	snprintf(val_str, HOVERSEL_TRAIT_SIZE, "%.*f", max_accuracy, val);
+	accuracy = max_accuracy;
+	position = strlen(val_str) - 1;
+	while ( position > 0 && val_str[position] == '0' ) {
+		--position;
+		--accuracy;
+	}
+	return accuracy;
+}
+
+void add_slider_description(char *dest, uint dest_size, AtspiAccessible *obj)
+{
+	gchar *role_name;
+	AtspiValue *value_iface;
+	double val;
+	double min_val;
+	double max_val;
+	char trait[HOVERSEL_TRAIT_SIZE] = "";
+	int accuracy;
+
+	role_name = atspi_accessible_get_localized_role_name(obj, NULL);
+	if (role_name) {
+		strncat(dest, role_name, dest_size - strlen(dest) - 1);
+		g_free(role_name);
+	}
+
+	value_iface = atspi_accessible_get_value_iface(obj);
+	if (!value_iface) {
+		return;
+	}
+
+	accuracy = get_accuracy( atspi_value_get_minimum_increment(value_iface, NULL), 3 );
+	val = atspi_value_get_current_value(value_iface, NULL);
+	max_val = atspi_value_get_maximum_value(value_iface, NULL);
+	min_val = atspi_value_get_minimum_value(value_iface, NULL);
+	snprintf(trait, HOVERSEL_TRAIT_SIZE, _("IDS_TRAIT_SLIDER_VALUE"), accuracy, min_val, accuracy, max_val, accuracy, val);
+	strncat(dest, trait, dest_size - strlen(dest) - 1);
+
+	if (_widget_has_state(obj, ATSPI_STATE_ENABLED)) {
+		strncat(dest, _("IDS_TRAIT_SLIDER_SWIPE_COMMUNICATE"), dest_size - strlen(dest) - 1);
+	}
+	g_object_unref(value_iface);
+}
+
+char *generate_trait(AtspiAccessible * obj)
+{
+	if (!obj)
+		return strdup("");
+
+	AtspiRole role = atspi_accessible_get_role(obj, NULL);
+	AtspiStateSet *state_set = atspi_accessible_get_state_set(obj);
+	char ret[TTS_MAX_TEXT_SIZE] = "\0";
+	switch (role) {
+	case ATSPI_ROLE_ENTRY: {
+		gchar *role_name = atspi_accessible_get_localized_role_name(obj, NULL);
+		if (role_name) {
+			strncat(ret, role_name, sizeof(ret) - strlen(ret) - 1);
+			strncat(ret, ", ", sizeof(ret) - strlen(ret) - 1);
+			if (atspi_state_set_contains(state_set, ATSPI_STATE_FOCUSED))
+				strncat(ret, _("IDS_TRAIT_TEXT_EDIT_FOCUSED"), sizeof(ret) - strlen(ret) - 1);
+			else
+				strncat(ret, _("IDS_TRAIT_TEXT_EDIT"), sizeof(ret) - strlen(ret) - 1);
+			g_free(role_name);
+		}
+		break;
+	}
+	case ATSPI_ROLE_MENU_ITEM: {
+		AtspiAccessible *parent = atspi_accessible_get_parent(obj, NULL);
+		int children_count = atspi_accessible_get_child_count(parent, NULL);
+		int index = atspi_accessible_get_index_in_parent(obj, NULL);
+		char tab_index[MENU_ITEM_TAB_INDEX_SIZE];
+		snprintf(tab_index, MENU_ITEM_TAB_INDEX_SIZE, _("IDS_TRAIT_MENU_ITEM_TAB_INDEX"), index + 1, children_count);
+		strncat(ret, tab_index, sizeof(ret) - strlen(ret) - 1);
+		g_object_unref(parent);
+		break;
+	}
+	case ATSPI_ROLE_POPUP_MENU: {
+		int children_count = atspi_accessible_get_child_count(obj, NULL);
+		char trait[HOVERSEL_TRAIT_SIZE];
+
+		snprintf(trait, HOVERSEL_TRAIT_SIZE, _("IDS_TRAIT_CTX_POPUP"));
+		strncat(ret, trait, sizeof(ret) - strlen(ret) - 1);
+		strncat(ret, ", ", sizeof(ret) - strlen(ret) - 1);
+
+		snprintf(trait, HOVERSEL_TRAIT_SIZE, _("IDS_TRAIT_SHOWING"));
+		strncat(ret, trait, sizeof(ret) - strlen(ret) - 1);
+		strncat(ret, " ", sizeof(ret) - strlen(ret) - 1);
+
+		snprintf(trait, HOVERSEL_TRAIT_SIZE, "%d", children_count);
+		strncat(ret, trait, sizeof(ret) - strlen(ret) - 1);
+		strncat(ret, " ", sizeof(ret) - strlen(ret) - 1);
+
+		snprintf(trait, HOVERSEL_TRAIT_SIZE, _("IDS_TRAIT_ITEMS"));
+		strncat(ret, trait, sizeof(ret) - strlen(ret) - 1);
+		strncat(ret, ", ", sizeof(ret) - strlen(ret) - 1);
+
+		snprintf(trait, HOVERSEL_TRAIT_SIZE, _("IDS_TRAIT_POPUP_CLOSE"));
+		strncat(ret, trait, sizeof(ret) - strlen(ret) - 1);
+		break;
+	}
+	case ATSPI_ROLE_DIALOG: {
+		int children_count = _find_popup_list_children_count(obj);
+		char trait[HOVERSEL_TRAIT_SIZE];
+
+		snprintf(trait, HOVERSEL_TRAIT_SIZE, _("IDS_TRAIT_POPUP"));
+		strncat(ret, trait, sizeof(ret) - strlen(ret) - 1);
+		strncat(ret, ", ", sizeof(ret) - strlen(ret) - 1);
+
+		if (children_count > 0) {
+			snprintf(trait, HOVERSEL_TRAIT_SIZE, _("IDS_TRAIT_SHOWING"));
+			strncat(ret, trait, sizeof(ret) - strlen(ret) - 1);
+			strncat(ret, " ", sizeof(ret) - strlen(ret) - 1);
+
+			snprintf(trait, HOVERSEL_TRAIT_SIZE, "%d", children_count);
+			strncat(ret, trait, sizeof(ret) - strlen(ret) - 1);
+			strncat(ret, " ", sizeof(ret) - strlen(ret) - 1);
+
+			snprintf(trait, HOVERSEL_TRAIT_SIZE, _("IDS_TRAIT_ITEMS"));
+			strncat(ret, trait, sizeof(ret) - strlen(ret) - 1);
+			strncat(ret, ", ", sizeof(ret) - strlen(ret) - 1);
+		}
+
+		snprintf(trait, HOVERSEL_TRAIT_SIZE, _("IDS_TRAIT_POPUP_CLOSE"));
+		strncat(ret, trait, sizeof(ret) - strlen(ret) - 1);
+		break;
+	}
+	case ATSPI_ROLE_GLASS_PANE: {
+		AtspiAccessible *parent = atspi_accessible_get_parent(obj, NULL);
+		int children_count = atspi_accessible_get_child_count(parent, NULL);
+		char trait[HOVERSEL_TRAIT_SIZE];
+		snprintf(trait, HOVERSEL_TRAIT_SIZE, _("IDS_TRAIT_PD_HOVERSEL"), children_count);
+		strncat(ret, trait, sizeof(ret) - strlen(ret) - 1);
+		g_object_unref(parent);
+		break;
+	}
+	case ATSPI_ROLE_LIST_ITEM: {
+		AtspiAccessible *parent = atspi_accessible_get_parent(obj, NULL);
+		AtspiRole parent_role = atspi_accessible_get_role(parent, NULL);
+
+		if(parent_role == ATSPI_ROLE_TREE_TABLE) {
+
+			AtspiStateSet *state_set = atspi_accessible_get_state_set(obj);
+			gboolean is_selected = atspi_state_set_contains(state_set, ATSPI_STATE_SELECTED);
+			g_object_unref(state_set);
+
+			if(is_selected) {
+				strncat(ret, _("IDS_TRAIT_ITEM_SELECTED"), sizeof(ret) - strlen(ret) - 1);
+			}
+
+			AtspiStateSet *parent_state_set = atspi_accessible_get_state_set(parent);
+			bool is_parent_multiselectable = atspi_state_set_contains(parent_state_set, ATSPI_STATE_MULTISELECTABLE);
+
+			g_object_unref(parent_state_set);
+			g_object_unref(parent);
+
+			if(is_parent_multiselectable) {
+
+				char buf[200];
+
+				AtspiSelection *parent_selection = atspi_accessible_get_selection(parent);
+				int selected_children_count = atspi_selection_get_n_selected_children(parent_selection, NULL);
+
+				if(is_selected) {
+					strncat(ret, ", ", sizeof(ret) - strlen(ret) - 1);
+				}
+
+				snprintf(buf, 200, _("IDS_TRAIT_ITEM_SELECTED_COUNT"), selected_children_count);
+				strncat(ret, buf, sizeof(ret) - strlen(ret) - 1);
+
+				g_object_unref(parent_selection);
+			}
+
+		} else if (atspi_state_set_contains(state_set, ATSPI_STATE_EXPANDABLE)) {
+			if (atspi_state_set_contains(state_set, ATSPI_STATE_EXPANDED)) {
+				strncat(ret, _("IDS_TRAIT_GROUP_INDEX_EXPANDED"), sizeof(ret) - strlen(ret) - 1);
+			} else {
+				strncat(ret, _("IDS_TRAIT_GROUP_INDEX_COLLAPSED"), sizeof(ret) - strlen(ret) - 1);
+			}
+		}
+		g_object_unref(parent);
+		break;
+	}
+	case ATSPI_ROLE_CHECK_BOX:
+	case ATSPI_ROLE_RADIO_BUTTON: {
+		if (atspi_state_set_contains(state_set, ATSPI_STATE_CHECKED)) {
+			strncat(ret, _("IDS_TRAIT_CHECK_BOX_SELECTED"), sizeof(ret) - strlen(ret) - 1);
+		} else {
+			strncat(ret, _("IDS_TRAIT_CHECK_BOX_NOT_SELECTED"), sizeof(ret) - strlen(ret) - 1);
+		}
+
+		if (role == ATSPI_ROLE_RADIO_BUTTON) {
+			/* Say role name ("radio button"), but only if it's not a color chooser */
+			AtspiAccessible *parent;
+			AtspiRole parent_role;
+			parent = atspi_accessible_get_parent(obj, NULL);
+			parent_role = atspi_accessible_get_role(parent, NULL);
+			if (parent_role != ATSPI_ROLE_COLOR_CHOOSER) {
+				gchar *role_name;
+				role_name = atspi_accessible_get_localized_role_name(obj, NULL);
+				if (role_name) {
+					strncat(ret, ", ", sizeof(ret) - strlen(ret) - 1);
+					strncat(ret, role_name, sizeof(ret) - strlen(ret) - 1);
+					g_free(role_name);
+				}
+			}
+			g_object_unref(parent);
+		}
+		break;
+	}
+	case ATSPI_ROLE_PUSH_BUTTON: {
+		strncat(ret, _("IDS_TRAIT_PUSH_BUTTON"), sizeof(ret) - strlen(ret) - 1);
+		break;
+	}
+	case ATSPI_ROLE_PROGRESS_BAR: {
+		AtspiValue *value = atspi_accessible_get_value_iface(obj);
+		if (value) {
+			double val = atspi_value_get_current_value(value, NULL);
+			char trait[HOVERSEL_TRAIT_SIZE];
+			if (val > 0) {
+				snprintf(trait, HOVERSEL_TRAIT_SIZE, _("IDS_TRAIT_PD_PROGRESSBAR_PERCENT"), val * 100);
+				strncat(ret, trait, sizeof(ret) - strlen(ret) - 1);
+			} else {
+				strncat(ret, _("IDS_TRAIT_PD_PROGRESSBAR"), sizeof(ret) - strlen(ret) - 1);
+			}
+			g_object_unref(value);
+		}
+		break;
+	}
+	case ATSPI_ROLE_TOGGLE_BUTTON: {
+		strncat(ret, _("IDS_TRAIT_TOGGLE_BUTTON"), sizeof(ret) - strlen(ret) - 1);
+		strncat(ret, ", ", sizeof(ret) - strlen(ret) - 1);
+		if (atspi_state_set_contains(state_set, ATSPI_STATE_CHECKED)) {
+			strncat(ret, _("IDS_TRAIT_TOGGLE_BUTTON_ON"), sizeof(ret) - strlen(ret) - 1);
+		} else {
+			strncat(ret, _("IDS_TRAIT_TOGGLE_BUTTON_OFF"), sizeof(ret) - strlen(ret) - 1);
+		}
+		break;
+	}
+	case ATSPI_ROLE_SLIDER: {
+		add_slider_description(ret, sizeof(ret), obj);
+		break;
+	}
+	case ATSPI_ROLE_HEADING:
+	case ATSPI_ROLE_GROUPING: {
+		break;
+	}
+	default: {
+		gchar *role_name = atspi_accessible_get_localized_role_name(obj, NULL);
+		if (role_name) {
+			strncat(ret, role_name, sizeof(ret) - strlen(ret) - 1);
+			g_free(role_name);
+		}
+	}
+	}
+
+	if (state_set)
+		g_object_unref(state_set);
+
+	return strdup(ret);
+}
+
+char *generate_text_for_relation_objects(AtspiAccessible * obj, AtspiRelationType search, char *(*text_generate_cb)(AtspiAccessible *obj))
+{
+	GError *err = NULL;
+	GArray *relations;
+	AtspiRelation *relation;
+	AtspiRelationType type;
+	Eina_Strbuf *buf;
+	int i, j;
+	char *ret = NULL;
+
+	if (!obj || !text_generate_cb) return NULL;
+
+	relations = atspi_accessible_get_relation_set(obj, &err);
+	if (err || !relations)
+	{
+		if (err) g_error_free(err);
+		return NULL;
+	}
+
+	buf = eina_strbuf_new();
+
+	for (i = 0; i < relations->len; i++)
+	{
+		relation = g_array_index(relations, AtspiRelation *, i);
+		type = atspi_relation_get_relation_type(relation);
+		if (type == search)
+		{
+			for (j = 0; j < atspi_relation_get_n_targets(relation); j++)
+			{
+				AtspiAccessible *target = atspi_relation_get_target(relation, j);
+				char *text = text_generate_cb(target);
+				if (j == 0)
+					eina_strbuf_append_printf(buf, "%s", text);
+				else
+					eina_strbuf_append_printf(buf, ", %s", text);
+				g_object_unref(target);
+				free(text);
+			}
+		}
+		g_object_unref(relation);
+	}
+	g_array_free(relations, TRUE);
+	ret = eina_strbuf_string_steal(buf);
+	eina_strbuf_free(buf);
+
+	return ret;
+}
+
+static char *generate_description_from_relation_object(AtspiAccessible *obj)
+{
+	GError *err = NULL;
+	char *ret = generate_trait(obj);
+	char *desc = atspi_accessible_get_description(obj, &err);
+
+	if (err)
+	{
+		g_error_free(err);
+		g_free(desc);
+		return ret;
+	}
+
+	if (desc) {
+ 		if (desc[0] != '\0') {
+			char *tmp = ret;
+			if (asprintf(&ret, "%s, %s", desc, ret) < 0)
+				ERROR("asprintf failed.");
+			free(tmp);
+		}
+		g_free(desc);
+	}
+
+
+	return ret;
+}
+
+static char *generate_name_from_relation_object(AtspiAccessible *obj)
+{
+	GError *err = NULL;
+	char *name = atspi_accessible_get_name(obj, &err);
+
+	if(err)
+	{
+		g_error_free(err);
+		g_free(name);
+		return NULL;
+	}
+
+	return name;
+}
+
 static char *generate_what_to_read(AtspiAccessible * obj)
 {
-	return lua_engine_describe_object(obj);
+	char *name;
+	char *names = NULL;
+	char *description;
+	char *role_name;
+	char *other;
+	char *text = NULL;
+	char ret[TTS_MAX_TEXT_SIZE] = "\0";
+	char *description_from_relation;
+	char *name_from_relation;
+
+	description = atspi_accessible_get_description(obj, NULL);
+	name = atspi_accessible_get_name(obj, NULL);
+	role_name = generate_trait(obj);
+	other = generate_description_for_subtrees(obj);
+	description_from_relation = generate_text_for_relation_objects(obj, ATSPI_RELATION_DESCRIBED_BY, generate_description_from_relation_object);
+	name_from_relation = generate_text_for_relation_objects(obj, ATSPI_RELATION_LABELLED_BY, generate_name_from_relation_object);
+	AtspiText *iface_text = atspi_accessible_get_text_iface(obj);
+	if (iface_text) {
+		text = atspi_text_get_text(iface_text, 0, atspi_text_get_character_count(iface_text, NULL), NULL);
+		g_object_unref(iface_text);
+	}
+
+	DEBUG("->->->->->-> WIDGET GAINED HIGHLIGHT: %s <-<-<-<-<-<-<-", name);
+	DEBUG("->->->->->-> FROM SUBTREE HAS NAME:  %s <-<-<-<-<-<-<-", other);
+
+	display_info_about_object(obj, false);
+
+	if (name && strncmp(name, "\0", 1))
+		names = strdup(name);
+	else if (other && strncmp(other, "\0", 1))
+		names = strdup(other);
+
+	if (text) {
+		strncat(ret, text, sizeof(ret) - strlen(ret) - 1);
+	}
+
+	DEBUG("Text:%s", text);
+
+	if (names && strlen(names) > 0) {
+		if (strlen(ret) > 0)
+			strncat(ret, ", ", sizeof(ret) - strlen(ret) - 1);
+		strncat(ret, names, sizeof(ret) - strlen(ret) - 1);
+	}
+
+	if (name_from_relation && strlen(name_from_relation) > 0) {
+		if(strlen(ret) > 0)
+			strncat(ret, ", ", sizeof(ret) - strlen(ret) - 1);
+		strncat(ret, name_from_relation, sizeof(ret) - strlen(ret) - 1);
+	}
+
+	if (role_name && strlen(role_name) > 0) {
+		if (strlen(ret) > 0)
+			strncat(ret, ", ", sizeof(ret) - strlen(ret) - 1);
+		strncat(ret, role_name, sizeof(ret) - strlen(ret) - 1);
+	}
+
+	if (description && strlen(description) > 0) {
+		if (strlen(ret) > 0)
+			strncat(ret, ", ", sizeof(ret) - strlen(ret) - 1);
+		strncat(ret, description, sizeof(ret) - strlen(ret) - 1);
+	}
+
+	if (description_from_relation && (description_from_relation[0] != '\n')) {
+		if (strlen(ret) > 0)
+			strncat(ret, ", ", sizeof(ret) - strlen(ret) - 1);
+		strncat(ret, description_from_relation, sizeof(ret) - strlen(ret) - 1);
+	}
+
+	free(text);
+	free(name);
+	free(names);
+	free(name_from_relation);
+	free(description);
+	free(role_name);
+	free(other);
+	free(description_from_relation);
+
+	return strdup(ret);
 }
 
 static void _current_highlight_object_set(AtspiAccessible * obj)
@@ -1719,9 +2252,7 @@ void navigator_init(void)
 	set_utterance_cb(_on_utterance);
 
 	screen_reader_gestures_tracker_register(on_gesture_detected, NULL);
-	//FIXME add some config to get script path
-	if (lua_engine_init(SCRIPTDIR "/mobile.lua"))
-		ERROR("Failed to init lua engine.");
+	// register on active_window
 	dbus_gesture_adapter_init();
 	app_tracker_init();
 	app_tracker_new_obj_highlighted_callback_register(_new_highlighted_obj_changed);
@@ -1748,7 +2279,6 @@ void navigator_shutdown(void)
 		flat_navi_context_free(context);
 		context = NULL;
 	}
-	lua_engine_shutdown();
 	dbus_gesture_adapter_shutdown();
 	app_tracker_shutdown();
 	window_tracker_shutdown();
