@@ -166,7 +166,7 @@ static int _accessible_relations(lua_State *L) {
 	AtspiAccessible *obj = _pop_class_obj(L, 1, 1, ACCESSIBLE_CLASS_NAME);
 	AtspiRelationType type = lua_tonumber(L, -1);
 	GError *err = NULL;
-	int i, j, idx;
+	int i, j;
 
 	lua_newtable(L);
 	if (!obj) return 1;
@@ -174,7 +174,7 @@ static int _accessible_relations(lua_State *L) {
 	GERROR_CHECK(err);
 	if (!rels) return 1;
 
-	for (i = 0, idx = 1; i < rels->len; i++)
+	for (i = 0; i < rels->len; i++)
 	{
 		AtspiRelation *rel = g_array_index(rels, AtspiRelation*, i);
 		if (atspi_relation_get_relation_type(rel) == type)
@@ -183,7 +183,7 @@ static int _accessible_relations(lua_State *L) {
 			{
 				AtspiAccessible *target = atspi_relation_get_target(rel, j);
 				if (!target) continue;
-				lua_pushinteger(L, idx++);
+				lua_pushinteger(L, j);
 				_push_class_obj(L, target, ACCESSIBLE_CLASS_NAME);
 				lua_settable(L, -3);
 			}
