@@ -30,7 +30,6 @@ IF("${SEC_FEATURE_TAPI_ENABLE}" STREQUAL "1")
     SET(SRCS ${SRCS}
 	${CMAKE_SOURCE_DIR}/src/dbus_gesture_adapter.c
 	${CMAKE_SOURCE_DIR}/src/elm_access_adapter.c
-	${CMAKE_SOURCE_DIR}/src/screen_reader_gestures.c
 	${CMAKE_SOURCE_DIR}/src/navigator.c
 	${CMAKE_SOURCE_DIR}/src/window_tracker.c)
 ELSE()

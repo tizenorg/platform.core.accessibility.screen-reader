@@ -67,6 +67,7 @@ static AtspiAccessible *_get_active_win(void)
 	}
 #endif
 	desktop_children_count = atspi_accessible_get_child_count(desktop, NULL);
+	DEBUG("Desktop children count = %d", desktop_children_count);
 	for (i = 0; i < desktop_children_count; i++) {
 		AtspiAccessible *app = atspi_accessible_get_child_at_index(desktop, i, NULL);
 

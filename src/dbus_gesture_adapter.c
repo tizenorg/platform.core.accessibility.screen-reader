@@ -116,7 +116,7 @@ void dbus_gesture_adapter_shutdown(void)
 	eldbus_shutdown();
 }
 
-static const char *_gesture_enum_to_string(Gesture g)
+const char *_gesture_enum_to_string(Gesture g)
 {
 	switch (g) {
 	case ONE_FINGER_HOVER:
@@ -211,5 +211,5 @@ void dbus_gesture_adapter_emit(const Gesture_Info * info)
 	if (!eldbus_service_signal_emit(service, GESTURE_DETECTED, name, info->x_beg, info->y_beg, info->x_end, info->y_end, info->state)) {
 		ERROR("Unable to send GestureDetected signal");
 	} else
-		DEBUG("Successfullt send GestureDetected singal");
+		DEBUG("Successfully send GestureDetected singal");
 }
