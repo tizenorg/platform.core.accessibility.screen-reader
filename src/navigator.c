@@ -24,6 +24,7 @@
 #include <Ecore.h>
 #include <math.h>
 #include <atspi/atspi.h>
+#include <Eldbus.h>
 #include "logger.h"
 #include "navigator.h"
 #include "window_tracker.h"
@@ -49,6 +50,10 @@
 #define HAPTIC_VIBRATE_DURATION 50
 #define HAPTIC_VIBRATE_INTENSITY 50
 
+#define E_A11Y_SERVICE_BUS_NAME "org.tizen.EModule"
+#define E_A11Y_SERVICE_NAVI_IFC_NAME "org.tizen.GestureNavigation"
+#define E_A11Y_SERVICE_NAVI_OBJ_PATH "/org/tizen/GestureNavigation"
+
 //Timeout in ms which will be used as interval for handling ongoing
 //hoved gesture updates. It is introduced to improve performance.
 //Even if user makes many mouse move events within hover gesture
@@ -65,6 +70,7 @@
      g_error_free(error);\
      error = NULL;\
    }
+
 
 static void on_window_activate(void *data, AtspiAccessible * window);
 
@@ -1887,6 +1893,34 @@ static Eina_Bool _is_slider(AtspiAccessible * obj)
 	return EINA_FALSE;
 }
 
+void start_scroll(int x, int y)
+{
+#ifdef X11_ENABLED
+        Ecore_X_Window wins[1] = { win };
+        Ecore_X_Window under = ecore_x_window_at_xy_with_skip_get(x, y, wins, sizeof(wins) / sizeof(wins[0]));
+        _get_root_coords(under, &rx, &ry);
+        ecore_x_mouse_in_send(under, x - rx, y - ry);
+        ecore_x_window_focus(under);
+        ecore_x_mouse_down_send(under, x - rx, y - ry, 1);
+        scrolled_win = under;
+#endif
+}
+
+void continue_scroll(int x, int y)
+{
+#ifdef X11_ENABLED
+        ecore_x_mouse_move_send(scrolled_win, x - rx, y - ry);
+#endif
+}
+
+void end_scroll(int x, int y)
+{
+#ifdef X11_ENABLED
+        ecore_x_mouse_up_send(scrolled_win, x - rx, y - ry, 1);
+        ecore_x_mouse_out_send(scrolled_win, x - rx, y - ry);
+#endif
+}
+
 static void _move_slider(Gesture_Info * gi)
 {
 	DEBUG("ONE FINGER DOUBLE TAP AND HOLD");
@@ -2025,134 +2059,153 @@ static void _start_stop_signal_send(void)
 	atspi_action_do_action(action, action_index, NULL);
 }
 
-static void on_gesture_detected(void *data, Gesture_Info * info)
+static void on_gesture_detected(void *data, const Eldbus_Message *msg)
 {
 #ifdef X11_ENABLED
 	Ecore_X_Window keyboard_win;
 #endif
-	_on_auto_review_stop();
+	DEBUG("In _on_gestures_detected callback");
+        Gesture_Info *info = calloc(sizeof(Gesture_Info), 1);
+        int temp;
+        if (!msg)
+          {
+             DEBUG("Incoming message is empty");
+             return;
+          }
 
-	if (info->type == ONE_FINGER_SINGLE_TAP && info->state == 3) {
-		DEBUG("One finger single tap aborted");
-		prepared = true;
-	}
+        if (!eldbus_message_arguments_get(msg, "iiiiiiu", &temp, &info->x_beg,
+                                          &info->y_beg, &info->x_end, &info->y_end,
+                                          &info->state, &info->event_time)) {
+                DEBUG("Getting message arguments failed");
+                return;
+        }
+        info->type = (Gesture) temp;
+        DEBUG("Incoming gesture name is %s : %d %d %d %d %d", _gesture_enum_to_string(info->type), info->x_beg, info->y_beg, info->x_end, info->y_end, info->state);
 
-	switch (info->type) {
-	case ONE_FINGER_HOVER:
-		if (prepared) {
-			DEBUG("Prepare to move slider");
-			_move_slider(info);
-		} else {
-			if (_last_hover_event_time < 0)
-				_last_hover_event_time = info->event_time;
-			//info->event_time and _last_hover_event_time contain timestamp in ms.
-			//RETURN so we do not handle all incoming event
-			if ((info->event_time - _last_hover_event_time) < ONGOING_HOVER_GESTURE_INTERPRETATION_INTERVAL && info->state == 1)
-				return;
-			_last_hover_event_time = info->state != 1 ? -1 : info->event_time;
+        _on_auto_review_stop();
+
+        if (info->type == ONE_FINGER_SINGLE_TAP && info->state == 3) {
+                DEBUG("One finger single tap aborted");
+               prepared = true;
+        }
+
+        switch (info->type) {
+        case ONE_FINGER_HOVER:
+                if (prepared) {
+                        DEBUG("Prepare to move slider");
+                        _move_slider(info);
+                } else {
+                        if (_last_hover_event_time < 0)
+                                _last_hover_event_time = info->event_time;
+                        //info->event_time and _last_hover_event_time contain timestamp in ms.
+                        //RETURN so we do not handle all incoming event
+                        if ((info->event_time - _last_hover_event_time) < ONGOING_HOVER_GESTURE_INTERPRETATION_INTERVAL && info->state == 1)
+                                return;
+                        _last_hover_event_time = info->state != 1 ? -1 : info->event_time;
 #if defined(ELM_ACCESS_KEYBOARD) && defined(X11_ENABLED)
-			keyboard_win = top_window_get(info->x_end, info->y_end);
-			if (keyboard_win && ecore_x_e_virtual_keyboard_get(keyboard_win)) {
-				elm_access_adaptor_emit_read(keyboard_win, info->x_end, info->y_end);
-				break;
-			}
+                        keyboard_win = top_window_get(info->x_end, info->y_end);
+                        if (keyboard_win && ecore_x_e_virtual_keyboard_get(keyboard_win)) {
+                                elm_access_adaptor_emit_read(keyboard_win, info->x_end, info->y_end);
+                                break;
+                        }
 #endif
-			_focus_widget(info);
-		}
-		break;
-	case TWO_FINGERS_HOVER:
-		_widget_scroll(info);
-		break;
-	case ONE_FINGER_FLICK_LEFT:
-		_focus_prev();
-		break;
-	case ONE_FINGER_FLICK_RIGHT:
-		_focus_next();
-		break;
-	case ONE_FINGER_FLICK_UP:
-		if (_is_active_entry())
-			_caret_move_backward();
-		else if (_has_value() && _is_enabled())
-			_value_inc();
-		else
-			_focus_prev();
-		break;
-	case ONE_FINGER_FLICK_DOWN:
-		if (_is_active_entry())
-			_caret_move_forward();
-		else if (_has_value() && _is_enabled())
-			_value_dec();
-		else
-			_focus_next();
-		break;
-	case ONE_FINGER_SINGLE_TAP:
+                        _focus_widget(info);
+                }
+                break;
+        case TWO_FINGERS_HOVER:
+                _widget_scroll(info);
+                break;
+        case ONE_FINGER_FLICK_LEFT:
+                _focus_prev();
+                break;
+        case ONE_FINGER_FLICK_RIGHT:
+                _focus_next();
+                break;
+        case ONE_FINGER_FLICK_UP:
+                if (_is_active_entry())
+                        _caret_move_backward();
+                else if (_has_value() && _is_enabled())
+                        _value_inc();
+                else
+                        _focus_prev();
+                break;
+        case ONE_FINGER_FLICK_DOWN:
+                if (_is_active_entry())
+                        _caret_move_forward();
+                else if (_has_value() && _is_enabled())
+                        _value_dec();
+                else
+                        _focus_next();
+                break;
+        case ONE_FINGER_SINGLE_TAP:
 #if defined(ELM_ACCESS_KEYBOARD) && defined(X11_ENABLED)
-		keyboard_win = top_window_get(info->x_end, info->y_end);
-		if (keyboard_win && ecore_x_e_virtual_keyboard_get(keyboard_win)) {
-			elm_access_adaptor_emit_read(keyboard_win, info->x_end, info->y_end);
-			break;
-		}
+                keyboard_win = top_window_get(info->x_end, info->y_end);
+                if (keyboard_win && ecore_x_e_virtual_keyboard_get(keyboard_win)) {
+                        elm_access_adaptor_emit_read(keyboard_win, info->x_end, info->y_end);
+                        break;
+                }
 #endif
-		if (!prepared)
-			_focus_widget(info);
-		break;
-	case ONE_FINGER_DOUBLE_TAP:
+                if (!prepared)
+                        _focus_widget(info);
+                break;
+        case ONE_FINGER_DOUBLE_TAP:
 #if defined(ELM_ACCESS_KEYBOARD) && defined(X11_ENABLED)
-		keyboard_win = top_window_get(info->x_end, info->y_end);
-		if (keyboard_win && ecore_x_e_virtual_keyboard_get(keyboard_win)) {
-			elm_access_adaptor_emit_activate(keyboard_win, info->x_end, info->y_end);
-			break;
-		}
+                keyboard_win = top_window_get(info->x_end, info->y_end);
+                if (keyboard_win && ecore_x_e_virtual_keyboard_get(keyboard_win)) {
+                        elm_access_adaptor_emit_activate(keyboard_win, info->x_end, info->y_end);
+                        break;
+                }
 #endif
-		_activate_widget();
-		break;
-	case TWO_FINGERS_SINGLE_TAP:
-		_set_pause();
-		break;
-	case TWO_FINGERS_DOUBLE_TAP:
-		_start_stop_signal_send();
-		break;
-	case TWO_FINGERS_TRIPLE_TAP:
+                _activate_widget();
+                break;
+        case TWO_FINGERS_SINGLE_TAP:
+                _set_pause();
+                break;
+        case TWO_FINGERS_DOUBLE_TAP:
+                _start_stop_signal_send();
+                break;
+        case TWO_FINGERS_TRIPLE_TAP:
 #ifndef SCREEN_READER_TV
-		_read_quickpanel();
+                _read_quickpanel();
 #endif
-		break;
-	case THREE_FINGERS_SINGLE_TAP:
-		_review_from_top();
-		break;
-	case THREE_FINGERS_DOUBLE_TAP:
-		_review_from_current();
-		break;
-	case THREE_FINGERS_FLICK_DOWN:
-		_quickpanel_change_state(QUICKPANEL_DOWN);
-		break;
-	case THREE_FINGERS_FLICK_UP:
-		_quickpanel_change_state(QUICKPANEL_UP);
-		break;
-	case ONE_FINGER_FLICK_LEFT_RETURN:
-		_direct_scroll_back();
-		break;
-	case ONE_FINGER_FLICK_RIGHT_RETURN:
-		_direct_scroll_forward();
-		break;
-	case ONE_FINGER_FLICK_UP_RETURN:
-		if (_is_active_entry())
-			_caret_move_beg();
-		else
-			_direct_scroll_to_first();
-		break;
-	case ONE_FINGER_FLICK_DOWN_RETURN:
-		if (_is_active_entry())
-			_caret_move_end();
-		else
-			_direct_scroll_to_last();
-		break;
-	default:
-		DEBUG("Gesture type %d not handled in switch", info->type);
-	}
+                break;
+        case THREE_FINGERS_SINGLE_TAP:
+                _review_from_top();
+                break;
+        case THREE_FINGERS_DOUBLE_TAP:
+                _review_from_current();
+                break;
+        case THREE_FINGERS_FLICK_DOWN:
+                _quickpanel_change_state(QUICKPANEL_DOWN);
+                break;
+        case THREE_FINGERS_FLICK_UP:
+                _quickpanel_change_state(QUICKPANEL_UP);
+                break;
+        case ONE_FINGER_FLICK_LEFT_RETURN:
+                _direct_scroll_back();
+                break;
+        case ONE_FINGER_FLICK_RIGHT_RETURN:
+                _direct_scroll_forward();
+                break;
+        case ONE_FINGER_FLICK_UP_RETURN:
+                if (_is_active_entry())
+                        _caret_move_beg();
+                else
+                        _direct_scroll_to_first();
+                break;
+        case ONE_FINGER_FLICK_DOWN_RETURN:
+                if (_is_active_entry())
+                        _caret_move_end();
+                else
+                        _direct_scroll_to_last();
+                break;
+        default:
+                DEBUG("Gesture type %d not handled in switch", info->type);
+        }
 
-	dbus_gesture_adapter_emit(info);
+        dbus_gesture_adapter_emit(info);
 }
+
 
 static void _view_content_changed(AtspiAccessible * root, void *user_data)
 {
@@ -2245,13 +2298,36 @@ static void on_window_activate(void *data, AtspiAccessible * window)
 	DEBUG("END");
 }
 
+void navigator_gestures_tracker_register(GestureCB cb, void *data)
+{
+        Eldbus_Connection *session;
+        Eldbus_Object *obj;
+        Eldbus_Proxy *proxy;
+
+        eldbus_init();
+        DEBUG("Navigator: Registering callback GestureDetected signal");
+        if (!(session = eldbus_address_connection_get("unix:path=/var/run/dbus/system_bus_socket"))) {
+                ERROR("Unable to get session bus");
+                return;
+        }
+        obj = eldbus_object_get(session, E_A11Y_SERVICE_BUS_NAME, E_A11Y_SERVICE_NAVI_OBJ_PATH);
+        if (!obj) ERROR("Getting object failed");
+
+        proxy = eldbus_proxy_get(obj, E_A11Y_SERVICE_NAVI_IFC_NAME);
+        if (!proxy) ERROR("Getting proxy failed");
+        if (!eldbus_proxy_signal_handler_add(proxy, "GestureDetected", cb, data))
+                DEBUG("No signal handler returned");
+        DEBUG("Callback registration successful");
+        return;
+}
+
 void navigator_init(void)
 {
 	DEBUG("START");
 
 	set_utterance_cb(_on_utterance);
 
-	screen_reader_gestures_tracker_register(on_gesture_detected, NULL);
+	navigator_gestures_tracker_register(on_gesture_detected, NULL);
 	// register on active_window
 	dbus_gesture_adapter_init();
 	app_tracker_init();
