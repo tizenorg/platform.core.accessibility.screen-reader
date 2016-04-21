@@ -9,4 +9,6 @@ void dbus_gesture_adapter_shutdown(void);
 
 void dbus_gesture_adapter_emit(const Gesture_Info *info);
 
+const char *_gesture_enum_to_string(Gesture g);
+
 #endif
