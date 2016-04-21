@@ -214,8 +214,6 @@ void set_signal_handler()
 
 static int app_create(void *data)
 {
-	if (vconf_set_bool(VCONFKEY_SETAPPL_ACCESSIBILITY_TTS, 1))
-		ERROR("Can't set value of %s vconf key to 1", VCONFKEY_SETAPPL_ACCESSIBILITY_TTS);
 	elm_init(0, NULL);
 	atspi_init();
 
@@ -247,8 +245,6 @@ static int app_terminate(void *data)
 
 	DEBUG("libatspi terminated");
 	atspi_exit();
-	if (vconf_set_bool(VCONFKEY_SETAPPL_ACCESSIBILITY_TTS, 0))
-		ERROR("Can't set value of %s vconf key to 1", VCONFKEY_SETAPPL_ACCESSIBILITY_TTS);
 	return 0;
 }
 
