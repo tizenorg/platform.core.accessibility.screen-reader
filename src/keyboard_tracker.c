@@ -25,8 +25,6 @@
 #include "screen_reader_tts.h"
 static AtspiDeviceListener *listener;
 static AtspiDeviceListener *async_listener;
-static Keyboard_Tracker_Cb user_cb;
-static void *user_data;
 #ifdef X11_ENABLED
 static Ecore_Event_Handler *root_xwindow_property_changed_hld = NULL;
 static Ecore_Event_Handler *active_xwindow_property_changed_hld = NULL;
