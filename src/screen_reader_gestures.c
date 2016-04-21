@@ -24,6 +24,12 @@
 #else
 #include <Ecore_Wayland.h>
 #endif
+#include <Eldbus.h>
+
+
+#define E_A11Y_SERVICE_BUS_NAME "com.samsung.EModule"
+#define E_A11Y_SERVICE_NAVI_IFC_NAME "com.samsung.GestureNavigation"
+#define E_A11Y_SERVICE_NAVI_OBJ_PATH "/com/samsung/GestureNavigation"
 
 static GestureCB _global_cb;
 static void *_global_data;
@@ -1175,6 +1181,44 @@ void screen_reader_gestures_shutdown(void)
 
 void screen_reader_gestures_tracker_register(GestureCB cb, void *data)
 {
-	_global_cb = cb;
-	_global_data = data;
+//	_global_cb = cb;
+//	_global_data = data;
+        Eldbus_Connection *session;
+        Eldbus_Signal_Handler *signal_handler;
+        Eldbus_Object *obj;
+        Eldbus_Proxy *proxy;
+
+        eldbus_init();
+        DEBUG("Screen reader gestures callback registration: Start");
+        if (!(session = eldbus_address_connection_get("unix:path=/var/run/dbus/system_bus_socket"))) {
+                ERROR("Unable to get session bus");
+                return;
+        }
+        obj = eldbus_object_get(session, E_A11Y_SERVICE_BUS_NAME, E_A11Y_SERVICE_NAVI_OBJ_PATH);
+        if (!obj) ERROR("Getting object failed");
+
+        proxy = eldbus_proxy_get(obj, E_A11Y_SERVICE_NAVI_IFC_NAME);
+        if (!proxy) ERROR("Getting proxy failed");
+//        if (!(msg = eldbus_message_method_call_new("org.a11y.Bus", "/org/a11y/bus", "org.a11y.Bus", "GetAddress"))) {
+//                ERROR("DBus message allocation failed");
+//                goto fail_msg;
+//        }
+//
+//        if (!eldbus_connection_send(session, msg, _on_get_a11y_address, session, -1)) {
+//                ERROR("Message send failed");
+//                goto fail_send;
+//        }
+//      signal_handler = eldbus_signal_handler_add(conn, E_A11Y_SERVICE_BUS_NAME,
+//                                                                        E_A11Y_SERVICE_NAVI_OBJ_PATH, E_A11Y_SERVICE_NAVI_IFC_NAME,
+//                                        "GestureDetected", on_gesture_detected, NULL);
+        if (!eldbus_proxy_signal_handler_add(proxy, "GestureDetected", cb, data))
+                DEBUG("No signal handler returned");
+        DEBUG("Screen reader gestures callback registration: End");
+        return;
+
+fail_send:
+//      eldbus_message_unref(msg);
+fail_msg:
+        eldbus_connection_unref(session);
 }
+

@@ -2,6 +2,7 @@
 #define SCREEN_READER_GESTURES_H_
 
 #include <Ecore.h>
+#include <Eldbus.h>
 #ifdef X11_ENABLED
 #include <Ecore_X.h>
 #else
@@ -79,7 +80,7 @@ Eina_Bool screen_reader_gesture_x_grab_touch_devices(Ecore_X_Window win);
 Eina_Bool screen_reader_gesture_wl_grab_touch_devices(Ecore_Wl_Window win);
 #endif
 
-typedef void (*GestureCB)(void *data, Gesture_Info *info);
+typedef void (*GestureCB)(void *data, const Eldbus_Message *msg);
 
 /**
  * @brief Registers callback on gestures

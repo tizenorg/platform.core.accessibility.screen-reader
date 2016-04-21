@@ -24,6 +24,7 @@
 #include <Ecore.h>
 #include <math.h>
 #include <atspi/atspi.h>
+#include <Eldbus.h>
 #include "logger.h"
 #include "navigator.h"
 #include "window_tracker.h"
@@ -65,6 +66,7 @@
      g_error_free(error);\
      error = NULL;\
    }
+
 
 static void on_window_activate(void *data, AtspiAccessible * window);
 
@@ -2025,134 +2027,153 @@ static void _start_stop_signal_send(void)
 	atspi_action_do_action(action, action_index, NULL);
 }
 
-static void on_gesture_detected(void *data, Gesture_Info * info)
+static void on_gesture_detected(void *data, const Eldbus_Message *msg)
 {
 #ifdef X11_ENABLED
 	Ecore_X_Window keyboard_win;
 #endif
-	_on_auto_review_stop();
+	DEBUG("In _on_gestures_detected callback");
+        Gesture_Info *info = calloc(sizeof(Gesture_Info), 1);
+        int temp;
+        if (!msg)
+          {
+             DEBUG("Incoming message is empty");
+             return;
+          }
 
-	if (info->type == ONE_FINGER_SINGLE_TAP && info->state == 3) {
-		DEBUG("One finger single tap aborted");
-		prepared = true;
-	}
+        if (!eldbus_message_arguments_get(msg, "iiiiiiu", &temp, &info->x_beg,
+                                          &info->y_beg, &info->x_end, &info->y_end,
+                                          &info->state, &info->event_time)) {
+                DEBUG("Getting message arguments failed");
+                return;
+        }
+        info->type = (Gesture) temp;
+        DEBUG("Incoming gesture name is %s : %d %d %d %d %d", _gesture_enum_to_string(info->type), info->x_beg, info->y_beg, info->x_end, info->y_end, info->state);
 
-	switch (info->type) {
-	case ONE_FINGER_HOVER:
-		if (prepared) {
-			DEBUG("Prepare to move slider");
-			_move_slider(info);
-		} else {
-			if (_last_hover_event_time < 0)
-				_last_hover_event_time = info->event_time;
-			//info->event_time and _last_hover_event_time contain timestamp in ms.
-			//RETURN so we do not handle all incoming event
-			if ((info->event_time - _last_hover_event_time) < ONGOING_HOVER_GESTURE_INTERPRETATION_INTERVAL && info->state == 1)
-				return;
-			_last_hover_event_time = info->state != 1 ? -1 : info->event_time;
+        _on_auto_review_stop();
+
+        if (info->type == ONE_FINGER_SINGLE_TAP && info->state == 3) {
+                DEBUG("One finger single tap aborted");
+               prepared = true;
+        }
+
+        switch (info->type) {
+        case ONE_FINGER_HOVER:
+                if (prepared) {
+                        DEBUG("Prepare to move slider");
+                        _move_slider(info);
+                } else {
+                        if (_last_hover_event_time < 0)
+                                _last_hover_event_time = info->event_time;
+                        //info->event_time and _last_hover_event_time contain timestamp in ms.
+                        //RETURN so we do not handle all incoming event
+                        if ((info->event_time - _last_hover_event_time) < ONGOING_HOVER_GESTURE_INTERPRETATION_INTERVAL && info->state == 1)
+                                return;
+                        _last_hover_event_time = info->state != 1 ? -1 : info->event_time;
 #if defined(ELM_ACCESS_KEYBOARD) && defined(X11_ENABLED)
-			keyboard_win = top_window_get(info->x_end, info->y_end);
-			if (keyboard_win && ecore_x_e_virtual_keyboard_get(keyboard_win)) {
-				elm_access_adaptor_emit_read(keyboard_win, info->x_end, info->y_end);
-				break;
-			}
+                        keyboard_win = top_window_get(info->x_end, info->y_end);
+                        if (keyboard_win && ecore_x_e_virtual_keyboard_get(keyboard_win)) {
+                                elm_access_adaptor_emit_read(keyboard_win, info->x_end, info->y_end);
+                                break;
+                        }
 #endif
-			_focus_widget(info);
-		}
-		break;
-	case TWO_FINGERS_HOVER:
-		_widget_scroll(info);
-		break;
-	case ONE_FINGER_FLICK_LEFT:
-		_focus_prev();
-		break;
-	case ONE_FINGER_FLICK_RIGHT:
-		_focus_next();
-		break;
-	case ONE_FINGER_FLICK_UP:
-		if (_is_active_entry())
-			_caret_move_backward();
-		else if (_has_value() && _is_enabled())
-			_value_inc();
-		else
-			_focus_prev();
-		break;
-	case ONE_FINGER_FLICK_DOWN:
-		if (_is_active_entry())
-			_caret_move_forward();
-		else if (_has_value() && _is_enabled())
-			_value_dec();
-		else
-			_focus_next();
-		break;
-	case ONE_FINGER_SINGLE_TAP:
+                        _focus_widget(info);
+                }
+                break;
+        case TWO_FINGERS_HOVER:
+                _widget_scroll(info);
+                break;
+        case ONE_FINGER_FLICK_LEFT:
+                _focus_prev();
+                break;
+        case ONE_FINGER_FLICK_RIGHT:
+                _focus_next();
+                break;
+        case ONE_FINGER_FLICK_UP:
+                if (_is_active_entry())
+                        _caret_move_backward();
+                else if (_has_value() && _is_enabled())
+                        _value_inc();
+                else
+                        _focus_prev();
+                break;
+        case ONE_FINGER_FLICK_DOWN:
+                if (_is_active_entry())
+                        _caret_move_forward();
+                else if (_has_value() && _is_enabled())
+                        _value_dec();
+                else
+                        _focus_next();
+                break;
+        case ONE_FINGER_SINGLE_TAP:
 #if defined(ELM_ACCESS_KEYBOARD) && defined(X11_ENABLED)
-		keyboard_win = top_window_get(info->x_end, info->y_end);
-		if (keyboard_win && ecore_x_e_virtual_keyboard_get(keyboard_win)) {
-			elm_access_adaptor_emit_read(keyboard_win, info->x_end, info->y_end);
-			break;
-		}
+                keyboard_win = top_window_get(info->x_end, info->y_end);
+                if (keyboard_win && ecore_x_e_virtual_keyboard_get(keyboard_win)) {
+                        elm_access_adaptor_emit_read(keyboard_win, info->x_end, info->y_end);
+                        break;
+                }
 #endif
-		if (!prepared)
-			_focus_widget(info);
-		break;
-	case ONE_FINGER_DOUBLE_TAP:
+                if (!prepared)
+                        _focus_widget(info);
+                break;
+        case ONE_FINGER_DOUBLE_TAP:
 #if defined(ELM_ACCESS_KEYBOARD) && defined(X11_ENABLED)
-		keyboard_win = top_window_get(info->x_end, info->y_end);
-		if (keyboard_win && ecore_x_e_virtual_keyboard_get(keyboard_win)) {
-			elm_access_adaptor_emit_activate(keyboard_win, info->x_end, info->y_end);
-			break;
-		}
+                keyboard_win = top_window_get(info->x_end, info->y_end);
+                if (keyboard_win && ecore_x_e_virtual_keyboard_get(keyboard_win)) {
+                        elm_access_adaptor_emit_activate(keyboard_win, info->x_end, info->y_end);
+                        break;
+                }
 #endif
-		_activate_widget();
-		break;
-	case TWO_FINGERS_SINGLE_TAP:
-		_set_pause();
-		break;
-	case TWO_FINGERS_DOUBLE_TAP:
-		_start_stop_signal_send();
-		break;
-	case TWO_FINGERS_TRIPLE_TAP:
+                _activate_widget();
+                break;
+        case TWO_FINGERS_SINGLE_TAP:
+                _set_pause();
+                break;
+        case TWO_FINGERS_DOUBLE_TAP:
+                _start_stop_signal_send();
+                break;
+        case TWO_FINGERS_TRIPLE_TAP:
 #ifndef SCREEN_READER_TV
-		_read_quickpanel();
+                _read_quickpanel();
 #endif
-		break;
-	case THREE_FINGERS_SINGLE_TAP:
-		_review_from_top();
-		break;
-	case THREE_FINGERS_DOUBLE_TAP:
-		_review_from_current();
-		break;
-	case THREE_FINGERS_FLICK_DOWN:
-		_quickpanel_change_state(QUICKPANEL_DOWN);
-		break;
-	case THREE_FINGERS_FLICK_UP:
-		_quickpanel_change_state(QUICKPANEL_UP);
-		break;
-	case ONE_FINGER_FLICK_LEFT_RETURN:
-		_direct_scroll_back();
-		break;
-	case ONE_FINGER_FLICK_RIGHT_RETURN:
-		_direct_scroll_forward();
-		break;
-	case ONE_FINGER_FLICK_UP_RETURN:
-		if (_is_active_entry())
-			_caret_move_beg();
-		else
-			_direct_scroll_to_first();
-		break;
-	case ONE_FINGER_FLICK_DOWN_RETURN:
-		if (_is_active_entry())
-			_caret_move_end();
-		else
-			_direct_scroll_to_last();
-		break;
-	default:
-		DEBUG("Gesture type %d not handled in switch", info->type);
-	}
+                break;
+        case THREE_FINGERS_SINGLE_TAP:
+                _review_from_top();
+                break;
+        case THREE_FINGERS_DOUBLE_TAP:
+                _review_from_current();
+                break;
+        case THREE_FINGERS_FLICK_DOWN:
+                _quickpanel_change_state(QUICKPANEL_DOWN);
+                break;
+        case THREE_FINGERS_FLICK_UP:
+                _quickpanel_change_state(QUICKPANEL_UP);
+                break;
+        case ONE_FINGER_FLICK_LEFT_RETURN:
+                _direct_scroll_back();
+                break;
+        case ONE_FINGER_FLICK_RIGHT_RETURN:
+                _direct_scroll_forward();
+                break;
+        case ONE_FINGER_FLICK_UP_RETURN:
+                if (_is_active_entry())
+                        _caret_move_beg();
+                else
+                        _direct_scroll_to_first();
+                break;
+        case ONE_FINGER_FLICK_DOWN_RETURN:
+                if (_is_active_entry())
+                        _caret_move_end();
+                else
+                        _direct_scroll_to_last();
+                break;
+        default:
+                DEBUG("Gesture type %d not handled in switch", info->type);
+        }
 
-	dbus_gesture_adapter_emit(info);
+        dbus_gesture_adapter_emit(info);
 }
+
 
 static void _view_content_changed(AtspiAccessible * root, void *user_data)
 {
