@@ -50,7 +50,7 @@
 #define HAPTIC_VIBRATE_DURATION 50
 #define HAPTIC_VIBRATE_INTENSITY 50
 
-#define E_A11Y_SERVICE_BUS_NAME "org.tizen.EModule"
+#define E_A11Y_SERVICE_BUS_NAME "org.enlightnement.wm-screen-reader"
 #define E_A11Y_SERVICE_NAVI_IFC_NAME "org.tizen.GestureNavigation"
 #define E_A11Y_SERVICE_NAVI_OBJ_PATH "/org/tizen/GestureNavigation"
 
