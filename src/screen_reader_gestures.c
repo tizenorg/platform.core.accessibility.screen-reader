@@ -24,6 +24,12 @@
 #else
 #include <Ecore_Wayland.h>
 #endif
+#include <Eldbus.h>
+
+
+#define E_A11Y_SERVICE_BUS_NAME "org.tizen.EModule"
+#define E_A11Y_SERVICE_NAVI_IFC_NAME "org.tizen.GestureNavigation"
+#define E_A11Y_SERVICE_NAVI_OBJ_PATH "/org/tizen/GestureNavigation"
 
 static GestureCB _global_cb;
 static void *_global_data;

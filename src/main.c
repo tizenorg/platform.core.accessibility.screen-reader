@@ -219,7 +219,7 @@ static int app_create(void *data)
 
 	screen_reader_create_service(data);
 #ifndef SCREEN_READER_TV
-	screen_reader_gestures_init();
+	//screen_reader_gestures_init();
 	navigator_init();
 #endif
 	keyboard_tracker_init();
@@ -234,7 +234,7 @@ static int app_terminate(void *data)
 	DEBUG("terminate navigator");
 	navigator_shutdown();
 	DEBUG("terminate gestures");
-	screen_reader_gestures_shutdown();
+	//screen_reader_gestures_shutdown();
 #endif
 	keyboard_tracker_shutdown();
 	DEBUG("terminate service");
