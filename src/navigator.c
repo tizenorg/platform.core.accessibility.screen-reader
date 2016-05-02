@@ -87,6 +87,7 @@ static FlatNaviContext *context;
 static bool prepared = false;
 static int counter = 0;
 int _last_hover_event_time = -1;
+bool read_description = true;
 
 static struct {
 	AtspiAccessible *focused_object;
@@ -792,10 +793,14 @@ static char *generate_what_to_read(AtspiAccessible * obj)
 		strncat(ret, role_name, sizeof(ret) - strlen(ret) - 1);
 	}
 
+	DEBUG("Description:%s VALUE %d", description,read_description);
 	if (description && strlen(description) > 0) {
-		if (strlen(ret) > 0)
-			strncat(ret, ", ", sizeof(ret) - strlen(ret) - 1);
-		strncat(ret, description, sizeof(ret) - strlen(ret) - 1);
+		/* If description reading is enabled */
+		if (read_description) {
+			if (strlen(ret) > 0)
+				strncat(ret, ", ", sizeof(ret) - strlen(ret) - 1);
+			strncat(ret, description, sizeof(ret) - strlen(ret) - 1);
+		}
 	}
 
 	if (description_from_relation && (description_from_relation[0] != '\n')) {

@@ -16,6 +16,7 @@
 
 #include "screen_reader_spi.h"
 #include "flat_navi.h"
+#include "navigator.h"
 #include <check.h>
 #include <stdio.h>
 #include <atspi/atspi.h>
