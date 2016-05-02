@@ -87,6 +87,7 @@ static FlatNaviContext *context;
 static bool prepared = false;
 static int counter = 0;
 int _last_hover_event_time = -1;
+static bool read_description = true;
 
 static struct {
 	AtspiAccessible *focused_object;
@@ -793,9 +794,12 @@ static char *generate_what_to_read(AtspiAccessible * obj)
 	}
 
 	if (description && strlen(description) > 0) {
-		if (strlen(ret) > 0)
-			strncat(ret, ", ", sizeof(ret) - strlen(ret) - 1);
-		strncat(ret, description, sizeof(ret) - strlen(ret) - 1);
+		/* If description reading is enabled */
+		if (read_description) {
+			if (strlen(ret) > 0)
+				strncat(ret, ", ", sizeof(ret) - strlen(ret) - 1);
+			strncat(ret, description, sizeof(ret) - strlen(ret) - 1);
+		}
 	}
 
 	if (description_from_relation && (description_from_relation[0] != '\n')) {
@@ -2318,6 +2322,16 @@ void navigator_gestures_tracker_register(GestureCB cb, void *data)
 		DEBUG("No signal handler returned");
 	DEBUG("Callback registration successful");
 	return;
+}
+
+void navigator_description_read_enable(bool read_desc)
+{
+	DEBUG("START");
+
+	read_description = read_desc;
+	DEBUG("Description Read status %d",read_desc);
+
+	DEBUG("END");
 }
 
 void navigator_init(void)
