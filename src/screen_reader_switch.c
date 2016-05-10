@@ -1,6 +1,10 @@
 #include "logger.h"
 #include <Eldbus.h>
 
+#define E_A11Y_SERVICE_BUS_NAME "org.enlightnement.wm-screen-reader"
+#define E_A11Y_SERVICE_NAVI_IFC_NAME "org.tizen.GestureNavigation"
+#define E_A11Y_SERVICE_NAVI_OBJ_PATH "/org/tizen/GestureNavigation"
+
 Eina_Bool screen_reader_switch_enabled_get(Eina_Bool * value)
 {
 	Eldbus_Connection *conn;
@@ -124,3 +128,37 @@ Eina_Bool screen_reader_switch_enabled_set(Eina_Bool value)
 
 	return ret;
 }
+
+
+Eina_Bool screen_reader_switch_wm_enabled_set(Eina_Bool value)
+{
+	Eldbus_Connection *conn;
+	Eldbus_Object *dobj;
+	Eldbus_Proxy *proxy;
+	Eina_Bool ret = EINA_FALSE;
+
+	eldbus_init();
+	if (!(conn = eldbus_address_connection_get("unix:path=/var/run/dbus/system_bus_socket"))) {
+		ERROR("Connection to system bus failed");
+		return EINA_FALSE;
+	}
+	if (!(dobj = eldbus_object_get(conn, E_A11Y_SERVICE_BUS_NAME, E_A11Y_SERVICE_NAVI_OBJ_PATH))) {
+		ERROR("Failed to create eldbus object");
+		goto fail_obj;
+	}
+	if (!(proxy = eldbus_proxy_get(dobj, E_A11Y_SERVICE_NAVI_IFC_NAME))) {
+		ERROR("Failed to create proxy object for 'org.tizen.GestureNavigation'");
+		goto fail_proxy;
+	}
+	eldbus_proxy_call(proxy, "ScreenReaderEnabled", NULL, NULL, -1, "b", value);
+
+fail_proxy:
+	eldbus_object_unref(dobj);
+fail_obj:
+	eldbus_connection_unref(conn);
+
+	eldbus_shutdown();
+
+	return ret;
+}
+

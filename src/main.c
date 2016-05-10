@@ -224,6 +224,7 @@ static int app_create(void *data)
 #endif
 	keyboard_tracker_init();
 	screen_reader_switch_enabled_set(EINA_TRUE);
+	screen_reader_switch_wm_enabled_set(EINA_TRUE);
 	return 0;
 }
 
@@ -241,6 +242,7 @@ static int app_terminate(void *data)
 	screen_reader_terminate_service(data);
 	DEBUG("clear ScreenReaderEnabled property");
 	screen_reader_switch_enabled_set(EINA_FALSE);
+	screen_reader_switch_wm_enabled_set(EINA_FALSE);
 	DEBUG("screen reader terminated");
 
 	DEBUG("libatspi terminated");
