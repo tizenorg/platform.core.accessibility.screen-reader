@@ -50,7 +50,7 @@
 #define HAPTIC_VIBRATE_DURATION 50
 #define HAPTIC_VIBRATE_INTENSITY 50
 
-#define E_A11Y_SERVICE_BUS_NAME "org.enlightnement.wm-screen-reader"
+#define E_A11Y_SERVICE_BUS_NAME "org.enlightenment.wm-screen-reader"
 #define E_A11Y_SERVICE_NAVI_IFC_NAME "org.tizen.GestureNavigation"
 #define E_A11Y_SERVICE_NAVI_OBJ_PATH "/org/tizen/GestureNavigation"
 
@@ -2065,19 +2065,19 @@ static void on_gesture_detected(void *data, const Eldbus_Message *msg)
 #endif
 	DEBUG("In _on_gestures_detected callback");
 	Gesture_Info *info = calloc(sizeof(Gesture_Info), 1);
-	int temp;
+	int g_type;
 	if (!msg) {
 		DEBUG("Incoming message is empty");
 		return;
 	}
 
-	if (!eldbus_message_arguments_get(msg, "iiiiiiu", &temp, &info->x_beg,
-					  &info->y_beg, &info->x_end, &info->y_end,
-					  &info->state, &info->event_time)) {
+	if (!eldbus_message_arguments_get(msg, "i", &g_type, "i", &info->x_beg,
+					"i", &info->y_beg, "i", &info->x_end, "i", &info->y_end,
+					"i", &info->state, "u", &info->event_time)) {
 		DEBUG("Getting message arguments failed");
 		return;
 	}
-	info->type = (Gesture) temp;
+	info->type = (Gesture)g_type;
 	DEBUG("Incoming gesture name is %s : %d %d %d %d %d", _gesture_enum_to_string(info->type),
 	      info->x_beg, info->y_beg, info->x_end, info->y_end, info->state);
 
@@ -2297,7 +2297,7 @@ static void on_window_activate(void *data, AtspiAccessible * window)
 	DEBUG("END");
 }
 
-void navigator_gestures_tracker_register(GestureCB cb, void *data)
+void navigator_gestures_tracker_register(GestureCB gesture_cb, void *data)
 {
 	Eldbus_Connection *session;
 	Eldbus_Object *obj;
@@ -2314,7 +2314,7 @@ void navigator_gestures_tracker_register(GestureCB cb, void *data)
 
 	proxy = eldbus_proxy_get(obj, E_A11Y_SERVICE_NAVI_IFC_NAME);
 	if (!proxy) ERROR("Getting proxy failed");
-	if (!eldbus_proxy_signal_handler_add(proxy, "GestureDetected", cb, data))
+	if (!eldbus_proxy_signal_handler_add(proxy, "GestureDetected", gesture_cb, data))
 		DEBUG("No signal handler returned");
 	DEBUG("Callback registration successful");
 	return;

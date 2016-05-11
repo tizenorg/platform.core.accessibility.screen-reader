@@ -1,7 +1,7 @@
 #include "logger.h"
 #include <Eldbus.h>
 
-#define E_A11Y_SERVICE_BUS_NAME "org.enlightnement.wm-screen-reader"
+#define E_A11Y_SERVICE_BUS_NAME "org.enlightenment.wm-screen-reader"
 #define E_A11Y_SERVICE_NAVI_IFC_NAME "org.tizen.GestureNavigation"
 #define E_A11Y_SERVICE_NAVI_OBJ_PATH "/org/tizen/GestureNavigation"
 
@@ -130,6 +130,29 @@ Eina_Bool screen_reader_switch_enabled_set(Eina_Bool value)
 }
 
 
+static void
+_on_send_status(void *data, const Eldbus_Message *msg, Eldbus_Pending *pending EINA_UNUSED)
+{
+   const char *errname, *errmsg;
+   Eina_Bool val;
+   Eina_Bool expected_val = (Eina_Bool)data;
+   if (eldbus_message_error_get(msg, &errname, &errmsg))
+     {
+        ERROR("%s %s", errname, errmsg);
+        return;
+     }
+   if (!eldbus_message_arguments_get(msg, "b", &val))
+     {
+        ERROR("Could not get message contents");
+        return;
+     }
+   if (val != expected_val)
+     {
+        ERROR("Screen reader status doesn't match");
+        return;
+     }
+}
+
 Eina_Bool screen_reader_switch_wm_enabled_set(Eina_Bool value)
 {
 	Eldbus_Connection *conn;
@@ -150,7 +173,7 @@ Eina_Bool screen_reader_switch_wm_enabled_set(Eina_Bool value)
 		ERROR("Failed to create proxy object for 'org.tizen.GestureNavigation'");
 		goto fail_proxy;
 	}
-	eldbus_proxy_call(proxy, "ScreenReaderEnabled", NULL, NULL, -1, "b", value);
+	eldbus_proxy_call(proxy, "ScreenReaderEnabled", _on_send_status, value, -1, "b", value);
 
 fail_proxy:
 	eldbus_object_unref(dobj);
