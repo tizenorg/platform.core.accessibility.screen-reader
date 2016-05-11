@@ -34,8 +34,9 @@ Eina_Bool screen_reader_switch_enabled_get(Eina_Bool *value);
  *
  * Function used to inform window manager module that screen reader is enabled
  *
- * ScreenReaderEnabled property refers to
- * org.wm bus at org/wm object path in org.tizen.wm interface
+ * ScreenReaderEnabled method refers to
+ * org.enlightnement.wm-screen-reader bus at /org/tizen/GestureNavigation object path
+ * in org.tizen.GestureNavigation
  *
  * @param value EINA_TRUE if screen reader should be enabled and hence the gesture layer,
  * EINA_FALSE otherwise.

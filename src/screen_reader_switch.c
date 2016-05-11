@@ -1,7 +1,7 @@
 #include "logger.h"
 #include <Eldbus.h>
 
-#define E_A11Y_SERVICE_BUS_NAME "org.enlightnement.wm-screen-reader"
+#define E_A11Y_SERVICE_BUS_NAME "org.enlightenment.wm-screen-reader"
 #define E_A11Y_SERVICE_NAVI_IFC_NAME "org.tizen.GestureNavigation"
 #define E_A11Y_SERVICE_NAVI_OBJ_PATH "/org/tizen/GestureNavigation"
 
@@ -128,7 +128,6 @@ Eina_Bool screen_reader_switch_enabled_set(Eina_Bool value)
 
 	return ret;
 }
-
 
 Eina_Bool screen_reader_switch_wm_enabled_set(Eina_Bool value)
 {
