@@ -2076,9 +2076,9 @@ static void on_gesture_detected(void *data, const Eldbus_Message *msg)
 		return;
 	}
 
-	if (!eldbus_message_arguments_get(msg, "i", &g_type, "i", &info->x_beg,
-					"i", &info->y_beg, "i", &info->x_end, "i", &info->y_end,
-					"i", &info->state, "u", &info->event_time)) {
+	if (!eldbus_message_arguments_get(msg, "iiiiiiu", &g_type, &info->x_beg,
+					&info->y_beg, &info->x_end, &info->y_end,
+					&info->state, &info->event_time)) {
 		DEBUG("Getting message arguments failed");
 		return;
 	}
