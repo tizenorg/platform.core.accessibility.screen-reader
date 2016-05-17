@@ -132,6 +132,23 @@ static void _print_event_object_info(const AtspiEvent * event)
 	g_free(role);
 }
 
+static void _read_value(AtspiValue * value)
+{
+	if (!value)
+		return;
+
+	gdouble current_val = atspi_value_get_current_value(value, NULL);
+	gdouble max_val = atspi_value_get_maximum_value(value, NULL);
+	gdouble min_val = atspi_value_get_minimum_value(value, NULL);
+
+	int proc = (current_val / fabs(max_val - min_val)) * 100;
+
+	char buf[256] = "\0";
+	snprintf(buf, sizeof(buf), "%d percent", proc);
+	DEBUG("has value %s", buf);
+	tts_speak(buf, EINA_TRUE);
+}
+
 static void _on_atspi_event_cb(const AtspiEvent * event)
 {
 	GList *l;
@@ -157,6 +174,12 @@ static void _on_atspi_event_cb(const AtspiEvent * event)
 		g_free(name);
 		return;
 	}
+
+	if (!strcmp(event->type, "object:property-change:accessible-value") && atspi_accessible_get_role(event->source, NULL) == ATSPI_ROLE_SLIDER) {
+		AtspiValue *value_interface = atspi_accessible_get_value_iface(event->source);
+		_read_value(value_interface);
+	}
+
 	AtspiAccessible *new_highlighted_obj = NULL;
 
 	if (!strcmp(event->type, "object:state-changed:highlighted"))
