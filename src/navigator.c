@@ -1165,23 +1165,6 @@ static void _caret_move_backward(void)
 	return;
 }
 
-static void _read_value(AtspiValue * value)
-{
-	if (!value)
-		return;
-
-	gdouble current_val = atspi_value_get_current_value(value, NULL);
-	gdouble max_val = atspi_value_get_maximum_value(value, NULL);
-	gdouble min_val = atspi_value_get_minimum_value(value, NULL);
-
-	int proc = (current_val / fabs(max_val - min_val)) * 100;
-
-	char buf[256] = "\0";
-	snprintf(buf, sizeof(buf), "%d percent", proc);
-	DEBUG("has value %s", buf);
-	tts_speak(buf, EINA_TRUE);
-}
-
 static void _value_inc(void)
 {
 	AtspiAccessible *current_widget = NULL;
@@ -1202,8 +1185,6 @@ static void _value_inc(void)
 		DEBUG("Minimum increment: %f\n ", (double)minimum_inc);
 		GERROR_CHECK(err)
 			atspi_value_set_current_value(value_interface, current_val + minimum_inc, &err);
-		GERROR_CHECK(err)
-			_read_value(value_interface);
 		g_object_unref(value_interface);
 		return;
 	}
@@ -1229,8 +1210,6 @@ static void _value_dec(void)
 		GERROR_CHECK(err)
 			DEBUG("Minimum increment: %f\n ", (double)minimum_inc);
 		atspi_value_set_current_value(value_interface, current_val - minimum_inc, &err);
-		GERROR_CHECK(err)
-			_read_value(value_interface);
 		g_object_unref(value_interface);
 		return;
 	}
@@ -1935,7 +1914,6 @@ static void _move_slider(Gesture_Info * gi)
 	}
 
 	AtspiAccessible *obj = NULL;
-	AtspiValue *value = NULL;
 	AtspiComponent *comp = NULL;
 	AtspiRect *rect = NULL;
 	int click_point_x = 0;
@@ -1994,13 +1972,6 @@ static void _move_slider(Gesture_Info * gi)
 		DEBUG("state == 2");
 		end_scroll(gi->x_end, gi->y_end);
 		prepared = false;
-		value = atspi_accessible_get_value_iface(obj);
-		if (value) {
-			_read_value(value);
-			g_object_unref(value);
-		} else {
-			ERROR("There is not value interface in slider");
-		}
 	}
 	DEBUG("END");
 }
