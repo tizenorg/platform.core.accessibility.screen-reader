@@ -759,7 +759,7 @@ static char *generate_what_to_read(AtspiAccessible * obj)
 		g_object_unref(iface_text);
 	}
 
-	DEBUG("->->->->->-> WIDGET GAINED HIGHLIGHT: %s <-<-<-<-<-<-<-", name);
+	DEBUG("->->->->->-> WIDGET GAINED HIGHLIGHT: %s %s<-<-<-<-<-<-<-", name, role_name);
 	DEBUG("->->->->->-> FROM SUBTREE HAS NAME:  %s <-<-<-<-<-<-<-", other);
 
 	display_info_about_object(obj, false);
@@ -1897,6 +1897,26 @@ static Eina_Bool _is_slider(AtspiAccessible * obj)
 	return EINA_FALSE;
 }
 
+static Eina_Bool _is_index_item()
+{
+	DEBUG("START");
+
+	if (!context) {
+		ERROR("No navigation context created");
+		return EINA_FALSE;
+	}
+	AtspiAccessible *obj = NULL;
+	AtspiRole role;
+	obj = flat_navi_context_current_get(context);
+
+	if (!obj)
+		return EINA_FALSE;
+
+	role = atspi_accessible_get_role(obj, NULL);
+	if (role == ATSPI_ROLE_RADIO_MENU_ITEM) return EINA_TRUE;
+	return EINA_FALSE;
+}
+
 void start_scroll(int x, int y)
 {
 #ifdef X11_ENABLED
@@ -2121,9 +2141,15 @@ static void on_gesture_detected(void *data, const Eldbus_Message *msg)
 		break;
 	case ONE_FINGER_FLICK_LEFT:
 		_focus_prev();
+		if (_is_index_item())
+			_activate_widget();
+
 		break;
 	case ONE_FINGER_FLICK_RIGHT:
 		_focus_next();
+		if (_is_index_item())
+			_activate_widget();
+
 		break;
 	case ONE_FINGER_FLICK_UP:
 		if (_is_active_entry())
