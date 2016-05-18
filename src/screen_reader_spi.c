@@ -336,7 +336,7 @@ void spi_event_listener_cb(AtspiEvent * event, void *user_data)
 		return;
 	}
 	DEBUG("SPEAK: %s", text_to_read);
-	tts_speak(text_to_read, EINA_TRUE);
+	tts_speak_customized(text_to_read, EINA_TRUE, EINA_TRUE, event->source);
 
 	free(text_to_read);
 	DEBUG("END");
