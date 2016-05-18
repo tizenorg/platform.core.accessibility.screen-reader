@@ -546,8 +546,8 @@ AtspiAccessible *_next(FlatNaviContext * ctx)
 	ret = _directional_depth_first_search(root, current, 1, &_accept_object);
 
 	if (current && !ret) {
-		DEBUG("DFS SECOND PASS");
-		ret = _directional_depth_first_search(root, NULL, 1, &_accept_object);
+		DEBUG("Last item reached, pass last item again");
+		ret = current;
 	}
 	return ret;
 }
@@ -561,8 +561,8 @@ AtspiAccessible *_prev(FlatNaviContext * ctx)
 
 	ret = _directional_depth_first_search(root, current, -1, &_accept_object);
 	if (current && !ret) {
-		DEBUG("DFS SECOND PASS");
-		ret = _directional_depth_first_search(root, NULL, -1, &_accept_object);
+		DEBUG("Last item reached, pass last item again");
+		ret = current;
 	}
 	return ret;
 }
