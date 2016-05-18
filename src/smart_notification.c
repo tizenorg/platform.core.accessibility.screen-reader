@@ -117,10 +117,10 @@ static void _scroll_event_cb(AtspiEvent * event, gpointer user_data)
 
 	if (!strcmp(event->type, "object:scroll-start")) {
 		DEBUG("Scrolling started");
-		tts_speak(_("IDS_SCROLLING_STARTED"), EINA_TRUE);
+		tts_speak_customized(_("IDS_SCROLLING_STARTED"), EINA_TRUE, EINA_TRUE, event->source);
 	} else if (!strcmp(event->type, "object:scroll-end")) {
 		DEBUG("Scrolling finished");
-		tts_speak(_("IDS_SCROLLING_FINISHED"), EINA_FALSE);
+		tts_speak_customized(_("IDS_SCROLLING_FINISHED"), EINA_FALSE, EINA_TRUE, event->source);
 		get_realized_items_count((AtspiAccessible *) event->source, &start_index, &end_index);
 		_smart_notification_realized_items(start_index, end_index);
 	}

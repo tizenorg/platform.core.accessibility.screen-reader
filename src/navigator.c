@@ -902,7 +902,7 @@ static void _current_highlight_object_set(AtspiAccessible * obj)
 		text_to_speak = generate_what_to_read(obj);
 		DEBUG("SPEAK:%s", text_to_speak);
 
-		tts_speak(text_to_speak, EINA_TRUE);
+		tts_speak_customized(text_to_speak, EINA_TRUE, EINA_TRUE, obj);
 		g_free(text_to_speak);
 	} else
 		DEBUG("Unable to highlight on object");
@@ -1071,8 +1071,8 @@ static void _caret_move_beg(void)
 			DEBUG("Caret position increment done");
 			gchar *text = atspi_text_get_text(text_interface, 0, 1, NULL);
 			DEBUG("SPEAK:%s", text);
-			tts_speak(text, EINA_TRUE);
-			tts_speak(_("IDS_TEXT_BEGIN"), EINA_FALSE);
+			tts_speak_customized(text, EINA_TRUE, EINA_TRUE, current_obj);
+			tts_speak_customized(_("IDS_TEXT_BEGIN"), EINA_FALSE, EINA_TRUE, current_obj);
 			g_free(text);
 		} else {
 			ERROR("Caret position increment error");
@@ -1101,7 +1101,7 @@ static void _caret_move_end(void)
 		if (ret) {
 			DEBUG("Caret position increment done");
 			DEBUG("SPEAK:%s", _("IDS_TEXT_END"));
-			tts_speak(_("IDS_TEXT_END"), EINA_TRUE);
+			tts_speak_customized(_("IDS_TEXT_END"), EINA_TRUE, EINA_TRUE, current_obj);
 		} else
 			ERROR("Caret position to end error");
 		g_object_unref(text_interface);
@@ -1136,10 +1136,10 @@ static void _caret_move_forward(void)
 			DEBUG("Current caret offset:%d", current_offset);
 			if (offset_pos == atspi_text_get_character_count(text_interface, NULL)) {
 				DEBUG("SPEAK:%s", _("IDS_TEXT_END"));
-				tts_speak(_("IDS_TEXT_END"), EINA_FALSE);
+				tts_speak_customized(_("IDS_TEXT_END"), EINA_FALSE, EINA_TRUE, current_obj);
 			} else {
 				DEBUG("SPEAK:%s", text);
-				tts_speak(text, EINA_TRUE);
+				tts_speak_customized(text, EINA_TRUE, EINA_TRUE, current_obj);
 			}
 			g_free(text);
 		} else {
@@ -1181,11 +1181,11 @@ static void _caret_move_backward(void)
 			DEBUG("Caret position decrement done");
 			DEBUG("Current caret position:%d", offset_pos);
 			DEBUG("SPEAK:%s", text);
-			tts_speak(text, EINA_TRUE);
+			tts_speak_customized(text, EINA_TRUE, EINA_TRUE, current_obj);
 			g_free(text);
 			if (offset_pos == 0) {
 				DEBUG("SPEAK:%s", _("IDS_TEXT_BEGIN"));
-				tts_speak(_("IDS_TEXT_BEGIN"), EINA_FALSE);
+				tts_speak_customized(_("IDS_TEXT_BEGIN"), EINA_FALSE, EINA_TRUE, current_obj);
 			}
 		} else {
 			ERROR("Caret position decrement error");
@@ -1301,7 +1301,7 @@ static void _activate_widget(void)
 
 				DEBUG("SPEAK:%s", text_to_speak);
 
-				tts_speak(text_to_speak, EINA_TRUE);
+				tts_speak_customized(text_to_speak, EINA_TRUE, EINA_TRUE, current_obj);
 				g_free(text_to_speak);
 				g_object_unref(focus_component);
 			}
@@ -1317,7 +1317,7 @@ static void _activate_widget(void)
 		GERROR_CHECK(err)
 			activate_found = EINA_FALSE;
 		while (i < number && !activate_found) {
-			actionName = atspi_action_get_name(action, i, &err);
+			actionName = atspi_action_get_action_name(action, i, &err);
 			if (actionName && !strcmp("activate", actionName)) {
 				DEBUG("There is activate action");
 				activate_found = EINA_TRUE;
@@ -1635,7 +1635,7 @@ void auto_review_highlight_top(void)
 	} else {
 		text_to_speak = generate_what_to_read(obj);
 		DEBUG("Text to speak: %s", text_to_speak);
-		tts_speak(text_to_speak, EINA_TRUE);
+		tts_speak_customized(text_to_speak, EINA_TRUE, EINA_TRUE, obj);
 		free(text_to_speak);
 	}
 
