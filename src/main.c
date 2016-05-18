@@ -30,6 +30,7 @@
 #include "logger.h"
 #include "screen_reader.h"
 #include "screen_reader_switch.h"
+#include "dbus_direct_reading_adapter.h"
 
 #define MAX_STACK_FRAMES 64
 static void *stack_traces[MAX_STACK_FRAMES];
@@ -225,12 +226,14 @@ static int app_create(void *data)
 	keyboard_tracker_init();
 	screen_reader_switch_enabled_set(EINA_TRUE);
 	screen_reader_switch_wm_enabled_set(EINA_TRUE);
+	dbus_direct_reading_adapter_init();
 	return 0;
 }
 
 static int app_terminate(void *data)
 {
 	DEBUG("screen reader terminating");
+	dbus_direct_reading_adapter_shutdown();
 #ifndef SCREEN_READER_TV
 	DEBUG("terminate navigator");
 	navigator_shutdown();
