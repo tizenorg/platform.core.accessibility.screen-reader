@@ -510,6 +510,7 @@ char *generate_trait(AtspiAccessible * obj)
 		strncat(ret, trait, sizeof(ret) - strlen(ret) - 1);
 		break;
 	}
+	case ATSPI_ROLE_COMBO_BOX:
 	case ATSPI_ROLE_GLASS_PANE: {
 		AtspiAccessible *parent = atspi_accessible_get_parent(obj, NULL);
 		int children_count = atspi_accessible_get_child_count(parent, NULL);
