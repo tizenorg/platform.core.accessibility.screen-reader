@@ -73,7 +73,7 @@ static const AtspiRole interesting_roles[] = {
 
 extern bool sound_feedback;
 
-static Eina_Bool _has_escape_action(AtspiAccessible * obj)
+static Eina_Bool _has_activate_action(AtspiAccessible * obj)
 {
 	Eina_Bool ret = EINA_FALSE;
 
@@ -84,7 +84,7 @@ static Eina_Bool _has_escape_action(AtspiAccessible * obj)
 		int i = 0;
 		for (; i < atspi_action_get_n_actions(action, NULL); i++) {
 			gchar *action_name = atspi_action_get_action_name(action, i, NULL);
-			Eina_Bool equal = !strcmp(action_name, "escape");
+			Eina_Bool equal = !strcmp(action_name, "activate");
 			g_free(action_name);
 			if (equal) {
 				ret = EINA_TRUE;
@@ -93,7 +93,7 @@ static Eina_Bool _has_escape_action(AtspiAccessible * obj)
 		}
 		g_object_unref(action);
 	}
-	DEBUG("Obj %s %s escape action", atspi_accessible_get_role_name(obj, NULL), ret ? "has" : "doesn't have");
+	DEBUG("Obj %s %s activate action", atspi_accessible_get_role_name(obj, NULL), ret ? "has" : "doesn't have");
 	return ret;
 }
 
@@ -188,7 +188,7 @@ static Eina_Bool _accept_object(AtspiAccessible * obj)
 	case ATSPI_ROLE_INPUT_METHOD_WINDOW:
 		return EINA_FALSE;
 	case ATSPI_ROLE_DIALOG:
-		if (!_has_escape_action(obj))
+		if (!_has_activate_action(obj))
 			return EINA_FALSE;
 		break;
 	default:
@@ -262,8 +262,8 @@ static Eina_Bool _accept_object(AtspiAccessible * obj)
 	}
 	if (!ret) {
 		action = atspi_accessible_get_action_iface(obj);
-		if (action) {
-			DEBUG("Has action interface");
+		if (action && _has_activate_action(obj)) {
+			DEBUG("Has action interface with activate action");
 			ret = EINA_TRUE;
 			g_object_unref(action);
 		}
