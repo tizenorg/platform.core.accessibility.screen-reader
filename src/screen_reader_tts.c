@@ -28,18 +28,10 @@
 static int last_utt_id;
 static Eina_Bool pause_state = EINA_FALSE;
 static Eina_Bool flush_flag = EINA_FALSE;
-static Eina_Strbuf *txt_keep_buff = NULL;
+static Eina_List *read_command_queue = NULL;
+static Read_Command *last_read_command = NULL;
 
 static void (*on_utterance_end) (void);
-
-static void _text_keep(const char *txt)
-{
-	if (!txt_keep_buff)
-		return;
-	if (eina_strbuf_length_get(txt_keep_buff) > 0)
-		eina_strbuf_append(txt_keep_buff, ", ");
-	eina_strbuf_append(txt_keep_buff, txt);
-}
 
 static char *get_tts_error(int r)
 {
@@ -151,7 +143,8 @@ static void __tts_test_utt_completed_cb(tts_h tts, int utt_id, void *user_data)
 		on_utterance_end();
 	}
 #endif
-
+	overwrite_last_read_command_with(NULL);
+	tts_speak_do(EINA_FALSE);
 	return;
 }
 
@@ -175,8 +168,23 @@ bool tts_init(void *data)
 	tts_set_utterance_completed_cb(sd->tts, __tts_test_utt_completed_cb, sd);
 
 	DEBUG("---------------------- TTS_init END ----------------------\n\n");
-	txt_keep_buff = eina_strbuf_new();
 	return true;
+}
+
+void tts_shutdown(void *data)
+{
+	if (!data) {
+		ERROR("Invalid parameter");
+		return;
+	}
+
+	Service_Data *sd = data;
+	sd->update_language_list = false;
+	free((char *)sd->text_from_dbus);
+	free(sd->current_value);
+	sd->text_from_dbus = NULL;
+	sd->current_value = NULL;
+	tts_stop(sd->tts);
 }
 
 Eina_Bool tts_pause_get(void)
@@ -189,6 +197,7 @@ void tts_stop_set(void)
 {
 	Service_Data *sd = get_pointer_to_service_data_struct();
 	tts_stop(sd->tts);
+	overwrite_last_read_command_with(NULL);
 }
 
 Eina_Bool tts_pause_set(Eina_Bool pause_switch)
@@ -215,65 +224,118 @@ Eina_Bool tts_pause_set(Eina_Bool pause_switch)
 	return EINA_TRUE;
 }
 
-void tts_speak(char *text_to_speak, Eina_Bool flush_switch)
+void overwrite_last_read_command_with(const Read_Command *new_value)
 {
+	if (last_read_command != NULL) {
+		if (last_read_command->text != NULL)
+			free(last_read_command->text);
+		free(last_read_command);
+	}
+	last_read_command = new_value;
+}
+
+Eina_Bool
+can_interrupt(const Read_Command *prev, const Read_Command *next)
+{
+	DEBUG("[START] checking if can interrupt: prev (%p), next(%p)", prev, next);
+	if (prev != NULL)
+		DEBUG("CAN_INTERRUPT: prev->interruptable(%d)", prev->interruptable);
+	return next != NULL ? (prev != NULL ? prev->interruptable : EINA_TRUE) : EINA_FALSE;
+}
+
+void tts_speak_do(Eina_Bool flush_switch)
+{
+	DEBUG("[START] tts_speak_do");
 	int ret = 0;
 	Service_Data *sd = get_pointer_to_service_data_struct();
 	int speak_id;
 
-	if (!sd)
+	if (!sd || eina_list_count(read_command_queue) == 0)
 		return;
+
+	Read_Command *command = NULL;
+	do {
+		DEBUG("CLEAN UP THE QUEUE HEAD(%p)",read_command_queue);
+		command = read_command_queue->data;
+		DEBUG("GOT READ COMMAND:%p", command);
+		read_command_queue = eina_list_remove(read_command_queue, command);
+		DEBUG("REMOVED COMMAND FROM QUEUE. NEW HEAD: %p", read_command_queue);
+	} while (eina_list_count(read_command_queue) > 0 && can_interrupt(command,read_command_queue->data));
+
+	if (command->text == NULL) {
+		free(command);
+		return;
+	}
+	DEBUG("READ COMMAND text: %s", command->text);
 	tts_state_e state;
 	tts_get_state(sd->tts, &state);
-
-	if (state != TTS_STATE_PLAYING && state != TTS_STATE_PAUSED && state != TTS_STATE_READY) {
-		if (text_to_speak)
-			_text_keep(text_to_speak);
-		return;
-	}
-
-	if (flush_flag || flush_switch) {
-		if (state == TTS_STATE_PLAYING || state == TTS_STATE_PAUSED) {
-			ret = tts_stop(sd->tts);
-			if (TTS_ERROR_NONE != ret) {
-				DEBUG("Fail to stop TTS: resultl(%d)", ret);
+	DEBUG("TTS_STATE: %d", state);
+	DEBUG("TTS_STATE_NAME: %s", get_tts_state(state));
+	DEBUG("START COMMAND PROCESSING");
+	if (state == TTS_STATE_READY || ((state == TTS_STATE_PLAYING || state == TTS_STATE_PAUSED) && can_interrupt(last_read_command, command))) {
+		DEBUG("ACTION REQUIRED. TTS state: %d",state);
+		if (flush_flag || flush_switch) {
+			if (state == TTS_STATE_PLAYING || state == TTS_STATE_PAUSED) {
+				ret = tts_stop(sd->tts);
+				if (TTS_ERROR_NONE != ret)
+					DEBUG("Fail to stop TTS: resultl(%d)", ret);
 			}
 		}
-	}
-
-	DEBUG("tts_speak\n");
-	DEBUG("text to say:%s\n", text_to_speak);
-	if (!text_to_speak)
+		if ((ret = tts_add_text(sd->tts, command->text, NULL, TTS_VOICE_TYPE_AUTO, TTS_SPEED_AUTO, &speak_id))) {
+			switch (ret) {
+			case TTS_ERROR_INVALID_PARAMETER:
+				DEBUG("FAILED tts_add_text: error: TTS_ERROR_INVALID_PARAMETER");
+				break;
+			case TTS_ERROR_INVALID_STATE:
+				DEBUG("FAILED tts_add_text: error: TTS_ERROR_INVALID_STATE, tts_state: %d", state);
+				break;
+			case TTS_ERROR_INVALID_VOICE:
+				DEBUG("FAILED tts_add_text: error: TTS_ERROR_INVALID_VOICE");
+				break;
+			case TTS_ERROR_OPERATION_FAILED:
+				DEBUG("FAILED tts_add_text: error: TTS_ERROR_OPERATION_FAILED");
+					break;
+			case TTS_ERROR_NOT_SUPPORTED:
+				DEBUG("FAILED tts_add_text: error: TTS_ERROR_NOT_SUPPORTED");
+				break;
+			default:
+				DEBUG("FAILED tts_add_text: error: not recognized");
+			}
 		return;
-	if (!text_to_speak[0])
-		return;
-
-	if ((ret = tts_add_text(sd->tts, text_to_speak, NULL, TTS_VOICE_TYPE_AUTO, TTS_SPEED_AUTO, &speak_id))) {
-		switch (ret) {
-		case TTS_ERROR_INVALID_PARAMETER:
-			DEBUG("FAILED tts_add_text: error: TTS_ERROR_INVALID_PARAMETER");
-			break;
-		case TTS_ERROR_INVALID_STATE:
-			DEBUG("FAILED tts_add_text: error: TTS_ERROR_INVALID_STATE, tts_state: %d", state);
-			break;
-		case TTS_ERROR_INVALID_VOICE:
-			DEBUG("FAILED tts_add_text: error: TTS_ERROR_INVALID_VOICE");
-			break;
-		case TTS_ERROR_OPERATION_FAILED:
-			DEBUG("FAILED tts_add_text: error: TTS_ERROR_OPERATION_FAILED");
-			break;
-		case TTS_ERROR_NOT_SUPPORTED:
-			DEBUG("FAILED tts_add_text: error: TTS_ERROR_NOT_SUPPORTED");
-			break;
-		default:
-			DEBUG("FAILED tts_add_text: error: not recognized");
 		}
-		return;
-	}
 
-	DEBUG("added id to:%d\n", speak_id);
-	last_utt_id = speak_id;
-	tts_play(sd->tts);
+		DEBUG("tts_speak_do: added id to:%d\n", speak_id);
+		last_utt_id = speak_id;
+		overwrite_last_read_command_with(command);
+		tts_play(sd->tts);
+	} else if (command != NULL) {
+		DEBUG("RETURNING READ COMMAND: %p",command);
+		read_command_queue = eina_list_prepend(read_command_queue, command);
+	}
+	DEBUG("[END] tts_speak_do");
+}
+
+void tts_speak_customized(char *text_to_speak, Eina_Bool flush_switch, Eina_Bool interruptable)
+{
+	if (text_to_speak == NULL)
+		return;
+	Service_Data *sd = get_pointer_to_service_data_struct();
+	tts_state_e state;
+	tts_get_state(sd->tts, &state);
+	DEBUG("READ COMMAND PARAMS, TEXT: %s, INTERRUPTABLE: %d", text_to_speak, interruptable);
+	Read_Command *rc = calloc(1,sizeof(Read_Command));
+	rc->text = strdup(text_to_speak);
+	rc->interruptable = interruptable;
+	DEBUG("BEFORE ADD: %p", read_command_queue);
+	read_command_queue = eina_list_append(read_command_queue, rc);
+	DEBUG("AFTER ADD: %p", read_command_queue);
+	tts_speak_do(flush_switch);
+	DEBUG("tts_speak_customized: END");
+}
+
+void tts_speak(char *text_to_speak, Eina_Bool flush_switch)
+{
+	tts_speak_customized(text_to_speak, flush_switch, EINA_TRUE);
 }
 
 Eina_Bool update_supported_voices(void *data)
@@ -311,37 +373,9 @@ void state_changed_cb(tts_h tts, tts_state_e previous, tts_state_e current, void
 	DEBUG("current state:%s and previous state:%s\n", get_tts_state(current), get_tts_state(previous));
 	Service_Data *sd = user_data;
 
-	if (TTS_STATE_CREATED == previous && TTS_STATE_READY == current) {
-
+	if (TTS_STATE_READY == current) {
 		update_supported_voices(sd);
-
-		char *txt;
-
-		if (!txt_keep_buff)
-			return;
-		if (!eina_strbuf_length_get(txt_keep_buff))
-			return;
-
-		txt = eina_strbuf_string_steal(txt_keep_buff);
-		eina_strbuf_free(txt_keep_buff);
-		txt_keep_buff = NULL;
-		tts_speak(txt, EINA_FALSE);
-		free(txt);
+		overwrite_last_read_command_with(NULL);
+		tts_speak_do(EINA_FALSE);
 	}
-}
-
-void spi_stop(void *data)
-{
-	if (!data) {
-		ERROR("Invalid parameter");
-		return;
-	}
-
-	Service_Data *sd = data;
-	sd->update_language_list = false;
-	free((char *)sd->text_from_dbus);
-	free(sd->current_value);
-	sd->text_from_dbus = NULL;
-	sd->current_value = NULL;
-	tts_stop(sd->tts);
 }
