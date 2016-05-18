@@ -73,7 +73,6 @@ int screen_reader_terminate_service(void *data)
 	tts_stop(service_data->tts);
 	tts_unprepare(service_data->tts);
 	tts_destroy(service_data->tts);
-	service_data->text_from_dbus = NULL;
 	service_data->current_value = NULL;
 
 	return 0;

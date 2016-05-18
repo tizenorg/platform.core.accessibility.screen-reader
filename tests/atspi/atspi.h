@@ -445,7 +445,7 @@ gint atspi_accessible_get_index_in_parent (AtspiAccessible *obj, GError **error)
 AtspiAction * atspi_accessible_get_action_iface (AtspiAccessible *obj);
 gint atspi_action_get_n_actions (AtspiAction *obj, GError **error);
 gchar * atspi_action_get_action_name (AtspiAction *obj, gint i, GError **error);
-
+gboolean atspi_action_do_action (AtspiAction *obj, gint i, GError **error);
 int atspi_exit(void);
 
 #endif /*__ATSPI_H__*/
