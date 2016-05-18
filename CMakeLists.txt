@@ -16,6 +16,7 @@ SET(SRCS ${CMAKE_SOURCE_DIR}/src/app_tracker.c
 	 ${CMAKE_SOURCE_DIR}/src/screen_reader_vconf.c
 	 ${CMAKE_SOURCE_DIR}/src/smart_notification.c
 	 ${CMAKE_SOURCE_DIR}/src/keyboard_tracker.c
+	 ${CMAKE_SOURCE_DIR}/src/dbus_direct_reading_adapter.c
 )
 
 
