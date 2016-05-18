@@ -452,11 +452,20 @@ char *generate_trait(AtspiAccessible * obj)
 	}
 	case ATSPI_ROLE_MENU_ITEM: {
 		AtspiAccessible *parent = atspi_accessible_get_parent(obj, NULL);
+		GError *err = NULL;
 		int children_count = atspi_accessible_get_child_count(parent, NULL);
 		int index = atspi_accessible_get_index_in_parent(obj, NULL);
+		AtspiSelection* selection = atspi_accessible_get_selection_iface(parent);
+		gboolean is_selected = atspi_selection_is_child_selected(selection, index, &err);
+		GERROR_CHECK(err);
 		char tab_index[MENU_ITEM_TAB_INDEX_SIZE];
 		snprintf(tab_index, MENU_ITEM_TAB_INDEX_SIZE, _("IDS_TRAIT_MENU_ITEM_TAB_INDEX"), index + 1, children_count);
 		strncat(ret, tab_index, sizeof(ret) - strlen(ret) - 1);
+		strncat(ret, ", ", sizeof(ret) - strlen(ret) - 1);
+		if (is_selected)
+			strncat(ret, _("IDS_TRAIT_ITEM_SELECTED"), sizeof(ret) - strlen(ret) - 1);
+		else
+			strncat(ret, _("IDS_TRAIT_ITEM_SELECT"), sizeof(ret) - strlen(ret) - 1);
 		g_object_unref(parent);
 		break;
 	}
