@@ -508,6 +508,11 @@ gchar *atspi_action_get_action_name(AtspiAction * obj, gint i, GError ** error)
 	return strdup("");
 }
 
+gboolean atspi_action_do_action(AtspiAction * obj, gint i, GError ** error)
+{
+	return FALSE;
+}
+
 gint atspi_accessible_get_index_in_parent(AtspiAccessible * obj, GError ** error)
 {
 	return obj->index_in_parent;

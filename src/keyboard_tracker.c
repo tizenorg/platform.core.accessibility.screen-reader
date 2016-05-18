@@ -172,6 +172,7 @@ void root_xwindow_property_tracker_unregister()
 #endif
 static gboolean async_keyboard_cb(const AtspiDeviceEvent * stroke, void *data)
 {
+	DEBUG("AT-SPI DEVICE EVENT: ID(%d) STRING(%s) TYPE(%d) HW_CODE(%d) MODIFIERS(%d) TIMESTAMP(%d)", stroke->id, stroke->event_string,stroke->type,stroke->hw_code, stroke->modifiers, stroke->timestamp);
 	if (!strcmp(stroke->event_string, "XF86Back"))
 	{
 		tts_speak(_("IDS_BACK_BUTTON"), EINA_TRUE);
