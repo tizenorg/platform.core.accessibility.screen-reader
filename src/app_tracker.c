@@ -170,7 +170,7 @@ static void _on_atspi_event_cb(const AtspiEvent * event)
 	if (!strcmp(event->type, "object:property-change:accessible-name") && _object_has_highlighted_state(event->source)) {
 		gchar *name = atspi_accessible_get_name(event->source, NULL);
 		DEBUG("New name for object, read:%s", name);
-		tts_speak (name, EINA_TRUE);
+		tts_speak_customized(name, EINA_TRUE, EINA_TRUE, event->source);
 		g_free(name);
 		return;
 	}
@@ -184,7 +184,7 @@ static void _on_atspi_event_cb(const AtspiEvent * event)
 		}
 		else if (role == ATSPI_ROLE_FILLER) {
 			gchar *name = atspi_accessible_get_name(event->source, NULL);
-			tts_speak (name, EINA_TRUE);
+			tts_speak_customized(name, EINA_TRUE, EINA_TRUE, event->source);
 			g_free(name);
 		}
 	}
@@ -198,7 +198,7 @@ static void _on_atspi_event_cb(const AtspiEvent * event)
 			snprintf(buf, sizeof(buf), _("IDS_TRAIT_REORDER_DRAG_START"), idx + 1);
 		else
 			snprintf(buf, sizeof(buf), _("IDS_TRAIT_REORDER_DRAG_STOP"), idx + 1);
-		tts_speak(buf, EINA_TRUE);
+		tts_speak_customized(buf, EINA_TRUE, EINA_TRUE, event->source);
 		g_error_free(err);
 	}
 
