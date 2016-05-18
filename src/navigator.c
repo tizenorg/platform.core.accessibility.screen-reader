@@ -616,12 +616,12 @@ char *generate_trait(AtspiAccessible * obj)
                  && (atspi_state_set_contains(state_set, ATSPI_STATE_EXPANDED) || atspi_state_set_contains(state_set, ATSPI_STATE_COLLAPSED))) {
 			//ELM_GENLIST_ITEM_GROUP
 			GError *err = NULL;
-			int childrens_count = atspi_accessible_get_child_count(obj, &err);
+			int children_count = atspi_accessible_get_child_count(obj, &err);
 			GERROR_CHECK(err);
-			if(childrens_count > 0) {
+			if(children_count > 0) {
 				int idx = 0;
 				AtspiAccessible *child_iter = NULL;
-				for (idx = 0; idx < childrens_count; idx++) {
+				for (idx = 0; idx < children_count; idx++) {
 					child_iter = atspi_accessible_get_child_at_index(obj, idx, &err);
 					GERROR_CHECK(err);
 					AtspiRole child_role = atspi_accessible_get_role(child_iter, &err);
@@ -978,7 +978,7 @@ static void _current_highlight_object_set(AtspiAccessible * obj)
 		text_to_speak = generate_what_to_read(obj);
 		DEBUG("SPEAK:%s", text_to_speak);
 
-		tts_speak(text_to_speak, EINA_TRUE);
+		tts_speak_customized(text_to_speak, EINA_TRUE, EINA_TRUE, obj);
 		g_free(text_to_speak);
 	} else
 		DEBUG("Unable to highlight on object");
@@ -1147,8 +1147,8 @@ static void _caret_move_beg(void)
 			DEBUG("Caret position increment done");
 			gchar *text = atspi_text_get_text(text_interface, 0, 1, NULL);
 			DEBUG("SPEAK:%s", text);
-			tts_speak(text, EINA_TRUE);
-			tts_speak(_("IDS_TEXT_BEGIN"), EINA_FALSE);
+			tts_speak_customized(text, EINA_TRUE, EINA_TRUE, current_obj);
+			tts_speak_customized(_("IDS_TEXT_BEGIN"), EINA_FALSE, EINA_TRUE, current_obj);
 			g_free(text);
 		} else {
 			ERROR("Caret position increment error");
@@ -1177,7 +1177,7 @@ static void _caret_move_end(void)
 		if (ret) {
 			DEBUG("Caret position increment done");
 			DEBUG("SPEAK:%s", _("IDS_TEXT_END"));
-			tts_speak(_("IDS_TEXT_END"), EINA_TRUE);
+			tts_speak_customized(_("IDS_TEXT_END"), EINA_TRUE, EINA_TRUE, current_obj);
 		} else
 			ERROR("Caret position to end error");
 		g_object_unref(text_interface);
@@ -1212,10 +1212,10 @@ static void _caret_move_forward(void)
 			DEBUG("Current caret offset:%d", current_offset);
 			if (offset_pos == atspi_text_get_character_count(text_interface, NULL)) {
 				DEBUG("SPEAK:%s", _("IDS_TEXT_END"));
-				tts_speak(_("IDS_TEXT_END"), EINA_FALSE);
+				tts_speak_customized(_("IDS_TEXT_END"), EINA_FALSE, EINA_TRUE, current_obj);
 			} else {
 				DEBUG("SPEAK:%s", text);
-				tts_speak(text, EINA_TRUE);
+				tts_speak_customized(text, EINA_TRUE, EINA_TRUE, current_obj);
 			}
 			g_free(text);
 		} else {
@@ -1257,11 +1257,11 @@ static void _caret_move_backward(void)
 			DEBUG("Caret position decrement done");
 			DEBUG("Current caret position:%d", offset_pos);
 			DEBUG("SPEAK:%s", text);
-			tts_speak(text, EINA_TRUE);
+			tts_speak_customized(text, EINA_TRUE, EINA_TRUE, current_obj);
 			g_free(text);
 			if (offset_pos == 0) {
 				DEBUG("SPEAK:%s", _("IDS_TEXT_BEGIN"));
-				tts_speak(_("IDS_TEXT_BEGIN"), EINA_FALSE);
+				tts_speak_customized(_("IDS_TEXT_BEGIN"), EINA_FALSE, EINA_TRUE, current_obj);
 			}
 		} else {
 			ERROR("Caret position decrement error");
@@ -1368,16 +1368,15 @@ static void _activate_widget(void)
 		focus_component = atspi_accessible_get_component_iface(current_widget);
 		if (focus_component) {
 			if (atspi_component_grab_focus(focus_component, &err) == TRUE) {
-				GERROR_CHECK(err)
-
-					DEBUG("Entry activated\n");
+				GERROR_CHECK(err);
+				DEBUG("Entry activated\n");
 
 				char *text_to_speak = NULL;
 				text_to_speak = generate_what_to_read(current_widget);
 
 				DEBUG("SPEAK:%s", text_to_speak);
 
-				tts_speak(text_to_speak, EINA_TRUE);
+				tts_speak_customized(text_to_speak, EINA_TRUE, EINA_TRUE, current_obj);
 				g_free(text_to_speak);
 				g_object_unref(focus_component);
 			}
@@ -1390,11 +1389,12 @@ static void _activate_widget(void)
 	action = atspi_accessible_get_action_iface(current_widget);
 	if (action) {
 		number = atspi_action_get_n_actions(action, &err);
+		GERROR_CHECK(err);
+		activate_found = EINA_FALSE;
 		DEBUG("Number of available action = %d\n", number);
-		GERROR_CHECK(err)
-			activate_found = EINA_FALSE;
 		while (i < number && !activate_found) {
-			actionName = atspi_action_get_name(action, i, &err);
+			actionName = atspi_action_get_action_name(action, i, &err);
+			GERROR_CHECK(err);
 			if (actionName && !strcmp("activate", actionName)) {
 				DEBUG("There is activate action");
 				activate_found = EINA_TRUE;
@@ -1406,15 +1406,12 @@ static void _activate_widget(void)
 		if (activate_found) {
 			DEBUG("PERFORMING ATSPI ACTION NO.%d", i);
 			atspi_action_do_action(action, i, &err);
-		} else if (number > 0) {
-			DEBUG("PERFORMING ATSPI DEFAULT ACTION");
-			atspi_action_do_action(action, 0, &err);
-		} else
-			ERROR("There is no actions inside Action interface");
-		if (action)
+			GERROR_CHECK(err);
 			g_object_unref(action);
-		GERROR_CHECK(err)
 			return;
+		} else
+			ERROR("There is no activate action inside Action interface");
+		g_object_unref(action);
 	}
 
 	ss = atspi_accessible_get_state_set(current_widget);
@@ -1712,7 +1709,7 @@ void auto_review_highlight_top(void)
 	} else {
 		text_to_speak = generate_what_to_read(obj);
 		DEBUG("Text to speak: %s", text_to_speak);
-		tts_speak(text_to_speak, EINA_TRUE);
+		tts_speak_customized(text_to_speak, EINA_TRUE, EINA_TRUE, obj);
 		free(text_to_speak);
 	}
 
