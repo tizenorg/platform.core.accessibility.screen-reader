@@ -1317,7 +1317,7 @@ static void _activate_widget(void)
 		GERROR_CHECK(err)
 			activate_found = EINA_FALSE;
 		while (i < number && !activate_found) {
-			actionName = atspi_action_get_name(action, i, &err);
+			actionName = atspi_action_get_action_name(action, i, &err);
 			if (actionName && !strcmp("activate", actionName)) {
 				DEBUG("There is activate action");
 				activate_found = EINA_TRUE;
