@@ -825,7 +825,8 @@ static void _current_highlight_object_set(AtspiAccessible * obj)
 {
 	DEBUG("START");
 	GError *err = NULL;
-	gchar *role = NULL;
+	gchar *role_name = NULL;
+	AtspiRole role = -1;
 
 	if (!obj) {
 		DEBUG("Clearing highlight object");
@@ -835,7 +836,6 @@ static void _current_highlight_object_set(AtspiAccessible * obj)
 			g_object_unref(current_comp);
 			current_comp = NULL;
 		}
-
 		return;
 	}
 	if (current_obj == obj) {
@@ -848,16 +848,19 @@ static void _current_highlight_object_set(AtspiAccessible * obj)
 		AtspiComponent *comp = atspi_accessible_get_component_iface(obj);
 		if (!comp) {
 			GError *err = NULL;
-			role = atspi_accessible_get_role_name(obj, &err);
-			ERROR("AtspiComponent *comp NULL, [%s]", role);
+			role_name = atspi_accessible_get_role_name(obj, &err);
+			ERROR("AtspiComponent *comp NULL, [%s]", role_name);
 			GERROR_CHECK(err);
-			g_free(role);
+			g_free(role_name);
 			return;
 		}
 		if (current_comp) {
 			atspi_component_clear_highlight(current_comp, &err);
 		}
-		atspi_component_grab_highlight(comp, &err);
+		role = atspi_accessible_get_role(obj, NULL);
+		if (role != ATSPI_ROLE_PAGE_TAB_LIST) {
+			atspi_component_grab_highlight(comp, &err);
+		}
 		current_comp = comp;
 		GERROR_CHECK(err)
 

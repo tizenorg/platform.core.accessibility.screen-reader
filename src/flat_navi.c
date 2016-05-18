@@ -173,7 +173,6 @@ static Eina_Bool _accept_object(AtspiAccessible * obj)
 	case ATSPI_ROLE_WINDOW:
 	case ATSPI_ROLE_IMAGE:
 	case ATSPI_ROLE_LIST:
-	case ATSPI_ROLE_PAGE_TAB_LIST:
 	case ATSPI_ROLE_TOOL_BAR:
 	case ATSPI_ROLE_REDUNDANT_OBJECT:
 		return EINA_FALSE;
@@ -414,6 +413,7 @@ AtspiAccessible *_directional_depth_first_search(AtspiAccessible * root, AtspiAc
 {
 	Eina_Bool start_is_not_defunct = EINA_FALSE;
 	AtspiStateSet *ss;
+	AtspiRole role = -1;
 
 	if (start) {
 		AtspiStateSet *ss = atspi_accessible_get_state_set(start);
@@ -452,9 +452,24 @@ AtspiAccessible *_directional_depth_first_search(AtspiAccessible * root, AtspiAc
 		// 1. start node
 		// 2. internal nodes of flow relation chains
 		// 3. parent before children in backward traversing
-		if (node != start && (relation_mode || !prev_related_in_direction) && !(cc > 0 && next_sibling_idx_modifier < 0 && !all_children_visited) && stop_condition(node)) {
-			g_object_unref(prev_related_in_direction);
-			return node;
+		// 4. If page tab list being returned as not a first object
+		role = atspi_accessible_get_role(node, NULL);
+		if (node != start && (relation_mode || !prev_related_in_direction) && !(cc > 0 && next_sibling_idx_modifier < 0 && !all_children_visited) && stop_condition(node))
+		{
+			if (role == ATSPI_ROLE_PAGE_TAB_LIST)
+			{
+				if (start == NULL)
+				{
+					DEBUG("next_sibling_idx_modifier == 1 && role == ATSPI_ROLE_PAGE_TAB_LIST");
+					g_object_unref(prev_related_in_direction);
+					return node;
+				}
+			}
+			else
+			{
+				g_object_unref(prev_related_in_direction);
+				return node;
+			}
 		}
 
 		AtspiAccessible *next_related_in_direction = (next_sibling_idx_modifier > 0)
