@@ -181,6 +181,12 @@ static void _on_atspi_event_cb(const AtspiEvent * event)
 		g_object_unref(value_interface);
 	}
 
+	if (!strcmp(event->type, "object:property-change:accessible-value") && atspi_accessible_get_role(event->source, NULL) == ATSPI_ROLE_FILLER) {
+		gchar *name = atspi_accessible_get_name(event->source, NULL);
+		tts_speak (name, EINA_TRUE);
+		g_free(name);
+	}
+
 	AtspiAccessible *new_highlighted_obj = NULL;
 
 	if (!strcmp(event->type, "object:state-changed:highlighted"))
