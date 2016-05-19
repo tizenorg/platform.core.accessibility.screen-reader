@@ -175,10 +175,18 @@ static void _on_atspi_event_cb(const AtspiEvent * event)
 		return;
 	}
 
-	if (!strcmp(event->type, "object:property-change:accessible-value") && atspi_accessible_get_role(event->source, NULL) == ATSPI_ROLE_SLIDER) {
-		AtspiValue *value_interface = atspi_accessible_get_value_iface(event->source);
-		_read_value(value_interface);
-		g_object_unref(value_interface);
+	if (!strcmp(event->type, "object:property-change:accessible-value")) {
+		AtspiRole role = atspi_accessible_get_role(event->source, NULL);
+		if (role == ATSPI_ROLE_SLIDER) {
+			AtspiValue *value_interface = atspi_accessible_get_value_iface(event->source);
+			_read_value(value_interface);
+			g_object_unref(value_interface);
+		}
+		else if (role == ATSPI_ROLE_FILLER) {
+			gchar *name = atspi_accessible_get_name(event->source, NULL);
+			tts_speak (name, EINA_TRUE);
+			g_free(name);
+		}
 	}
 
 	AtspiAccessible *new_highlighted_obj = NULL;
