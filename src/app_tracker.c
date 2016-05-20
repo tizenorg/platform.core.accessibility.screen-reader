@@ -190,6 +190,18 @@ static void _on_atspi_event_cb(const AtspiEvent * event)
 	}
 	//
 
+	if (!strcmp(event->type, "object:state-changed:animated") && (atspi_accessible_get_role(event->source, NULL) == ATSPI_ROLE_LIST_ITEM)) {
+		GError *err = NULL;
+		char buf[256] = "\0";
+		gint idx = atspi_accessible_get_index_in_parent(event->source, &err);
+		if (event->detail1)
+			snprintf(buf, sizeof(buf),_("IDS_TRAIT_REORDER_DRAG_START"), idx + 1);
+		else
+			snprintf(buf, sizeof(buf),_("IDS_TRAIT_REORDER_DRAG_STOP"), idx + 1);
+		tts_speak(buf, EINA_TRUE);
+		g_error_free(err);
+	}
+
 	AtspiAccessible *new_highlighted_obj = NULL;
 
 	if (!strcmp(event->type, "object:state-changed:highlighted"))
@@ -240,6 +252,7 @@ static int _app_tracker_init_internal(void)
 	atspi_event_listener_register(_listener, "object:state-changed:visible", NULL);
 	atspi_event_listener_register(_listener, "object:state-changed:defunct", NULL);
 	atspi_event_listener_register(_listener, "object:state-changed:highlighted", NULL);
+	atspi_event_listener_register(_listener, "object:state-changed:animated", NULL);
 	atspi_event_listener_register(_listener, "object:bounds-changed", NULL);
 	atspi_event_listener_register(_listener, "object:visible-data-changed", NULL);
 	atspi_event_listener_register(_listener, "object:active-descendant-changed", NULL);
@@ -267,6 +280,7 @@ static void _app_tracker_shutdown_internal(void)
 	atspi_event_listener_deregister(_listener, "object:state-changed:showing", NULL);
 	atspi_event_listener_deregister(_listener, "object:state-changed:visible", NULL);
 	atspi_event_listener_deregister(_listener, "object:state-changed:highlighted", NULL);
+	atspi_event_listener_deregister(_listener, "object:state-changed:animated", NULL);
 	atspi_event_listener_deregister(_listener, "object:bounds-changed", NULL);
 	atspi_event_listener_deregister(_listener, "object:state-changed:defunct", NULL);
 	atspi_event_listener_deregister(_listener, "object:visible-data-changed", NULL);

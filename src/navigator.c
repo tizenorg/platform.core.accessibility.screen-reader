@@ -541,7 +541,7 @@ char *generate_trait(AtspiAccessible * obj)
 	case ATSPI_ROLE_LIST_ITEM: {
 		AtspiAccessible *parent = atspi_accessible_get_parent(obj, NULL);
 		AtspiRole parent_role = atspi_accessible_get_role(parent, NULL);
-
+		AtspiStateSet *parent_state_set = atspi_accessible_get_state_set(parent);
 		if(parent_role == ATSPI_ROLE_TREE_TABLE) {
 
 			AtspiStateSet *state_set = atspi_accessible_get_state_set(obj);
@@ -582,6 +582,10 @@ char *generate_trait(AtspiAccessible * obj)
 				strncat(ret, _("IDS_TRAIT_GROUP_INDEX_COLLAPSED"), sizeof(ret) - strlen(ret) - 1);
 			}
 		}
+		else if (atspi_state_set_contains(parent_state_set, ATSPI_STATE_ANIMATED)) {
+			strncat(ret, _("IDS_TRAIT_REORDER_ITEM_SELECT"), sizeof(ret) - strlen(ret) - 1);
+		}
+		g_object_unref(parent_state_set);
 		g_object_unref(parent);
 		break;
 	}
