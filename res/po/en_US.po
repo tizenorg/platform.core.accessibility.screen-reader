@@ -240,3 +240,12 @@ msgstr "%d selected in total"
 
 msgid "IDS_TRAIT_ITEM_SELECT"
 msgstr "Double tap to select"
+
+msgid "IDS_TRAIT_REORDER_ITEM_SELECT"
+msgstr "Reorder, Button, Double tap and hold, then drag to reorder"
+
+msgid "IDS_TRAIT_REORDER_DRAG_START"
+msgstr "Started dragging item at position %d"
+
+msgid "IDS_TRAIT_REORDER_DRAG_STOP"
+msgstr "Item dropped into position %d"
