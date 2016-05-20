@@ -471,7 +471,8 @@ char *generate_trait(AtspiAccessible * obj)
 		break;
 	}
 	case ATSPI_ROLE_POPUP_MENU: {
-		int children_count = atspi_accessible_get_child_count(obj, NULL);
+		AtspiAccessible *parent = atspi_accessible_get_parent(obj, NULL);
+		int children_count = atspi_accessible_get_child_count(parent, NULL);
 		char trait[HOVERSEL_TRAIT_SIZE];
 
 		snprintf(trait, HOVERSEL_TRAIT_SIZE, _("IDS_TRAIT_CTX_POPUP"));
@@ -492,6 +493,7 @@ char *generate_trait(AtspiAccessible * obj)
 
 		snprintf(trait, HOVERSEL_TRAIT_SIZE, _("IDS_TRAIT_POPUP_CLOSE"));
 		strncat(ret, trait, sizeof(ret) - strlen(ret) - 1);
+		g_object_unref(parent);
 		break;
 	}
 	case ATSPI_ROLE_DIALOG: {
@@ -517,6 +519,13 @@ char *generate_trait(AtspiAccessible * obj)
 		}
 
 		snprintf(trait, HOVERSEL_TRAIT_SIZE, _("IDS_TRAIT_POPUP_CLOSE"));
+		strncat(ret, trait, sizeof(ret) - strlen(ret) - 1);
+		break;
+	}
+	case ATSPI_ROLE_COMBO_BOX: {
+		int children_count = atspi_accessible_get_child_count(obj, NULL);
+		char trait[HOVERSEL_TRAIT_SIZE];
+		snprintf(trait, HOVERSEL_TRAIT_SIZE, _("IDS_TRAIT_PD_HOVERSEL"), children_count);
 		strncat(ret, trait, sizeof(ret) - strlen(ret) - 1);
 		break;
 	}
