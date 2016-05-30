@@ -590,6 +590,7 @@ char *generate_trait(AtspiAccessible * obj)
 		break;
 	}
 	case ATSPI_ROLE_CHECK_BOX:
+		strncat(ret, _("IDS_TRAIT_PUSH_BUTTON"), sizeof(ret) - strlen(ret) - 1);
 	case ATSPI_ROLE_RADIO_BUTTON: {
 		if (atspi_state_set_contains(state_set, ATSPI_STATE_CHECKED)) {
 			strncat(ret, _("IDS_TRAIT_CHECK_BOX_SELECTED"), sizeof(ret) - strlen(ret) - 1);
