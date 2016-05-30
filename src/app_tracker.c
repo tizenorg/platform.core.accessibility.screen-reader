@@ -202,6 +202,15 @@ static void _on_atspi_event_cb(const AtspiEvent * event)
 		g_error_free(err);
 	}
 
+	if (!strcmp(event->type, "object:state-changed:checked") && (atspi_accessible_get_role(event->source, NULL) == ATSPI_ROLE_CHECK_BOX)) {
+		char buf[16] = "\0";
+		if (event->detail1)
+			snprintf(buf, sizeof(buf), "%s", _("IDS_TRAIT_CHECK_BOX_SELECTED"));
+		else
+			snprintf(buf, sizeof(buf), "%s", _("IDS_TRAIT_CHECK_BOX_NOT_SELECTED"));
+		tts_speak(buf, EINA_TRUE);
+	}
+
 	AtspiAccessible *new_highlighted_obj = NULL;
 
 	if (!strcmp(event->type, "object:state-changed:highlighted"))
@@ -253,6 +262,7 @@ static int _app_tracker_init_internal(void)
 	atspi_event_listener_register(_listener, "object:state-changed:defunct", NULL);
 	atspi_event_listener_register(_listener, "object:state-changed:highlighted", NULL);
 	atspi_event_listener_register(_listener, "object:state-changed:animated", NULL);
+	atspi_event_listener_register(_listener, "object:state-changed:checked", NULL);
 	atspi_event_listener_register(_listener, "object:bounds-changed", NULL);
 	atspi_event_listener_register(_listener, "object:visible-data-changed", NULL);
 	atspi_event_listener_register(_listener, "object:active-descendant-changed", NULL);
@@ -281,6 +291,7 @@ static void _app_tracker_shutdown_internal(void)
 	atspi_event_listener_deregister(_listener, "object:state-changed:visible", NULL);
 	atspi_event_listener_deregister(_listener, "object:state-changed:highlighted", NULL);
 	atspi_event_listener_deregister(_listener, "object:state-changed:animated", NULL);
+	atspi_event_listener_deregister(_listener, "object:state-changed:checked", NULL);
 	atspi_event_listener_deregister(_listener, "object:bounds-changed", NULL);
 	atspi_event_listener_deregister(_listener, "object:state-changed:defunct", NULL);
 	atspi_event_listener_deregister(_listener, "object:visible-data-changed", NULL);
