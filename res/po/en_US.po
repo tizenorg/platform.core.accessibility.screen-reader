@@ -89,7 +89,7 @@ msgid "IDS_TRAIT_TEXT_EDIT_FOCUSED_TV"
 msgstr "editing"
 
 msgid "IDS_TRAIT_PD_PROGRESSBAR"
-msgstr "Progressing"
+msgstr "Processing"
 
 msgid "IDS_TRAIT_PD_PROGRESSBAR_PERCENT"
 msgstr "%.0f percent, Progressing"
