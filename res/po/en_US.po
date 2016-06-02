@@ -56,10 +56,10 @@ msgid "IDS_TRAIT_GROUP_INDEX"
 msgstr "group index"
 
 msgid "IDS_TRAIT_GROUP_INDEX_EXPANDED"
-msgstr "Expandable list, Double tap to collapse the list"
+msgstr "Expandable list, Double tap to collapse"
 
 msgid "IDS_TRAIT_GROUP_INDEX_COLLAPSED"
-msgstr "Expandable list, Double tap to expand the list"
+msgstr "Expandable list, Double tap to expand"
 
 msgid "IDS_TRAIT_MENU_ITEM_TAB_INDEX"
 msgstr "Tab %1$d of %2$d"
@@ -249,4 +249,3 @@ msgstr "Started dragging item at position %d"
 
 msgid "IDS_TRAIT_REORDER_DRAG_STOP"
 msgstr "Item dropped into position %d"
-
