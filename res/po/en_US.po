@@ -236,7 +236,7 @@ msgid "IDS_TRAIT_ITEM_SELECTED"
 msgstr "selected"
 
 msgid "IDS_TRAIT_ITEM_SELECTED_COUNT"
-msgstr "%d selected in total"
+msgstr "image %d selected in total"
 
 msgid "IDS_TRAIT_ITEM_SELECT"
 msgstr "Double tap to select"
