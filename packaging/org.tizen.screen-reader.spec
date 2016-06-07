@@ -41,6 +41,8 @@ An utility library for developers of the menu screen.
 %setup -q
 
 %build
+%restore_fcommon
+
 %define DataDir %{?TZ_SYS_RO_SHARE:%TZ_SYS_RO_SHARE}%{!?TZ_SYS_RO_SHARE:/usr/share}
 %define AppDir %{TZ_SYS_RO_APP}/%{name}
 %define Exec screen-reader
