@@ -654,7 +654,7 @@ char *generate_trait(AtspiAccessible * obj)
 		break;
 	}
 	case ATSPI_ROLE_HEADING:
-	case ATSPI_ROLE_PAGE_TAB_LIST:
+	case ATSPI_ROLE_PAGE_TAB:
 	case ATSPI_ROLE_GROUPING: {
 		break;
 	}
@@ -890,7 +890,7 @@ static void _current_highlight_object_set(AtspiAccessible * obj)
 			atspi_component_clear_highlight(current_comp, &err);
 		}
 		role = atspi_accessible_get_role(obj, NULL);
-		if (role != ATSPI_ROLE_PAGE_TAB_LIST) {
+		if (role != ATSPI_ROLE_PAGE_TAB) {
 			atspi_component_grab_highlight(comp, &err);
 		}
 		current_comp = comp;
