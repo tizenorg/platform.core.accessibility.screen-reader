@@ -7,13 +7,13 @@
 
 #define LANGUAGE_NAME_SIZE 6
 
-#define FOCUS_CHANGED_SIG "object:state-changed:focused"
-#define HIGHLIGHT_CHANGED_SIG "object:state-change:highlighted"
-#define VALUE_CHANGED_SIG "object:property-change:accessible-value"
-#define CARET_MOVED_SIG "object:text-caret-moved"
-#define STATE_FOCUSED_SIG "object:state-changed:focused"
-#define TEXT_INSERT_SIG "object:text-changed:insert"
-#define TEXT_DELETE_SIG "object:text-changed:delete"
+#define VALUE_CHANGED_SIG 	"object:property-change:accessible-value"
+#define STATE_CHECKED_SIG 	"object:state-changed:checked"
+#define STATE_FOCUSED_SIG 	"object:state-changed:focused"
+#define STATE_HIGHLIGHTED_SIG 	"object:state-change:highlighted"
+#define CARET_MOVED_SIG 	"object:text-caret-moved"
+#define TEXT_INSERT_SIG 	"object:text-changed:insert"
+#define TEXT_DELETE_SIG 	"object:text-changed:delete"
 
 typedef struct
 {

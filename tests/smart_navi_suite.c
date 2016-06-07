@@ -54,7 +54,7 @@ void setup(void)
 {
 	Service_Data *data = get_pointer_to_service_data_struct();
 	data->run_service = 1;
-	data->tracking_signal_name = HIGHLIGHT_CHANGED_SIG;
+	data->tracking_signal_name = STATE_HIGHLIGHTED_SIG;
 
 	//Set by tts
 	data->tts = NULL;

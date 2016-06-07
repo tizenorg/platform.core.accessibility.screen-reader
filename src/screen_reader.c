@@ -31,9 +31,9 @@ Service_Data service_data = {
 	//Set by vconf
 	.run_service = 1,
 #ifdef SCREEN_READER_TV
-	.tracking_signal_name = FOCUS_CHANGED_SIG,
+	.tracking_signal_name = STATE_FOCUSED_SIG,
 #else
-	.tracking_signal_name = HIGHLIGHT_CHANGED_SIG,
+	.tracking_signal_name = STATE_HIGHLIGHTED_SIG,
 #endif
 
 	//Set by tts
