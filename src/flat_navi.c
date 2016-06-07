@@ -50,6 +50,7 @@ static const AtspiRole interesting_roles[] = {
 	ATSPI_ROLE_LINK,
 	ATSPI_ROLE_LIST_ITEM,
 	ATSPI_ROLE_MENU_ITEM,
+	ATSPI_ROLE_PAGE_TAB,
 	ATSPI_ROLE_PANEL,
 	ATSPI_ROLE_PARAGRAPH,
 	ATSPI_ROLE_PASSWORD_TEXT,
@@ -177,6 +178,7 @@ static Eina_Bool _accept_object(AtspiAccessible * obj)
 	case ATSPI_ROLE_REDUNDANT_OBJECT:
 	case ATSPI_ROLE_COLOR_CHOOSER:
 	case ATSPI_ROLE_PANEL:
+	case ATSPI_ROLE_PAGE_TAB_LIST:
 		return EINA_FALSE;
 	case ATSPI_ROLE_DIALOG:
 		if (!_has_escape_action(obj))
@@ -458,11 +460,11 @@ AtspiAccessible *_directional_depth_first_search(AtspiAccessible * root, AtspiAc
 		role = atspi_accessible_get_role(node, NULL);
 		if (node != start && (relation_mode || !prev_related_in_direction) && !(cc > 0 && next_sibling_idx_modifier < 0 && !all_children_visited) && stop_condition(node))
 		{
-			if (role == ATSPI_ROLE_PAGE_TAB_LIST)
+			if (role == ATSPI_ROLE_PAGE_TAB)
 			{
 				if (start == NULL)
 				{
-					DEBUG("next_sibling_idx_modifier == 1 && role == ATSPI_ROLE_PAGE_TAB_LIST");
+					DEBUG("next_sibling_idx_modifier == 1 && role == ATSPI_ROLE_PAGE_TAB");
 					g_object_unref(prev_related_in_direction);
 					return node;
 				}
