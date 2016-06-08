@@ -61,6 +61,9 @@ msgstr "Expandable list, Double tap to collapse the list"
 msgid "IDS_TRAIT_GROUP_INDEX_COLLAPSED"
 msgstr "Expandable list, Double tap to expand the list"
 
+msgid "IDS_TRAIT_GROUP_INDEX_IN_CHECK_BOX"
+msgstr "The Checkbox for the entire group"
+
 msgid "IDS_TRAIT_MENU_ITEM_TAB_INDEX"
 msgstr "Tab %1$d of %2$d"
 
