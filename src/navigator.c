@@ -2336,17 +2336,17 @@ static void on_window_activate(void *data, AtspiAccessible * window)
 
 void navigator_gestures_tracker_register(GestureCB gesture_cb, void *data)
 {
-	Eldbus_Connection *session;
+	Eldbus_Connection *conn;
 	Eldbus_Object *obj;
 	Eldbus_Proxy *proxy;
 
 	eldbus_init();
 	DEBUG("Navigator: Registering callback GestureDetected signal");
-	if (!(session = eldbus_address_connection_get("unix:path=/var/run/dbus/system_bus_socket"))) {
-		ERROR("Unable to get session bus");
+	if (!(conn = eldbus_connection_get(ELDBUS_CONNECTION_TYPE_SYSTEM))) {
+		ERROR("Unable to get system bus");
 		return;
 	}
-	obj = eldbus_object_get(session, E_A11Y_SERVICE_BUS_NAME, E_A11Y_SERVICE_NAVI_OBJ_PATH);
+	obj = eldbus_object_get(conn, E_A11Y_SERVICE_BUS_NAME, E_A11Y_SERVICE_NAVI_OBJ_PATH);
 	if (!obj) ERROR("Getting object failed");
 
 	proxy = eldbus_proxy_get(obj, E_A11Y_SERVICE_NAVI_IFC_NAME);

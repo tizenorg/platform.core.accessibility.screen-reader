@@ -137,7 +137,7 @@ Eina_Bool screen_reader_switch_wm_enabled_set(Eina_Bool value)
 	Eina_Bool ret = EINA_FALSE;
 
 	eldbus_init();
-	if (!(conn = eldbus_address_connection_get("unix:path=/var/run/dbus/system_bus_socket"))) {
+	if (!(conn = eldbus_connection_get(ELDBUS_CONNECTION_TYPE_SYSTEM))) {
 		ERROR("Connection to system bus failed");
 		return EINA_FALSE;
 	}
