@@ -179,6 +179,7 @@ static Eina_Bool _accept_object(AtspiAccessible * obj)
 	case ATSPI_ROLE_COLOR_CHOOSER:
 	case ATSPI_ROLE_PANEL:
 	case ATSPI_ROLE_PAGE_TAB_LIST:
+	case ATSPI_ROLE_TREE_TABLE:
 		return EINA_FALSE;
 	case ATSPI_ROLE_DIALOG:
 		if (!_has_escape_action(obj))
