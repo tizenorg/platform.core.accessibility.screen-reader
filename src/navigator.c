@@ -575,7 +575,48 @@ char *generate_trait(AtspiAccessible * obj)
 				g_object_unref(parent_selection);
 			}
 
-		} else if (atspi_state_set_contains(state_set, ATSPI_STATE_EXPANDABLE)) {
+		}
+		else if(!atspi_state_set_contains(state_set, ATSPI_STATE_EXPANDABLE)
+                 && (atspi_state_set_contains(state_set, ATSPI_STATE_EXPANDED) || atspi_state_set_contains(state_set, ATSPI_STATE_COLLAPSED))) {
+			//ELM_GENLIST_ITEM_GROUP
+			GError *err = NULL;
+			int childrens_count = atspi_accessible_get_child_count(obj, &err);
+			GERROR_CHECK(err);
+			if(childrens_count == 0) {
+				strncat(ret, _("IDS_TRAIT_GROUP_INDEX"), sizeof(ret) - strlen(ret) - 1);
+			}
+			else {
+				int idx = 0;
+				AtspiAccessible *child_iter = NULL;
+				for (idx = 0; idx < childrens_count; idx++) {
+					child_iter = atspi_accessible_get_child_at_index(obj, idx, &err);
+					GERROR_CHECK(err);
+					AtspiRole child_role = atspi_accessible_get_role(child_iter, &err);
+					GERROR_CHECK(err);
+					if(child_role == ATSPI_ROLE_CHECK_BOX) {
+						strncat(ret, _("IDS_TRAIT_GROUP_INDEX_IN_CHECK_BOX"), sizeof(ret) - strlen(ret) - 1);
+
+						AtspiStateSet *child_state_set = atspi_accessible_get_state_set(child_iter);
+						gboolean is_selected = atspi_state_set_contains(child_state_set, ATSPI_STATE_CHECKED);;
+						g_object_unref(child_state_set);
+						g_object_unref(child_iter);
+						strncat(ret, ", ", sizeof(ret) - strlen(ret) - 1);
+						if(is_selected) {
+							strncat(ret, _("IDS_TRAIT_CHECK_BOX_SELECTED"), sizeof(ret) - strlen(ret) - 1);
+						}
+						else {
+							strncat(ret, _("IDS_TRAIT_CHECK_BOX_NOT_SELECTED"), sizeof(ret) - strlen(ret) - 1);
+						}
+						break;
+					}
+					g_object_unref(child_iter);
+				}
+			}
+		}
+		else if (atspi_state_set_contains(state_set, ATSPI_STATE_EXPANDABLE)) {
+			//ELM_GENLIST_ITEM_TREE
+			strncat(ret, _("IDS_TRAIT_GROUP_INDEX"), sizeof(ret) - strlen(ret) - 1);
+			strncat(ret, ", ", sizeof(ret) - strlen(ret) - 1);
 			if (atspi_state_set_contains(state_set, ATSPI_STATE_EXPANDED)) {
 				strncat(ret, _("IDS_TRAIT_GROUP_INDEX_EXPANDED"), sizeof(ret) - strlen(ret) - 1);
 			} else {
