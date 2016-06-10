@@ -1348,9 +1348,10 @@ static void _activate_widget(void)
 			}
 		}
 		g_object_unref(edit);
-		return;
+		//After grabbing focus in editable interface, activate the interface to generate clicked event to app
+		//and also to open keypad again in case keypad was closed by clicking back key and entry still had focus.
+		//return;
 	}
-
 	action = atspi_accessible_get_action_iface(current_widget);
 	if (action) {
 		number = atspi_action_get_n_actions(action, &err);
