@@ -1312,7 +1312,6 @@ static void _activate_widget(void)
 			}
 		}
 		g_object_unref(edit);
-		return;
 	}
 
 	action = atspi_accessible_get_action_iface(current_widget);
