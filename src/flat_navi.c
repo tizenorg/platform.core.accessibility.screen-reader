@@ -174,6 +174,7 @@ static Eina_Bool _accept_object(AtspiAccessible * obj)
 	case ATSPI_ROLE_WINDOW:
 	case ATSPI_ROLE_IMAGE:
 	case ATSPI_ROLE_LIST:
+	case ATSPI_ROLE_ICON:
 	case ATSPI_ROLE_TOOL_BAR:
 	case ATSPI_ROLE_REDUNDANT_OBJECT:
 	case ATSPI_ROLE_COLOR_CHOOSER:
