@@ -88,6 +88,7 @@ static bool prepared = false;
 static int counter = 0;
 int _last_hover_event_time = -1;
 bool read_description = true;
+bool haptic;
 
 static struct {
 	AtspiAccessible *focused_object;
@@ -2296,8 +2297,8 @@ static void _new_highlighted_obj_changed(AtspiAccessible * new_highlighted_obj, 
 	if (context && flat_navi_context_current_get(context) != new_highlighted_obj) {
 		flat_navi_context_current_set(context, g_object_ref(new_highlighted_obj));
 	}
-
-	haptic_vibrate_start(HAPTIC_VIBRATE_DURATION, HAPTIC_VIBRATE_INTENSITY);
+	if (haptic)
+		haptic_vibrate_start(HAPTIC_VIBRATE_DURATION, HAPTIC_VIBRATE_INTENSITY);
 
 }
 
