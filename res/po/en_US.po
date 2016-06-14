@@ -22,11 +22,11 @@ msgstr "Scrolling finished"
 msgid "IDS_SCROLLING_STARTED"
 msgstr "Scrolling started"
 
-msgid "IDS_VISUAL_KEYBOARD_DISABLED"
-msgstr "Visual keyboard disabled"
+msgid "IDS_KEYBOARD_HIDDEN"
+msgstr "Keyboard hidden"
 
-msgid "IDS_VISUAL_KEYBOARD_ENABLED"
-msgstr "Visual keyboard enabled"
+msgid "IDS_KEYBOARD_SHOWN"
+msgstr "Keyboard shown"
 
 msgid "IDS_REACHED_MAX_VAL"
 msgstr ", maximum value reached"

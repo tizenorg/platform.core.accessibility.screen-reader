@@ -82,7 +82,7 @@ static last_focus_t last_focus = { -1, -1 };
 
 static AtspiAccessible *current_obj;
 static AtspiComponent *current_comp = NULL;
-static AtspiAccessible *top_window;
+AtspiAccessible *top_window;
 static FlatNaviContext *context;
 static bool prepared = false;
 static int counter = 0;
