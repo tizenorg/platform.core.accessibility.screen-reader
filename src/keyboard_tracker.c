@@ -17,6 +17,7 @@
 #include <string.h>
 #include <atspi/atspi.h>
 #include <Ecore.h>
+#include <vconf.h>
 #ifdef X11_ENABLED
 #include <Ecore_X.h>
 #endif
@@ -25,6 +26,11 @@
 #include "screen_reader_tts.h"
 static AtspiDeviceListener *listener;
 static AtspiDeviceListener *async_listener;
+
+#ifndef X11_ENABLED
+static int prev_keyboard_state = VCONFKEY_ISF_INPUT_PANEL_STATE_HIDE;
+#endif
+
 #ifdef X11_ENABLED
 static Ecore_Event_Handler *root_xwindow_property_changed_hld = NULL;
 static Ecore_Event_Handler *active_xwindow_property_changed_hld = NULL;
@@ -148,6 +154,55 @@ static gboolean async_keyboard_cb(const AtspiDeviceEvent * stroke, void *data)
 		return FALSE;
 }
 
+void keyboard_changed_cb(keynode_t * node, void *user_data)
+{
+	DEBUG("START");
+	int keyboard_state;
+	int ret = vconf_get_int(VCONFKEY_ISF_INPUT_PANEL_STATE, &keyboard_state);
+	if (ret != 0) {
+		ERROR("ret == %d", ret);
+		return;
+	}
+	if (keyboard_state == prev_keyboard_state) return;
+	if (keyboard_state == VCONFKEY_ISF_INPUT_PANEL_STATE_SHOW) {
+		tts_speak (_("IDS_KEYBOARD_SHOWN"), EINA_FALSE);
+		DEBUG("tts_speak Keyboard shown\n");
+		prev_keyboard_state = keyboard_state;
+	}
+	else if (keyboard_state == VCONFKEY_ISF_INPUT_PANEL_STATE_HIDE) {
+		tts_speak (_("IDS_KEYBOARD_HIDDEN"), EINA_FALSE);
+		DEBUG("tts_speak keyboard hidden\n");
+		prev_keyboard_state = keyboard_state;
+	}
+}
+
+void _set_vconf_key_changed_callback_keyboard_status()
+{
+	DEBUG("START");
+	int keyboard_state;
+	int ret = vconf_get_int(VCONFKEY_ISF_INPUT_PANEL_STATE, &keyboard_state);
+	if (ret != 0) {
+		ERROR("ret == %d", ret);
+		return;
+	}
+	//If keyboard is already open/hidden do not read.
+	ret = vconf_notify_key_changed(VCONFKEY_ISF_INPUT_PANEL_STATE, keyboard_changed_cb, NULL);
+	if (ret != 0)
+		DEBUG("Could not add notify callback to VCONFKEY_ISF_INPUT_PANEL_STATE key");
+	DEBUG("END");
+}
+
+void _unset_vconf_key_changed_callback_keyboard_status()
+{
+	DEBUG("START");
+	int ret;
+
+	ret = vconf_ignore_key_changed(VCONFKEY_ISF_INPUT_PANEL_STATE, keyboard_changed_cb);
+	if (ret != 0)
+		DEBUG("Could not delete notify callback to VCONFKEY_ISF_INPUT_PANEL_STATE key");
+	DEBUG("END");
+}
+
 void keyboard_tracker_init(void)
 {
 	async_listener = atspi_device_listener_new(async_keyboard_cb, NULL, NULL);
@@ -156,6 +211,8 @@ void keyboard_tracker_init(void)
 #ifdef X11_ENABLED
 	active_xwindow_property_tracker_register();
 	root_xwindow_property_tracker_register();
+#else
+	_set_vconf_key_changed_callback_keyboard_status();
 #endif
 	DEBUG("keyboard tracker init");
 }
@@ -167,6 +224,8 @@ void keyboard_tracker_shutdown(void)
 #ifdef X11_ENABLED
 	root_xwindow_property_tracker_unregister();
 	active_xwindow_property_tracker_unregister();
+#else
+	_unset_vconf_key_changed_callback_keyboard_status();
 #endif
 	DEBUG("keyboard tracker shutdown");
 }
