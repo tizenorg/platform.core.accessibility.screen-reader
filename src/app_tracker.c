@@ -17,6 +17,7 @@
 #include "app_tracker.h"
 #include "screen_reader_tts.h"
 #include "logger.h"
+#include "keyboard_tracker.h"
 
 typedef struct {
 	AtspiAccessible *base_root;
@@ -166,6 +167,16 @@ static void _on_atspi_event_cb(const AtspiEvent * event)
 	}
 
 	_print_event_object_info(event);
+
+	if (!strcmp(event->type, "object:bounds-changed")
+		&& (atspi_accessible_get_role(event->source, NULL) == ATSPI_ROLE_INPUT_METHOD_WINDOW)) {
+		AtspiRect *rect;
+		rect = (AtspiRect *)g_value_get_boxed(&event->any_data);
+		if (rect) {
+			keyboard_geometry_set(rect->x, rect->y, rect->width, rect->height);
+			DEBUG("keyboard_geometry: %d %d %d %d", rect->x, rect->y, rect->width, rect->height);
+		}
+	}
 
 	if (!strcmp(event->type, "object:property-change:accessible-name") && _object_has_highlighted_state(event->source)) {
 		gchar *name = atspi_accessible_get_name(event->source, NULL);
