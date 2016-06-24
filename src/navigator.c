@@ -2131,6 +2131,8 @@ static void on_gesture_detected(void *data, const Eldbus_Message *msg)
 {
 #ifdef X11_ENABLED
 	Ecore_X_Window keyboard_win;
+#else
+	Eina_Bool keyboard_status;
 #endif
 	DEBUG("In _on_gestures_detected callback");
 	Gesture_Info *info = calloc(sizeof(Gesture_Info), 1);
@@ -2176,6 +2178,9 @@ static void on_gesture_detected(void *data, const Eldbus_Message *msg)
 				elm_access_adaptor_emit_read(keyboard_win, info->x_end, info->y_end);
 				break;
 			}
+#else
+			keyboard_status = keyboard_event_status(info->x_end, info->y_end);
+			if (keyboard_status) break;
 #endif
 			_focus_widget(info);
 		}
@@ -2218,6 +2223,9 @@ static void on_gesture_detected(void *data, const Eldbus_Message *msg)
 			elm_access_adaptor_emit_read(keyboard_win, info->x_end, info->y_end);
 			break;
 		}
+#else
+		keyboard_status = keyboard_event_status(info->x_end, info->y_end);
+                if (keyboard_status) break;
 #endif
 		if (!prepared)
 			_focus_widget(info);
@@ -2229,6 +2237,9 @@ static void on_gesture_detected(void *data, const Eldbus_Message *msg)
 			elm_access_adaptor_emit_activate(keyboard_win, info->x_end, info->y_end);
 			break;
 		}
+#else
+		keyboard_status = keyboard_event_status(info->x_end, info->y_end);
+                if (keyboard_status) break;
 #endif
 		_activate_widget();
 		break;
