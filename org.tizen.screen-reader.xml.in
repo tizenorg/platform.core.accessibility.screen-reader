@@ -9,6 +9,7 @@
                 <app-control>
                     <operation name="http://tizen.org/appcontrol/operation/read_screen"/>
                 </app-control>
+                <background-category value="system"/>
         </ui-application>
 	<privileges>
 		<privilege>http://tizen.org/privilege/haptic</privilege>
