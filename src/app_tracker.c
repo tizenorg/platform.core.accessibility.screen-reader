@@ -17,6 +17,7 @@
 #include "app_tracker.h"
 #include "screen_reader_tts.h"
 #include "logger.h"
+#include <ctype.h>
 #ifndef X11_ENABLED
 #include "keyboard_tracker.h"
 #endif
@@ -40,6 +41,7 @@ static int _init_count;
 static GList *_roots;
 static AtspiEventListener *_listener;
 static AppTrackerEventCB _new_obj_highlighted_callback;
+extern bool keyboard_feedback;
 
 static int _is_descendant(AtspiAccessible * ancestor, AtspiAccessible * descendant)
 {
@@ -180,6 +182,36 @@ static void _on_atspi_event_cb(const AtspiEvent * event)
 		}
 	}
 #endif
+	if (keyboard_feedback) {
+		if (!strcmp(event->type, "object:text-changed:insert") && (atspi_accessible_get_role(event->source, NULL) == ATSPI_ROLE_ENTRY)) {
+			char buf[256] = "\0";
+			const gchar *text = NULL;
+			text = g_value_get_string(&event->any_data);
+			if ((event->detail2 == 1) && isupper((int)*text)) {
+			   strncat(buf, _("IDS_CAPITAL"), sizeof(buf) - strlen(buf) - 1);
+			   strncat(buf, " ", sizeof(buf) - strlen(buf) - 1);
+			}
+			strncat(buf, text, sizeof(buf) - strlen(buf) - 1);
+			tts_speak(buf, EINA_TRUE);
+		}
+		if (!strcmp(event->type, "object:text-changed:delete") && (atspi_accessible_get_role(event->source, NULL) == ATSPI_ROLE_ENTRY)) {
+			char buf[256] = "\0";
+			const gchar *text = NULL;
+			text = g_value_get_string(&event->any_data);
+			if ((event->detail2 == 1) && isupper((int)*text)) {
+				strncat(buf, _("IDS_CAPITAL"), sizeof(buf) - strlen(buf) - 1);
+				strncat(buf, " ", sizeof(buf) - strlen(buf) - 1);
+			}
+			strncat(buf, text, sizeof(buf) - strlen(buf) - 1);
+			strncat(buf, " ", sizeof(buf) - strlen(buf) - 1);
+			strncat(buf, _("IDS_DELETED"), sizeof(buf) - strlen(buf) - 1);
+			if (event->detail1 == 0) {
+				strncat(buf, " ", sizeof(buf) - strlen(buf) - 1);//entry should be empty, need to find/get more detail here
+				strncat(buf, _("IDS_ALL_CHARACTERS_DELETED"), sizeof(buf) - strlen(buf) - 1);
+			}
+			tts_speak(buf, EINA_TRUE);
+		}
+	}
 	if (!strcmp(event->type, "object:property-change:accessible-name") && _object_has_highlighted_state(event->source)) {
 		gchar *name = atspi_accessible_get_name(event->source, NULL);
 		DEBUG("New name for object, read:%s", name);
@@ -280,6 +312,8 @@ static int _app_tracker_init_internal(void)
 	atspi_event_listener_register(_listener, "object:visible-data-changed", NULL);
 	atspi_event_listener_register(_listener, "object:active-descendant-changed", NULL);
 	atspi_event_listener_register(_listener, "object:property-change", NULL);
+	atspi_event_listener_register(_listener, "object:text-changed:insert", NULL);
+	atspi_event_listener_register(_listener, "object:text-changed:delete", NULL);
 
 	return 0;
 }

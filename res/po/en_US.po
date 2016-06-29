@@ -86,7 +86,16 @@ msgid "IDS_TRAIT_POPUP_CLOSE"
 msgstr "double tap to close it"
 
 msgid "IDS_TRAIT_TEXT_EDIT_FOCUSED"
-msgstr "Editing, flick up and down to adjust position."
+msgstr "Editing"
+
+msgid "IDS_DELETED"
+msgstr "Deleted"
+
+msgid "IDS_CAPITAL"
+msgstr "Capital"
+
+msgid "IDS_ALL_CHARACTERS_DELETED"
+msgstr "All characters deleted"
 
 msgid "IDS_TRAIT_TEXT_EDIT_FOCUSED_TV"
 msgstr "editing"

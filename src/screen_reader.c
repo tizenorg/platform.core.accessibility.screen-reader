@@ -69,6 +69,7 @@ int screen_reader_terminate_service(void *data)
 	DEBUG("Service Terminate Callback \n");
 
 	Service_Data *service_data = data;
+	vconf_exit();
 
 	tts_stop(service_data->tts);
 	tts_unprepare(service_data->tts);

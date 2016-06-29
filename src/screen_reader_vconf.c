@@ -32,25 +32,11 @@
 
 keylist_t *keys = NULL;
 
-bool read_description;
-bool haptic;
+bool read_description = true;
+bool haptic = true;
+bool keyboard_feedback = true;
 
 // ------------------------------ vconf callbacks----------------------
-
-void app_termination_cb(keynode_t * node, void *user_data)
-{
-	DEBUG("START");
-	DEBUG("Application terminate %d", !vconf_keynode_get_int(node));
-
-	Service_Data *service_data = user_data;
-	service_data->run_service = vconf_keynode_get_int(node);
-
-	if (service_data->run_service == 0) {
-		elm_exit();
-	}
-
-	DEBUG("END");
-}
 
 void display_language_cb(keynode_t * node, void *user_data)
 {
@@ -96,24 +82,26 @@ int _set_vconf_callback_and_print_message_on_error_and_return_error_code(const c
 	return ret;
 }
 
+int _unset_vconf_callback(const char *in_key, vconf_callback_fn cb)
+{
+	int ret = vconf_ignore_key_changed(in_key, cb);
+	if (ret != 0)
+		DEBUG("Could not delete notify callback to %s", in_key);
+	DEBUG("END");
+	return ret;
+}
+
 void haptic_changed_cb(keynode_t * node, void *user_data)
 {
 	DEBUG("START");
 	DEBUG("Trying to set Reader haptic to: %d", vconf_keynode_get_bool(node));
-
-	Service_Data *sd = user_data;
 	int enabled;
-
-	if (!sd) return;
-
 	int ret = vconf_get_bool("db/setting/accessibility/screen_reader/haptic", &enabled);
 	if (ret != 0) {
 		ERROR("ret == %d", ret);
 		return;
 	}
-
 	haptic = enabled;
-
 	DEBUG("END");
 }
 
@@ -121,65 +109,85 @@ void reader_description_cb(keynode_t * node, void *user_data)
 {
 	DEBUG("START");
 	DEBUG("Trying to set Reader description to: %d", vconf_keynode_get_bool(node));
-
-	Service_Data *sd = user_data;
-	int descrition;
-
-	if (!sd) return;
-
-	int ret = vconf_get_bool("db/setting/accessibility/screen_reader/description", &descrition);
+	int description;
+	int ret = vconf_get_bool("db/setting/accessibility/screen_reader/description", &description);
 	if (ret != 0) {
 		ERROR("ret == %d", ret);
 		return;
 	}
-
-	read_description = descrition;
-
+	read_description = description;
 	DEBUG("END");
 }
 
-void _set_vconf_key_changed_callback_reader_haptic(Service_Data * service_data)
+void keyboard_feedback_cb(keynode_t * node, void *user_data)
 {
 	DEBUG("START");
+	DEBUG("Trying to set keyboard feedback to: %d", vconf_keynode_get_bool(node));
+	int kb_feedback = 1;
+	int ret = vconf_get_bool("db/setting/accessibility/screen_reader/keyboard_feedback", &kb_feedback);
+	if (ret != 0) {
+		ERROR("ret == %d", ret);
+		return;
+	}
+	keyboard_feedback = kb_feedback;
+	DEBUG("END");
+}
 
+void _set_vconf_key_changed_callback_reader_haptic()
+{
+	DEBUG("START");
 	int enabled;
-
 	int ret = vconf_get_bool("db/setting/accessibility/screen_reader/haptic", &enabled);
 	if (ret != 0) {
 		ERROR("ret == %d", ret);
 		return;
 	}
-
 	haptic = enabled;
 	DEBUG("Hapticr status %d ",haptic);
-	ret = vconf_notify_key_changed("db/setting/accessibility/screen_reader/haptic", haptic_changed_cb, service_data);
+	ret = vconf_notify_key_changed("db/setting/accessibility/screen_reader/haptic", haptic_changed_cb, NULL);
 	if (ret != 0)
 		DEBUG("Could not add notify callback to db/setting/accessibility/screen_reader/haptic key");
 
 	DEBUG("END");
 }
 
-void _set_vconf_key_changed_callback_reader_description(Service_Data * service_data)
+void _set_vconf_key_changed_callback_reader_description()
 {
 	DEBUG("START");
 
-	int descrition;
-
-	int ret = vconf_get_bool("db/setting/accessibility/screen_reader/description", &descrition);
+	int description;
+	int ret = vconf_get_bool("db/setting/accessibility/screen_reader/description", &description);
 	if (ret != 0) {
 		ERROR("ret == %d", ret);
 		return;
 	}
-
-	read_description = descrition;
-	DEBUG("Description Reader status %d ",descrition);
-	ret = vconf_notify_key_changed("db/setting/accessibility/screen_reader/description", reader_description_cb, service_data);
+	read_description = description;
+	DEBUG("Description Reader status %d ",description);
+	ret = vconf_notify_key_changed("db/setting/accessibility/screen_reader/description", reader_description_cb, NULL);
 	if (ret != 0)
 		DEBUG("Could not add notify callback to db/setting/accessibility/screen_reader/description key");
 
 	DEBUG("END");
 }
 
+void _set_vconf_key_changed_callback_reader_keyboard_feedback()
+{
+	DEBUG("START");
+
+	int kb_feedback = 0;
+	int ret = vconf_get_bool("db/setting/accessibility/screen_reader/keyboard_feedback", &kb_feedback);
+	if (ret != 0) {
+		ERROR("ret == %d", ret);
+		return;
+	}
+	keyboard_feedback = kb_feedback;
+	DEBUG("keyboard feedback status %d ",keyboard_feedback);
+	ret = vconf_notify_key_changed("db/setting/accessibility/screen_reader/keyboard_feedback", keyboard_feedback_cb, NULL);
+	if (ret != 0)
+		DEBUG("Could not add notify callback to db/setting/accessibility/screen_reader/keyboard_feedback key");
+
+DEBUG("END");
+}
 
 bool vconf_init(Service_Data * service_data)
 {
@@ -201,9 +209,18 @@ bool vconf_init(Service_Data * service_data)
 	}
 
 	_set_vconf_callback_and_print_message_on_error_and_return_error_code("db/menu_widget/language", display_language_cb, service_data);
-	_set_vconf_key_changed_callback_reader_description(service_data);
-	_set_vconf_key_changed_callback_reader_haptic(service_data);
+	_set_vconf_key_changed_callback_reader_description();
+	_set_vconf_key_changed_callback_reader_haptic();
+	_set_vconf_key_changed_callback_reader_keyboard_feedback();
 
 	DEBUG("---------------------- VCONF_init END ----------------------\n\n");
 	return true;
+}
+
+void vconf_exit()
+{
+	_unset_vconf_callback("db/menu_widget/language", display_language_cb);
+	_unset_vconf_callback("db/setting/accessibility/screen_reader/keyboard_feedback", keyboard_feedback_cb);
+	_unset_vconf_callback("db/setting/accessibility/screen_reader/haptic", haptic_changed_cb);
+	_unset_vconf_callback("db/setting/accessibility/screen_reader/description", reader_description_cb);
 }
