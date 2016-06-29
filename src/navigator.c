@@ -87,8 +87,8 @@ static FlatNaviContext *context;
 static bool prepared = false;
 static int counter = 0;
 int _last_hover_event_time = -1;
-bool read_description = true;
-bool haptic;
+extern bool read_description;
+extern bool haptic;
 
 static struct {
 	AtspiAccessible *focused_object;
@@ -438,7 +438,8 @@ char *generate_trait(AtspiAccessible * obj)
 	AtspiStateSet *state_set = atspi_accessible_get_state_set(obj);
 	char ret[TTS_MAX_TEXT_SIZE] = "\0";
 	switch (role) {
-	case ATSPI_ROLE_ENTRY: {
+	case ATSPI_ROLE_ENTRY:
+	case ATSPI_ROLE_PASSWORD_TEXT: {
 		gchar *role_name = atspi_accessible_get_localized_role_name(obj, NULL);
 		if (role_name) {
 			strncat(ret, role_name, sizeof(ret) - strlen(ret) - 1);
