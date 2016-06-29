@@ -2,7 +2,7 @@
 <manifest xmlns="http://tizen.org/ns/packages" package="org.tizen.screen-reader" api-version="3.0" version="0.1.0" install-location="internal-only">
         <label>screen-reader</label>
         <description>SMART NAVIGATOR</description>
-        <ui-application appid="org.tizen.screen-reader" exec="@TZ_SYS_RO_APP@/org.tizen.screen-reader/bin/screen-reader" nodisplay="true" multiple="false" type="capp" taskmanage="false">
+        <ui-application appid="org.tizen.screen-reader" exec="@TZ_SYS_RO_APP@/org.tizen.screen-reader/bin/screen-reader" nodisplay="true" multiple="false" type="capp" taskmanage="true">
                 <label>screen-reader</label>
                 <icon>@TZ_SYS_RO_APP@/org.tizen.screen-reader/res/icons/screen-reader.png</icon>
                 <label xml:lang="en-us">screen-reader</label>
