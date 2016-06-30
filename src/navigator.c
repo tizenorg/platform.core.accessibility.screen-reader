@@ -474,8 +474,13 @@ char *generate_trait(AtspiAccessible * obj)
 	}
 	case ATSPI_ROLE_POPUP_MENU: {
 		AtspiAccessible *parent = atspi_accessible_get_parent(obj, NULL);
-		int children_count = atspi_accessible_get_child_count(parent, NULL);
+		AtspiRole parent_role = atspi_accessible_get_role(parent, NULL);
+		int children_count;
 		char trait[HOVERSEL_TRAIT_SIZE];
+		if (parent_role == ATSPI_ROLE_COMBO_BOX)
+			children_count = atspi_accessible_get_child_count(parent, NULL);
+		else
+			children_count = atspi_accessible_get_child_count(obj, NULL);
 
 		snprintf(trait, HOVERSEL_TRAIT_SIZE, _("IDS_TRAIT_CTX_POPUP"));
 		strncat(ret, trait, sizeof(ret) - strlen(ret) - 1);
