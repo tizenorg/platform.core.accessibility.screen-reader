@@ -26,6 +26,12 @@
 #include "screen_reader_tts.h"
 static AtspiDeviceListener *listener;
 static AtspiDeviceListener *async_listener;
+#ifndef X11_ENABLED
+static int keyboardX = 0;
+static int keyboardY = 0;
+static int keyboardW = 0;
+static int keyboardH = 0;
+#endif
 
 #ifndef X11_ENABLED
 static int prev_keyboard_state = VCONFKEY_ISF_INPUT_PANEL_STATE_HIDE;
@@ -229,3 +235,31 @@ void keyboard_tracker_shutdown(void)
 #endif
 	DEBUG("keyboard tracker shutdown");
 }
+
+#ifndef X11_ENABLED
+void keyboard_geometry_set(int x, int y, int width, int height)
+{
+	keyboardX = x;
+	keyboardY = y;
+	keyboardW = width;
+	keyboardH = height;
+}
+
+void keyboard_geometry_get(int *x, int *y, int *width, int *height)
+{
+	*x = keyboardX;
+	*y = keyboardY;
+	*width = keyboardW;
+	*height = keyboardH;
+}
+
+Eina_Bool keyboard_event_status(int x, int y)
+{
+	if (prev_keyboard_state == VCONFKEY_ISF_INPUT_PANEL_STATE_SHOW) {
+		if ((y >= keyboardY) && (y <= (keyboardY + keyboardH)) && (x >= keyboardX) && (x <= (keyboardX + keyboardW))) {
+			return EINA_TRUE;
+		}
+	}
+	return EINA_FALSE;
+}
+#endif

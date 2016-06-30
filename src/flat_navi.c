@@ -45,6 +45,7 @@ static const AtspiRole interesting_roles[] = {
 	ATSPI_ROLE_HEADER,
 	ATSPI_ROLE_HEADING,
 	ATSPI_ROLE_ICON,
+	ATSPI_ROLE_INPUT_METHOD_WINDOW,
 	ATSPI_ROLE_ENTRY,
 	ATSPI_ROLE_LABEL,
 	ATSPI_ROLE_LINK,
@@ -181,6 +182,7 @@ static Eina_Bool _accept_object(AtspiAccessible * obj)
 	case ATSPI_ROLE_PANEL:
 	case ATSPI_ROLE_TREE_TABLE:
 	case ATSPI_ROLE_PAGE_TAB_LIST:
+	case ATSPI_ROLE_INPUT_METHOD_WINDOW:
 		return EINA_FALSE;
 	case ATSPI_ROLE_DIALOG:
 		if (!_has_escape_action(obj))
