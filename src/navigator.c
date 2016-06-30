@@ -400,7 +400,6 @@ void add_slider_description(char *dest, uint dest_size, AtspiAccessible *obj)
 	gchar *role_name;
 	AtspiValue *value_iface;
 	double val;
-	double min_val;
 	double max_val;
 	char trait[HOVERSEL_TRAIT_SIZE] = "";
 	int accuracy;
@@ -419,8 +418,7 @@ void add_slider_description(char *dest, uint dest_size, AtspiAccessible *obj)
 	accuracy = get_accuracy( atspi_value_get_minimum_increment(value_iface, NULL), 3 );
 	val = atspi_value_get_current_value(value_iface, NULL);
 	max_val = atspi_value_get_maximum_value(value_iface, NULL);
-	min_val = atspi_value_get_minimum_value(value_iface, NULL);
-	snprintf(trait, HOVERSEL_TRAIT_SIZE, _("IDS_TRAIT_SLIDER_VALUE"), accuracy, min_val, accuracy, max_val, accuracy, val);
+	snprintf(trait, HOVERSEL_TRAIT_SIZE, _("IDS_TRAIT_SLIDER_VALUE"), accuracy, val, accuracy, max_val);
 	strncat(dest, trait, dest_size - strlen(dest) - 1);
 
 	if (_widget_has_state(obj, ATSPI_STATE_ENABLED)) {

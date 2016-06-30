@@ -14,7 +14,7 @@ msgid "IDS_TRAIT_SLIDER_SWIPE_COMMUNICATE"
 msgstr "flick up and down to adjust the position. "
 
 msgid "IDS_TRAIT_SLIDER_VALUE"
-msgstr " from %.*f to %.*f, current value %.*f, "
+msgstr "%.*f of %.*f"
 
 msgid "IDS_SCROLLING_FINISHED"
 msgstr "Scrolling finished"
