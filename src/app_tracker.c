@@ -146,7 +146,7 @@ static void _read_value(AtspiValue * value)
 	gdouble max_val = atspi_value_get_maximum_value(value, NULL);
 	gdouble min_val = atspi_value_get_minimum_value(value, NULL);
 
-	int proc = (current_val / fabs(max_val - min_val)) * 100;
+	int proc = ((current_val - min_val) / fabs(max_val - min_val)) * 100;
 
 	char buf[256] = "\0";
 	snprintf(buf, sizeof(buf), "%d percent", proc);
