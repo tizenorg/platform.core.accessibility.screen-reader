@@ -247,13 +247,38 @@ static void _on_atspi_event_cb(const AtspiEvent * event)
 		g_error_free(err);
 	}
 
-	if (!strcmp(event->type, "object:state-changed:checked") && (atspi_accessible_get_role(event->source, NULL) == ATSPI_ROLE_CHECK_BOX)) {
-		char buf[16] = "\0";
+	if (!strcmp(event->type, "object:state-changed:checked")) {
+		char buf[256] = "\0";
+		gchar *name = atspi_accessible_get_name(event->source, NULL);
+		strncat(buf, name, sizeof(buf) - strlen(buf) - 1);
+		strncat(buf, ", ", sizeof(buf) - strlen(buf) - 1);
 		if (event->detail1)
-			snprintf(buf, sizeof(buf), "%s", _("IDS_TRAIT_CHECK_BOX_SELECTED"));
+			strncat(buf, _("IDS_TRAIT_CHECK_BOX_SELECTED"), sizeof(buf) - strlen(buf) - 1);
 		else
-			snprintf(buf, sizeof(buf), "%s", _("IDS_TRAIT_CHECK_BOX_NOT_SELECTED"));
+			strncat(buf, _("IDS_TRAIT_CHECK_BOX_NOT_SELECTED"), sizeof(buf) - strlen(buf) - 1);
 		tts_speak(buf, EINA_TRUE);
+		g_free(name);
+	}
+
+	if (!strcmp(event->type, "object:state-changed:selected") && (atspi_accessible_get_role(event->source, NULL) == ATSPI_ROLE_MENU_ITEM)) {
+		char buf[256] = "\0";
+		char tab_index[16] = "\0";
+		AtspiAccessible *parent = atspi_accessible_get_parent(event->source, NULL);
+		int children_count = atspi_accessible_get_child_count(parent, NULL);
+		int index = atspi_accessible_get_index_in_parent(event->source, NULL);
+		gchar *name = atspi_accessible_get_name(event->source, NULL);
+		strncat(buf, name, sizeof(buf) - strlen(buf) - 1);
+		strncat(buf, ", ", sizeof(buf) - strlen(buf) - 1);
+		snprintf(tab_index, sizeof(tab_index), _("IDS_TRAIT_MENU_ITEM_TAB_INDEX"), index + 1, children_count);
+		strncat(buf, tab_index, sizeof(buf) - strlen(buf) - 1);
+		strncat(buf, ", ", sizeof(buf) - strlen(buf) - 1);
+		if (event->detail1) {
+			strncat(buf, _("IDS_TRAIT_ITEM_SELECTED"), sizeof(buf) - strlen(buf) - 1);
+		}
+		else strncat(buf, _("IDS_TRAIT_ITEM_SELECT"), sizeof(buf) - strlen(buf) - 1);
+		tts_speak(buf, EINA_TRUE);
+		g_object_unref(parent);
+		g_free(name);
 	}
 
 	AtspiAccessible *new_highlighted_obj = NULL;
@@ -308,6 +333,7 @@ static int _app_tracker_init_internal(void)
 	atspi_event_listener_register(_listener, "object:state-changed:highlighted", NULL);
 	atspi_event_listener_register(_listener, "object:state-changed:animated", NULL);
 	atspi_event_listener_register(_listener, "object:state-changed:checked", NULL);
+	atspi_event_listener_register(_listener, "object:state-changed:selected", NULL);
 	atspi_event_listener_register(_listener, "object:bounds-changed", NULL);
 	atspi_event_listener_register(_listener, "object:visible-data-changed", NULL);
 	atspi_event_listener_register(_listener, "object:active-descendant-changed", NULL);
