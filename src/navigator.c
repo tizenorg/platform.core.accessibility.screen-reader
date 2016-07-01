@@ -629,6 +629,10 @@ char *generate_trait(AtspiAccessible * obj)
 	}
 	case ATSPI_ROLE_CHECK_BOX:
 	case ATSPI_ROLE_RADIO_BUTTON: {
+		AtspiAccessible *parent;
+		AtspiRole parent_role;
+		parent = atspi_accessible_get_parent(obj, NULL);
+		parent_role = atspi_accessible_get_role(parent, NULL);
 		if (atspi_state_set_contains(state_set, ATSPI_STATE_CHECKED)) {
 			strncat(ret, _("IDS_TRAIT_CHECK_BOX_SELECTED"), sizeof(ret) - strlen(ret) - 1);
 		}
@@ -636,26 +640,10 @@ char *generate_trait(AtspiAccessible * obj)
 			if (atspi_state_set_contains(state_set, ATSPI_STATE_EDITABLE)) {
 				strncat(ret, _("IDS_TRAIT_TEXT_EDIT"), sizeof(ret) - strlen(ret) - 1);
 			}
-			else strncat(ret, _("IDS_TRAIT_CHECK_BOX_NOT_SELECTED"), sizeof(ret) - strlen(ret) - 1);
+			else if (parent_role != ATSPI_ROLE_COLOR_CHOOSER)
+				strncat(ret, _("IDS_TRAIT_CHECK_BOX_NOT_SELECTED"), sizeof(ret) - strlen(ret) - 1);
 		}
-
-		if (role == ATSPI_ROLE_RADIO_BUTTON) {
-			/* Say role name ("radio button"), but only if it's not a color chooser or multibuttonentry items */
-			AtspiAccessible *parent;
-			AtspiRole parent_role;
-			parent = atspi_accessible_get_parent(obj, NULL);
-			parent_role = atspi_accessible_get_role(parent, NULL);
-			if (parent_role != ATSPI_ROLE_COLOR_CHOOSER && parent_role != ATSPI_ROLE_PANEL) {
-				gchar *role_name;
-				role_name = atspi_accessible_get_localized_role_name(obj, NULL);
-				if (role_name) {
-					strncat(ret, ", ", sizeof(ret) - strlen(ret) - 1);
-					strncat(ret, role_name, sizeof(ret) - strlen(ret) - 1);
-					g_free(role_name);
-				}
-			}
-			g_object_unref(parent);
-		}
+		//Role name should not be read for radio button, color selector, multibuttonentry items
 		break;
 	}
 	case ATSPI_ROLE_PUSH_BUTTON: {
