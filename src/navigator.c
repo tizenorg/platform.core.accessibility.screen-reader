@@ -863,6 +863,11 @@ static char *generate_what_to_read(AtspiAccessible * obj)
 		strncat(ret, role_name, sizeof(ret) - strlen(ret) - 1);
 	}
 
+	if (!_widget_has_state(obj, ATSPI_STATE_ENABLED)) {
+		strncat(ret, ", ", sizeof(ret) - strlen(ret) - 1);
+		strncat(ret, _("IDS_TRAIT_DISABLED"), sizeof(ret) - strlen(ret) - 1);
+	}
+
 	DEBUG("Description:%s VALUE %d", description,read_description);
 	if (description && strlen(description) > 0) {
 		/* If description reading is enabled */

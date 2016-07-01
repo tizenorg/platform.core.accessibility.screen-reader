@@ -88,6 +88,9 @@ msgstr "double tap to close it"
 msgid "IDS_TRAIT_TEXT_EDIT_FOCUSED"
 msgstr "Editing"
 
+msgid "IDS_TRAIT_DISABLED"
+msgstr "Disabled"
+
 msgid "IDS_DELETED"
 msgstr "Deleted"
 
