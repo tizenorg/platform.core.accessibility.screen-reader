@@ -531,7 +531,7 @@ AtspiAccessible *_directional_depth_first_search(AtspiAccessible * root, AtspiAc
 						break;
 					}
 				}
-				if (!up_node_found) {
+				if (!up_node_found && node) {
 					int idx = atspi_accessible_get_index_in_parent(node, NULL);
 					g_object_unref(node);
 					node = atspi_accessible_get_child_at_index(atspi_accessible_get_parent(node, NULL), idx + next_sibling_idx_modifier, NULL);	//... and next

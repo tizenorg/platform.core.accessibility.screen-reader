@@ -70,7 +70,7 @@ static AtspiAccessible *_get_active_win(void)
 	DEBUG("Desktop children count = %d", desktop_children_count);
 	for (i = 0; i < desktop_children_count; i++) {
 		AtspiAccessible *app = atspi_accessible_get_child_at_index(desktop, i, NULL);
-
+		if (!app) continue;
 		if (active_window_pid == 0 || active_window_pid == atspi_accessible_get_process_id(app, NULL))
 			app_children_count = atspi_accessible_get_child_count(app, NULL);
 		else
