@@ -30,7 +30,8 @@ static AtspiAccessible *last_active_win;
 
 static void _on_atspi_window_cb(const AtspiEvent * event)
 {
-	DEBUG("Event: %s: %s", event->type, atspi_accessible_get_name(event->source, NULL));
+	gchar *name = atspi_accessible_get_name(event->source, NULL);
+	DEBUG("Event: %s: %s", event->type, name);
 
 	if (!strcmp(event->type, "window:activate") && last_active_win != event->source)	//if we got activate 2 times
 	{
@@ -39,6 +40,22 @@ static void _on_atspi_window_cb(const AtspiEvent * event)
 			user_cb(user_data, event->source);
 		last_active_win = event->source;
 	}
+
+	if (!strcmp(event->type, "object:state-changed:visible") && !strcmp(name, "Quickpanel Window"))
+	{
+		if (event->detail1)
+		{
+			if (user_cb)
+				user_cb(user_data, event->source);
+		}
+		else
+		{
+			if (user_cb)
+				user_cb(user_data, last_active_win);
+		}
+	}
+
+	g_free(name);
 }
 
 static AtspiAccessible *_get_active_win(void)
@@ -108,12 +125,14 @@ void window_tracker_init(void)
 	DEBUG("START");
 	listener = atspi_event_listener_new_simple(_on_atspi_window_cb, NULL);
 	atspi_event_listener_register(listener, "window:activate", NULL);
+	atspi_event_listener_register(listener, "object:state-changed:visible", NULL);
 }
 
 void window_tracker_shutdown(void)
 {
 	DEBUG("START");
 	atspi_event_listener_deregister(listener, "window:activate", NULL);
+	atspi_event_listener_deregister(listener, "object:state-changed:visible", NULL);
 	g_object_unref(listener);
 	listener = NULL;
 	user_cb = NULL;
