@@ -332,6 +332,7 @@ Eina_Bool flat_navi_context_current_at_x_y_set(FlatNaviContext * ctx, gint x_cor
 	GError *error = NULL;
 
 	AtspiAccessible *obj = g_object_ref(ctx->root);
+
 	AtspiAccessible *youngest_ancestor_in_context = (_accept_object(obj) ? g_object_ref(obj) : NULL);
 	AtspiComponent *component;
 	Eina_Bool look_for_next_descendant = EINA_TRUE;
@@ -352,11 +353,25 @@ Eina_Bool flat_navi_context_current_at_x_y_set(FlatNaviContext * ctx, gint x_cor
 			look_for_next_descendant = EINA_FALSE;
 		} else if (obj) {
 			DEBUG("Found object %s, role %s", atspi_accessible_get_name(obj, NULL), atspi_accessible_get_role_name(obj, NULL));
+
+			AtspiAccessible *relation_obj = _get_object_in_relation(obj, ATSPI_RELATION_CONTROLLED_BY);
+			if(relation_obj) {
+				g_clear_object(&obj);
+
+				obj = relation_obj;
+				current_obj = relation_obj;
+			}
+
 			if (_accept_object(obj)) {
 				DEBUG("Object  %s with role %s fulfills highlight conditions", atspi_accessible_get_name(obj, NULL), atspi_accessible_get_role_name(obj, NULL));
 				if (youngest_ancestor_in_context)
 					g_object_unref(youngest_ancestor_in_context);
 				youngest_ancestor_in_context = g_object_ref(obj);
+				if(relation_obj)
+				{
+					g_object_unref(relation_obj);
+					look_for_next_descendant = EINA_FALSE;
+				}
 			}
 		} else {
 			g_clear_object(&obj);
