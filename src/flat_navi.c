@@ -352,11 +352,30 @@ Eina_Bool flat_navi_context_current_at_x_y_set(FlatNaviContext * ctx, gint x_cor
 			look_for_next_descendant = EINA_FALSE;
 		} else if (obj) {
 			DEBUG("Found object %s, role %s", atspi_accessible_get_name(obj, NULL), atspi_accessible_get_role_name(obj, NULL));
+			Eina_Bool contains_ret = EINA_FALSE;
+			AtspiAccessible *relation_obj = _get_object_in_relation(obj, ATSPI_RELATION_CONTROLLED_BY);
+			if(relation_obj) {
+				contains_ret = atspi_component_contains(relation_obj, x_cord, y_cord, ATSPI_COORD_TYPE_WINDOW, NULL);
+				if(contains_ret) {
+					g_clear_object(&obj);
+					obj = relation_obj;
+				}
+				else {
+					g_object_unref(&relation_obj);
+				}
+			}
+
 			if (_accept_object(obj)) {
 				DEBUG("Object  %s with role %s fulfills highlight conditions", atspi_accessible_get_name(obj, NULL), atspi_accessible_get_role_name(obj, NULL));
 				if (youngest_ancestor_in_context)
 					g_object_unref(youngest_ancestor_in_context);
 				youngest_ancestor_in_context = g_object_ref(obj);
+				if(relation_obj && contains_ret)
+				{
+					g_object_unref(&relation_obj);
+					g_object_unref(&obj);
+					look_for_next_descendant = EINA_FALSE;
+				}
 			}
 		} else {
 			g_clear_object(&obj);
