@@ -936,6 +936,7 @@ static void _current_highlight_object_set(AtspiAccessible * obj)
 			tts_stop_set();
 			tts_pause_set(EINA_FALSE);
 		}
+		g_clear_object(&current_obj);
 		current_obj = obj;
 		char *text_to_speak = NULL;
 		text_to_speak = generate_what_to_read(obj);
