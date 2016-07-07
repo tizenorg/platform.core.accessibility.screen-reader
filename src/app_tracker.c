@@ -18,6 +18,7 @@
 #include "screen_reader_tts.h"
 #include "logger.h"
 #include <ctype.h>
+#include <wctype.h>
 #ifndef X11_ENABLED
 #include "keyboard_tracker.h"
 #endif
@@ -188,15 +189,18 @@ static void _on_atspi_event_cb(const AtspiEvent * event)
 			const gchar *text = NULL;
 			text = g_value_get_string(&event->any_data);
 			if ((event->detail2 == 1) && isupper((int)*text)) {
-			   strncat(buf, _("IDS_CAPITAL"), sizeof(buf) - strlen(buf) - 1);
-			   strncat(buf, " ", sizeof(buf) - strlen(buf) - 1);
+				strncat(buf, _("IDS_CAPITAL"), sizeof(buf) - strlen(buf) - 1);
+				strncat(buf, " ", sizeof(buf) - strlen(buf) - 1);
 			}
 			strncat(buf, text, sizeof(buf) - strlen(buf) - 1);
+			DEBUG("Text Inserted :%s", buf);
 			tts_speak(buf, EINA_TRUE);
 		}
 		if (!strcmp(event->type, "object:text-changed:delete") && (atspi_accessible_get_role(event->source, NULL) == ATSPI_ROLE_ENTRY)) {
 			char buf[256] = "\0";
 			const gchar *text = NULL;
+			char *etext = NULL;
+			AtspiText *iface_text = NULL;
 			text = g_value_get_string(&event->any_data);
 			if ((event->detail2 == 1) && isupper((int)*text)) {
 				strncat(buf, _("IDS_CAPITAL"), sizeof(buf) - strlen(buf) - 1);
@@ -205,10 +209,17 @@ static void _on_atspi_event_cb(const AtspiEvent * event)
 			strncat(buf, text, sizeof(buf) - strlen(buf) - 1);
 			strncat(buf, " ", sizeof(buf) - strlen(buf) - 1);
 			strncat(buf, _("IDS_DELETED"), sizeof(buf) - strlen(buf) - 1);
-			if (event->detail1 == 0) {
-				strncat(buf, " ", sizeof(buf) - strlen(buf) - 1);//entry should be empty, need to find/get more detail here
-				strncat(buf, _("IDS_ALL_CHARACTERS_DELETED"), sizeof(buf) - strlen(buf) - 1);
+			iface_text = atspi_accessible_get_text_iface(event->source);
+			if (iface_text) {
+				etext = atspi_text_get_text(iface_text, 0, atspi_text_get_character_count(iface_text, NULL), NULL);
+				if (event->detail1 == 0 && !strcmp(etext, "")) {
+					strncat(buf, " ", sizeof(buf) - strlen(buf) - 1);//entry should be empty, need to find/get more detail here
+					strncat(buf, _("IDS_ALL_CHARACTERS_DELETED"), sizeof(buf) - strlen(buf) - 1);
+				}
+				g_object_unref(iface_text);
+				free(etext);
 			}
+			DEBUG("Text deleted :%s", buf);
 			tts_speak(buf, EINA_TRUE);
 		}
 	}
