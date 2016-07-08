@@ -19,4 +19,5 @@ void keyboard_tracker_shutdown(void);
 void keyboard_geometry_set(int x, int y, int width, int height);
 void keyboard_geometry_get(int *x, int *y, int *width, int *height);
 Eina_Bool keyboard_event_status(int x, int y);
+void keyboard_signal_emit(int type, int x, int y);
 #endif

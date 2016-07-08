@@ -31,6 +31,23 @@ static int keyboardX = 0;
 static int keyboardY = 0;
 static int keyboardW = 0;
 static int keyboardH = 0;
+extern AtspiAccessible *top_win;
+#define E_KEYBOARD_SERVICE_BUS_NAME "org.tizen.keyboard"
+#define E_KEYBOARD_SERVICE_NAVI_IFC_NAME "org.tizen.KBGestureNavigation"
+#define E_KEYBOARD_SERVICE_NAVI_OBJ_PATH "/org/tizen/KBGestureNavigation"
+
+static Eldbus_Connection *conn = NULL;
+static Eldbus_Service_Interface *iface = NULL;
+#define KB_GESTURE_SIGNAL 0
+static const Eldbus_Signal signals[] = {
+   [KB_GESTURE_SIGNAL] = {"KBGestureDetected",
+                                ELDBUS_ARGS({"i", "type"},{"i", "x"},{"i", "y"}),0},
+                                { }
+};
+
+static const Eldbus_Service_Interface_Desc iface_desc = {
+		E_KEYBOARD_SERVICE_NAVI_IFC_NAME, NULL, signals
+};
 #endif
 
 #ifndef X11_ENABLED
@@ -218,6 +235,11 @@ void keyboard_tracker_init(void)
 	active_xwindow_property_tracker_register();
 	root_xwindow_property_tracker_register();
 #else
+	eldbus_init();
+	conn = eldbus_connection_get(ELDBUS_CONNECTION_TYPE_SESSION);
+	eldbus_name_request(conn, E_KEYBOARD_SERVICE_BUS_NAME,
+						ELDBUS_NAME_REQUEST_FLAG_DO_NOT_QUEUE, NULL, NULL);
+	iface = eldbus_service_interface_register(conn, E_KEYBOARD_SERVICE_NAVI_OBJ_PATH, &iface_desc);
 	_set_vconf_key_changed_callback_keyboard_status();
 #endif
 	DEBUG("keyboard tracker init");
@@ -231,6 +253,9 @@ void keyboard_tracker_shutdown(void)
 	root_xwindow_property_tracker_unregister();
 	active_xwindow_property_tracker_unregister();
 #else
+	eldbus_name_release(conn, E_KEYBOARD_SERVICE_BUS_NAME, NULL, NULL);
+	eldbus_connection_unref(conn);
+	eldbus_shutdown();
 	_unset_vconf_key_changed_callback_keyboard_status();
 #endif
 	DEBUG("keyboard tracker shutdown");
@@ -255,11 +280,24 @@ void keyboard_geometry_get(int *x, int *y, int *width, int *height)
 
 Eina_Bool keyboard_event_status(int x, int y)
 {
-	if (prev_keyboard_state == VCONFKEY_ISF_INPUT_PANEL_STATE_SHOW) {
+	gchar* name = NULL;
+	if (top_win)
+		name = atspi_accessible_get_name(top_win, NULL);
+	if (prev_keyboard_state == VCONFKEY_ISF_INPUT_PANEL_STATE_SHOW && strcmp(name, "Quickpanel Window")) {
 		if ((y >= keyboardY) && (y <= (keyboardY + keyboardH)) && (x >= keyboardX) && (x <= (keyboardX + keyboardW))) {
+			g_free(name);
 			return EINA_TRUE;
 		}
 	}
+	g_free(name);
 	return EINA_FALSE;
+}
+
+void keyboard_signal_emit(int type, int x, int y)
+{
+	if (!conn) return;
+	if (!iface) return;
+
+	eldbus_service_signal_emit(iface, KB_GESTURE_SIGNAL, type, x, y);
 }
 #endif
