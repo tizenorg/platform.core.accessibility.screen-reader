@@ -23,8 +23,8 @@
 #endif
 
 typedef struct {
-	AtspiAccessible *base_root;
 	AtspiAccessible *root;
+	GList *base_roots;
 	GList *callbacks;
 	guint timer;
 } SubTreeRootData;
@@ -300,21 +300,23 @@ static void _on_atspi_event_cb(const AtspiEvent * event)
 		!strcmp("object:state-changed:defunct", event->type)) {
 		for (l = _roots; l != NULL; l = l->next) {
 			std = l->data;
-
-			if (!_object_has_showing_state(std->root) && std->base_root) {
-				std->root = std->base_root;
-				std->base_root = NULL;
+			GList *l_base_root = g_list_last(std->base_roots);
+			if (!_object_has_showing_state(std->root) && l_base_root->data ){
+				std->root = l_base_root->data;
+				std->base_roots = g_list_remove(std->base_roots, l_base_root->data);
 			}
 
 			if (_is_descendant(std->root, event->source)) {
 				if (std->timer)
 					g_source_remove(std->timer);
-					DEBUG("Before Checking if modal is showing");
-					if (_object_has_modal_state(event->source)) {
-						DEBUG("Object is modal");
-						std->base_root = std->root;
-						std->root = event->source;
-					}
+
+				DEBUG("Before Checking if modal is showing");
+				if (_object_has_modal_state(event->source)) {
+					DEBUG("Object is modal");
+					std->base_roots = g_list_append(std->base_roots, std->root);
+					std->root = event->source;
+				}
+
 				std->timer = g_timeout_add(APP_TRACKER_INVACTIVITY_TIMEOUT, _on_timeout_cb, std);
 			}
 		}
@@ -416,10 +418,11 @@ void app_tracker_callback_register(AtspiAccessible * app, AppTrackerEventCB cb, 
 	if (!rd) {
 		rd = g_new(SubTreeRootData, 1);
 		rd->root = app;
-		rd->base_root = NULL;
 		rd->callbacks = NULL;
 		rd->timer = 0;
 		_roots = g_list_append(_roots, rd);
+		rd->base_roots = NULL;
+		rd->base_roots = g_list_append(rd->base_roots, NULL);
 	}
 
 	cd = g_new(EventCallbackData, 1);
@@ -443,7 +446,7 @@ void app_tracker_callback_unregister(AtspiAccessible * app, AppTrackerEventCB cb
 	SubTreeRootData *std = NULL;
 
 	for (l = _roots; l != NULL; l = l->next) {
-		if (((SubTreeRootData *) l->data)->root == app || ((SubTreeRootData *) l->data)->base_root == app) {
+		if (((SubTreeRootData *) l->data)->root == app || ((SubTreeRootData *) l->data)->base_roots->data == app) {
 			std = l->data;
 			break;
 		}
