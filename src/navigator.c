@@ -77,6 +77,17 @@ typedef struct {
 	int x, y;
 } last_focus_t;
 
+/* The Highlight_Type will be used for access object working for embedded
+toolkit such as Dali does not support at-spi interface. This kind of work
+will make screen-reader be slow. They have to implement the interface */
+typedef enum {
+	HIGHLIGHT_POINT,
+	HIGHLIGHT_FIRST,
+	HIGHLIGHT_LAST,
+	HIGHLIGHT_NEXT,
+	HIGHLIGHT_PREV
+} Highlight_Type;
+
 static last_focus_t gesture_start_p = { -1, -1 };
 static last_focus_t last_focus = { -1, -1 };
 
@@ -888,7 +899,98 @@ static char *generate_what_to_read(AtspiAccessible * obj)
 	return strdup(ret);
 }
 
-static void _current_highlight_object_set(AtspiAccessible * obj)
+static Eina_Bool _do_action(AtspiAccessible *obj, char *expected_action)
+{
+	AtspiAction *action;
+	GError *err = NULL;
+	gint i = 0;
+	gint number_of_action = 0;
+	gchar *action_name = NULL;
+	Eina_Bool action_found = EINA_FALSE;
+	Eina_Bool ret = EINA_FALSE;
+
+	action = atspi_accessible_get_action_iface(obj);
+	if (action) {
+		number_of_action = atspi_action_get_n_actions(action, &err);
+		GERROR_CHECK(err)
+
+		while (i < number_of_action && !action_found) {
+			action_name = atspi_action_get_name(action, i, &err);
+			GERROR_CHECK(err)
+
+			if (action_name && !strcmp(expected_action, action_name)) {
+				DEBUG("Expected action %s (index: %d) found!", expected_action, i);
+				action_found = EINA_TRUE;
+			} else {
+				i++;
+			}
+			g_free(action_name);
+		}
+
+		if (action_found) {
+			ret = atspi_action_do_action(action, i, &err);
+			GERROR_CHECK(err)
+		}
+		g_object_unref(action);
+	}
+
+	if (!action_found)
+		ERROR("Cannot find expected action %s", expected_action);
+
+	return ret;
+}
+
+/* This function will set highlight information such as how an object gets highlight,
+HIGHLIGHT_FIRST means the highlight moves from previous highlighted object,
+adn HIGHLIGHT_LAST means the highlight moves from next highlighted object. */
+static void _highlight_type_set(AtspiAccessible *obj, Highlight_Type h_type)
+{
+	//AtspiAction *action;
+
+	//GError *err = NULL;
+	//gint i = 0;
+	//gint number_of_action = 0;
+	//gchar *action_name = NULL;
+	char *expected_action = NULL;
+	//Eina_Bool action_found = EINA_FALSE;
+
+	/* elm_access must have action 'highlight,first', and 'highlight,last' */
+	switch (h_type) {
+	case HIGHLIGHT_FIRST:
+		expected_action = "highlight,first";
+		break;
+	case HIGHLIGHT_LAST:
+		expected_action = "highlight,last";
+		break;
+	default:
+		ERROR("Not supported highlight type");
+		return;
+	}
+
+	_do_action(obj, expected_action);
+}
+
+static Eina_Bool _highlight_access_object(AtspiAccessible *obj, Highlight_Type h_type)
+{
+	char *expected_action = NULL;
+
+	/* elm_access must have action 'highlight,first', and 'highlight,last' */
+	switch (h_type) {
+	case HIGHLIGHT_NEXT:
+		expected_action = "highlight,next";
+		break;
+	case HIGHLIGHT_PREV:
+		expected_action = "highlight,prev";
+		break;
+	default:
+		ERROR("Not supported highlight type");
+		return EINA_FALSE;
+	}
+
+	return _do_action(obj, expected_action);
+}
+
+static void _current_highlight_object_set(AtspiAccessible * obj, Highlight_Type h_type)
 {
 	DEBUG("START");
 	GError *err = NULL;
@@ -926,6 +1028,12 @@ static void _current_highlight_object_set(AtspiAccessible * obj)
 		}
 		role = atspi_accessible_get_role(obj, NULL);
 		if (role != ATSPI_ROLE_PAGE_TAB) {
+			if (role == ATSPI_ROLE_UNKNOWN) {
+				/* to support elm_access used for embedded toolkit,
+				probably have to check more such as attribute 'type',
+				because there could be other ATSPI_ROLE_UNKNOWN. */
+				_highlight_type_set(obj, h_type);
+			}
 			atspi_component_grab_highlight(comp, &err);
 		}
 		current_comp = comp;
@@ -997,7 +1105,7 @@ static void _focus_widget(Gesture_Info * info)
 	if (flat_navi_context_current_at_x_y_set(context, info->x_beg, info->y_beg, &obj)) {
 		last_focus.x = info->x_beg;
 		last_focus.y = info->y_beg;
-		_current_highlight_object_set(obj);
+		_current_highlight_object_set(obj, HIGHLIGHT_POINT);
 	}
 
 	DEBUG("END");
@@ -1014,7 +1122,7 @@ static void _focus_next(void)
 
 	obj = flat_navi_context_next(context);
 	if (obj)
-		_current_highlight_object_set(obj);
+		_current_highlight_object_set(obj, HIGHLIGHT_FIRST);
 	else
 		DEBUG("Next widget not found. Abort");
 	DEBUG("END");
@@ -1043,7 +1151,7 @@ static void _focus_next_visible(void)
 	while (obj && !visible);
 
 	if (obj)
-		_current_highlight_object_set(obj);
+		_current_highlight_object_set(obj, HIGHLIGHT_FIRST);
 	else
 		DEBUG("Next widget not found. Abort");
 	DEBUG("END");
@@ -1070,7 +1178,7 @@ static void _focus_prev_visible(void)
 	while (obj && !visible);
 
 	if (obj)
-		_current_highlight_object_set(obj);
+		_current_highlight_object_set(obj, HIGHLIGHT_LAST);
 	else
 		DEBUG("Previous widget not found. Abort");
 }
@@ -1085,7 +1193,7 @@ static void _focus_prev(void)
 
 	obj = flat_navi_context_prev(context);
 	if (obj)
-		_current_highlight_object_set(obj);
+		_current_highlight_object_set(obj, HIGHLIGHT_LAST);
 	else
 		DEBUG("Previous widget not found. Abort");
 }
@@ -1658,7 +1766,7 @@ void auto_review_highlight_set(void)
 		s_auto_review.auto_review_on = false;
 	}
 
-	_current_highlight_object_set(obj);
+	_current_highlight_object_set(obj, HIGHLIGHT_FIRST);
 
 	DEBUG("END");
 }
@@ -1671,7 +1779,7 @@ void auto_review_highlight_top(void)
 	AtspiAccessible *first = flat_navi_context_first(context);
 
 	if (first != obj) {
-		_current_highlight_object_set(first);
+		_current_highlight_object_set(first, HIGHLIGHT_FIRST);
 	} else {
 		text_to_speak = generate_what_to_read(obj);
 		DEBUG("Text to speak: %s", text_to_speak);
@@ -1774,7 +1882,7 @@ static void _direct_scroll_back(void)
 		if (flat_navi_context_current_set(context, obj)) {
 			DEBUG("current obj set");
 		}
-		_current_highlight_object_set(obj);
+		_current_highlight_object_set(obj, HIGHLIGHT_FIRST);
 	}
 	g_object_unref(parent);
 	g_object_unref(current);
@@ -1833,7 +1941,7 @@ static void _direct_scroll_forward(void)
 		if (flat_navi_context_current_set(context, obj)) {
 			DEBUG("current obj set");
 		}
-		_current_highlight_object_set(obj);
+		_current_highlight_object_set(obj, HIGHLIGHT_LAST);
 	}
 	g_object_unref(parent);
 	g_object_unref(current);
@@ -1848,7 +1956,7 @@ static void _direct_scroll_to_first(void)
 	}
 	AtspiAccessible *obj = flat_navi_context_first(context);
 	if (obj)
-		_current_highlight_object_set(obj);
+		_current_highlight_object_set(obj, HIGHLIGHT_FIRST);
 	else
 		DEBUG("First widget not found. Abort");
 	DEBUG("END");
@@ -1863,7 +1971,7 @@ static void _direct_scroll_to_last(void)
 	}
 	AtspiAccessible *obj = flat_navi_context_last(context);
 	if (obj)
-		_current_highlight_object_set(obj);
+		_current_highlight_object_set(obj, HIGHLIGHT_LAST);
 	else
 		DEBUG("Last widget not found. Abort");
 	DEBUG("END");
@@ -2125,6 +2233,33 @@ static void _start_stop_signal_send(void)
 	atspi_action_do_action(action, action_index, NULL);
 }
 
+static Eina_Bool _check_access_object_internal(Highlight_Type h_type)
+{
+	AtspiRole role;
+	AtspiAccessible *obj;
+	GError *err = NULL;
+
+	if (!context) {
+		ERROR("No navigation context created");
+		return EINA_FALSE;
+	}
+
+	obj = flat_navi_context_current_get(context);
+	if (!obj) return EINA_FALSE;
+
+	role = atspi_accessible_get_role(obj, &err);
+	GERROR_CHECK(err)
+
+	if (role == ATSPI_ROLE_UNKNOWN) {
+		/* to support elm_access used for embedded toolkit,
+		probably have to check more such as attribute 'type',
+		because there could be other ATSPI_ROLE_UNKNOWN. */
+		return _highlight_access_object(obj, h_type);
+	}
+
+	return EINA_FALSE;
+}
+
 static void on_gesture_detected(void *data, const Eldbus_Message *msg)
 {
 #ifdef X11_ENABLED
@@ -2187,12 +2322,14 @@ static void on_gesture_detected(void *data, const Eldbus_Message *msg)
 		_widget_scroll(info);
 		break;
 	case ONE_FINGER_FLICK_LEFT:
+		if (_check_access_object_internal(HIGHLIGHT_PREV)) break;
 		_focus_prev();
 		if (_is_index_item())
 			_activate_widget();
 
 		break;
 	case ONE_FINGER_FLICK_RIGHT:
+		if (_check_access_object_internal(HIGHLIGHT_NEXT)) break;
 		_focus_next();
 		if (_is_index_item())
 			_activate_widget();
@@ -2298,7 +2435,7 @@ static void _view_content_changed(AtspiAccessible * root, void *user_data)
 		return;
 	flat_navi_context_free(context);
 	context = flat_navi_context_create(root);
-	_current_highlight_object_set(flat_navi_context_current_get(context));
+	_current_highlight_object_set(flat_navi_context_current_get(context), HIGHLIGHT_FIRST);
 }
 
 static void _new_highlighted_obj_changed(AtspiAccessible * new_highlighted_obj, void *user_data)
