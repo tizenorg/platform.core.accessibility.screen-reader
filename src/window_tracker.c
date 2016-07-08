@@ -27,6 +27,7 @@ static Window_Tracker_Cb user_cb;
 static void *user_data;
 static AtspiEventListener *listener;
 static AtspiAccessible *last_active_win;
+AtspiAccessible *top_win;
 
 static void _on_atspi_window_cb(const AtspiEvent * event)
 {
@@ -35,10 +36,10 @@ static void _on_atspi_window_cb(const AtspiEvent * event)
 
 	if (!strcmp(event->type, "window:activate") && last_active_win != event->source)	//if we got activate 2 times
 	{
-
 		if (user_cb)
 			user_cb(user_data, event->source);
 		last_active_win = event->source;
+		top_win = last_active_win;
 	}
 
 	if (!strcmp(event->type, "object:state-changed:visible") && !strcmp(name, "Quickpanel Window"))
@@ -47,11 +48,13 @@ static void _on_atspi_window_cb(const AtspiEvent * event)
 		{
 			if (user_cb)
 				user_cb(user_data, event->source);
+			top_win = event->source;
 		}
 		else
 		{
 			if (user_cb)
 				user_cb(user_data, last_active_win);
+			top_win = last_active_win;
 		}
 	}
 
@@ -117,6 +120,7 @@ static AtspiAccessible *_get_active_win(void)
 	}
 	g_object_unref(desktop);
 	DEBUG("END last_active_win: %p", last_active_win);
+	top_win = last_active_win;
 	return last_active_win;
 }
 
@@ -138,6 +142,7 @@ void window_tracker_shutdown(void)
 	user_cb = NULL;
 	user_data = NULL;
 	last_active_win = NULL;
+	top_win = NULL;
 }
 
 void window_tracker_register(Window_Tracker_Cb cb, void *data)

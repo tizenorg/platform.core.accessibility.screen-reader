@@ -2178,7 +2178,11 @@ static void on_gesture_detected(void *data, const Eldbus_Message *msg)
 			}
 #else
 			keyboard_status = keyboard_event_status(info->x_end, info->y_end);
-			if (keyboard_status) break;
+			if (keyboard_status)
+				{
+					keyboard_signal_emit(info->type, info->x_end, info->y_end);
+					break;
+				}
 #endif
 			_focus_widget(info);
 		}
@@ -2223,7 +2227,11 @@ static void on_gesture_detected(void *data, const Eldbus_Message *msg)
 		}
 #else
 		keyboard_status = keyboard_event_status(info->x_end, info->y_end);
-		if (keyboard_status) break;
+		if (keyboard_status)
+			{
+				keyboard_signal_emit(info->type, info->x_end, info->y_end);
+				break;
+			}
 #endif
 		if (!prepared)
 			_focus_widget(info);
@@ -2237,7 +2245,11 @@ static void on_gesture_detected(void *data, const Eldbus_Message *msg)
 		}
 #else
 		keyboard_status = keyboard_event_status(info->x_end, info->y_end);
-		if (keyboard_status) break;
+		if (keyboard_status)
+			{
+				keyboard_signal_emit(info->type, info->x_end, info->y_end);
+				break;
+			}
 #endif
 		_activate_widget();
 		break;
