@@ -2372,12 +2372,12 @@ static void on_window_activate(void *data, AtspiAccessible * window)
 		AtspiAccessible *modal_descendant = _get_modal_descendant(window);
 		app_tracker_callback_register(modal_descendant ? modal_descendant : window, _view_content_changed, NULL);
 		_view_content_changed(modal_descendant ? modal_descendant : window, NULL);
+		top_window = modal_descendant ? modal_descendant : window;
 		g_object_unref(modal_descendant);
 	} else {
 		flat_navi_context_free(context);
 		ERROR("No top window found!");
 	}
-	top_window = window;
 	DEBUG("END");
 }
 
