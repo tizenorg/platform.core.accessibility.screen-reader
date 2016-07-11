@@ -14,6 +14,7 @@ enum _Notification_Type
 {
    FOCUS_CHAIN_END_NOTIFICATION_EVENT,
    REALIZED_ITEMS_NOTIFICATION_EVENT,
+   HIGHLIGHT_NOTIFICATION_EVENT
 };
 
 typedef enum _Notification_Type Notification_Type;
