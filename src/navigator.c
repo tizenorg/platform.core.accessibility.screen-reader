@@ -930,6 +930,7 @@ static void _current_highlight_object_set(AtspiAccessible * obj)
 		}
 		current_comp = comp;
 		GERROR_CHECK(err)
+		//smart_notification(HIGHLIGHT_NOTIFICATION_EVENT, 0, 0);
 
 		Eina_Bool is_paused = tts_pause_get();
 		if (is_paused) {

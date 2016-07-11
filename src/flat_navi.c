@@ -16,6 +16,7 @@
 
 #include "flat_navi.h"
 #include "logger.h"
+#include "smart_notification.h"
 
 struct _FlatNaviContext {
 	AtspiAccessible *root;
@@ -571,6 +572,7 @@ AtspiAccessible *_next(FlatNaviContext * ctx)
 	if (current && !ret) {
 		DEBUG("Last item reached, pass last item again");
 		ret = current;
+		smart_notification(FOCUS_CHAIN_END_NOTIFICATION_EVENT, 0, 0);
 	}
 	return ret;
 }
@@ -586,6 +588,7 @@ AtspiAccessible *_prev(FlatNaviContext * ctx)
 	if (current && !ret) {
 		DEBUG("first item reached, pass first item again");
 		ret = current;
+		smart_notification(FOCUS_CHAIN_END_NOTIFICATION_EVENT, 0, 0);
 	}
 	return ret;
 }

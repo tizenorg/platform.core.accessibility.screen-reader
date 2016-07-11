@@ -15,6 +15,8 @@
  */
 
 #include "screen_reader_spi.h"
+#include "screen_reader_haptic.h"
+#include "smart_notification.h"
 #include "flat_navi.h"
 #include <check.h>
 #include <stdio.h>
