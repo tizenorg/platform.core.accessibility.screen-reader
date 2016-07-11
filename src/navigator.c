@@ -930,6 +930,9 @@ static void _current_highlight_object_set(AtspiAccessible * obj)
 		}
 		current_comp = comp;
 		GERROR_CHECK(err)
+		smart_notification(HIGHLIGHT_NOTIFICATION_EVENT, 0, 0);
+		if (haptic)
+			haptic_vibrate_start(HAPTIC_VIBRATE_DURATION, HAPTIC_VIBRATE_INTENSITY);
 
 		Eina_Bool is_paused = tts_pause_get();
 		if (is_paused) {
@@ -2307,9 +2310,6 @@ static void _new_highlighted_obj_changed(AtspiAccessible * new_highlighted_obj, 
 	if (context && flat_navi_context_current_get(context) != new_highlighted_obj) {
 		flat_navi_context_current_set(context, g_object_ref(new_highlighted_obj));
 	}
-	if (haptic)
-		haptic_vibrate_start(HAPTIC_VIBRATE_DURATION, HAPTIC_VIBRATE_INTENSITY);
-
 }
 
 void clear(gpointer d)
