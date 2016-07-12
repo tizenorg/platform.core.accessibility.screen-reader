@@ -448,7 +448,7 @@ AtspiAccessible *_directional_depth_first_search(AtspiAccessible * root, AtspiAc
 		g_object_unref(next_related_in_direction);
 	}
 
-	Eina_Bool all_children_visited = (start && start != root && next_sibling_idx_modifier < 0)?EINA_TRUE:EINA_FALSE;
+	Eina_Bool all_children_visited = (start && next_sibling_idx_modifier < 0)?EINA_TRUE:EINA_FALSE;
 
 	while (node) {
 		AtspiAccessible *prev_related_in_direction = (next_sibling_idx_modifier > 0)
