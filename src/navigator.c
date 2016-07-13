@@ -924,6 +924,11 @@ static void _current_highlight_object_set(AtspiAccessible * obj)
 		if (current_comp) {
 			atspi_component_clear_highlight(current_comp, &err);
 		}
+
+		smart_notification(HIGHLIGHT_NOTIFICATION_EVENT, 0, 0);
+		if (haptic)
+			haptic_vibrate_start(HAPTIC_VIBRATE_DURATION, HAPTIC_VIBRATE_INTENSITY);
+
 		role = atspi_accessible_get_role(obj, NULL);
 		if (role != ATSPI_ROLE_PAGE_TAB) {
 			atspi_component_grab_highlight(comp, &err);
@@ -2319,9 +2324,6 @@ static void _new_highlighted_obj_changed(AtspiAccessible * new_highlighted_obj, 
 	if (context && flat_navi_context_current_get(context) != new_highlighted_obj) {
 		flat_navi_context_current_set(context, g_object_ref(new_highlighted_obj));
 	}
-	if (haptic)
-		haptic_vibrate_start(HAPTIC_VIBRATE_DURATION, HAPTIC_VIBRATE_INTENSITY);
-
 }
 
 void clear(gpointer d)

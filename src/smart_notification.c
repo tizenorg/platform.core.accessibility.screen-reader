@@ -31,6 +31,7 @@ static Eina_Bool status = EINA_FALSE;
 
 static void _smart_notification_focus_chain_end(void);
 static void _smart_notification_realized_items(int start_idx, int end_idx);
+static void _smart_notification_highlight(void);
 
 /**
  * @brief Smart Notifications event handler
@@ -51,6 +52,9 @@ void smart_notification(Notification_Type nt, int start_index, int end_index)
 		break;
 	case REALIZED_ITEMS_NOTIFICATION_EVENT:
 		_smart_notification_realized_items(start_index, end_index);
+		break;
+	case HIGHLIGHT_NOTIFICATION_EVENT:
+		_smart_notification_highlight();
 		break;
 	default:
 		DEBUG("Gesture type %d not handled in switch", nt);
@@ -173,6 +177,21 @@ static void _smart_notification_focus_chain_end(void)
 
 	tone_player_stop(0);
 	tone_player_start(TONE_TYPE_SUP_CONFIRM, SOUND_TYPE_MEDIA, 200, NULL);
+}
+
+/**
+ * @brief Smart notifications hightlight event handler
+ *
+ */
+static void _smart_notification_highlight(void)
+{
+	if (!status)
+		return;
+
+	DEBUG(RED "Smart notification - HIGHLIGHT" RESET);
+
+	tone_player_stop(0);
+	tone_player_start(TONE_TYPE_PROP_BEEP, SOUND_TYPE_MEDIA, 200, NULL);
 }
 
 /**
