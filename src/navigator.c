@@ -72,6 +72,7 @@
    }
 
 static void on_window_activate(void *data, AtspiAccessible * window);
+static void _highlight_on_slider(Eina_Bool is_slider);
 
 typedef struct {
 	int x, y;
@@ -79,6 +80,7 @@ typedef struct {
 
 static last_focus_t gesture_start_p = { -1, -1 };
 static last_focus_t last_focus = { -1, -1 };
+static last_focus_t last_pos = { -1, -1 };
 
 static AtspiAccessible *current_obj;
 static AtspiComponent *current_comp = NULL;
@@ -199,6 +201,35 @@ char *state_to_char(AtspiStateType state)
 
 }
 
+static void _highlight_on_slider(Eina_Bool is_slider)
+{
+	Eldbus_Connection *conn;
+	Eldbus_Object *dobj;
+	Eldbus_Proxy *proxy;
+
+	eldbus_init();
+	if (!(conn = eldbus_connection_get(ELDBUS_CONNECTION_TYPE_SYSTEM))) {
+		ERROR("Connection to system bus failed");
+		return ;
+	}
+	if (!(dobj = eldbus_object_get(conn, E_A11Y_SERVICE_BUS_NAME, E_A11Y_SERVICE_NAVI_OBJ_PATH))) {
+		ERROR("Failed to create eldbus object");
+		goto fail_obj;
+	}
+	if (!(proxy = eldbus_proxy_get(dobj, E_A11Y_SERVICE_NAVI_IFC_NAME))) {
+		ERROR("Failed to create proxy object for 'org.tizen.GestureNavigation'");
+		goto fail_proxy;
+	}
+	eldbus_proxy_call(proxy, "IsSlider", NULL, NULL, -1, "b", is_slider);
+
+	fail_proxy:
+		eldbus_object_unref(dobj);
+	fail_obj:
+		eldbus_connection_unref(conn);
+
+	eldbus_shutdown();
+
+}
 static void display_info_about_object(AtspiAccessible * obj, bool display_parent_info)
 {
 	if(!obj)
@@ -2012,9 +2043,6 @@ static void _move_slider(Gesture_Info * gi)
 	AtspiAccessible *obj = NULL;
 	AtspiComponent *comp = NULL;
 	AtspiRect *rect = NULL;
-	int click_point_x = 0;
-	int click_point_y = 0;
-
 	obj = current_obj;
 
 	if (!obj) {
@@ -2048,10 +2076,6 @@ static void _move_slider(Gesture_Info * gi)
 		DEBUG("Current object is in:%d %d", rect->x, rect->y);
 		DEBUG("Current object has size:%d %d", rect->width, rect->height);
 
-		click_point_x = rect->x + rect->width / 2;
-		click_point_y = rect->y + rect->height / 2;
-		DEBUG("Click on point %d %d", click_point_x, click_point_y);
-		start_scroll(click_point_x, click_point_y);
 	}
 
 	if (gi->state == 1) {
@@ -2060,14 +2084,23 @@ static void _move_slider(Gesture_Info * gi)
 			if (counter >= GESTURE_LIMIT) {
 			counter = 0;
 			DEBUG("Scroll on point %d %d", gi->x_end, gi->y_end);
-			continue_scroll(gi->x_end, gi->y_end);
+			if (last_pos.x != -1) {
+				if (last_pos.x > gi->x_end)
+					_value_dec();
+				else
+					_value_inc();
+			}
+			last_pos.x = gi->x_end;
+			last_pos.y = gi->y_end;
 		}
 	}
 
 	if (gi->state == 2) {
 		DEBUG("state == 2");
-		end_scroll(gi->x_end, gi->y_end);
 		prepared = false;
+		_highlight_on_slider(EINA_FALSE);
+		last_pos.x = -1;
+		last_pos.y = -1;
 	}
 	DEBUG("END");
 }
@@ -2160,6 +2193,7 @@ static void on_gesture_detected(void *data, const Eldbus_Message *msg)
 	if (info->type == ONE_FINGER_SINGLE_TAP && info->state == 3) {
 			DEBUG("One finger single tap aborted");
 			prepared = true;
+			if (_is_slider(current_obj)) _highlight_on_slider(EINA_TRUE);
 	}
 
 	switch (info->type) {
