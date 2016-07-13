@@ -2298,7 +2298,43 @@ static void _view_content_changed(AtspiAccessible * root, void *user_data)
 		return;
 	flat_navi_context_free(context);
 	context = flat_navi_context_create(root);
-	_current_highlight_object_set(flat_navi_context_current_get(context));
+
+	FlatNaviContext *ctx = context;
+	bool is_highlight = FALSE;
+	AtspiAccessible *cur = NULL;
+	switch(atspi_accessible_get_role(root, NULL))
+	{
+	case ATSPI_ROLE_WINDOW :
+		while(cur != flat_navi_context_current_get(ctx))
+		{
+			cur = flat_navi_context_current_get(ctx);
+			AtspiRole role = atspi_accessible_get_role(flat_navi_context_current_get(ctx), NULL);
+			if(role == ATSPI_ROLE_PAGE_TAB ||	//add more roles...
+				role == ATSPI_ROLE_PAGE_TAB_LIST)
+			{
+				is_highlight = EINA_TRUE;
+				_current_highlight_object_set(flat_navi_context_current_get(context));
+				break;
+			}
+			flat_navi_context_next(ctx);
+		}
+		if(!is_highlight)
+		{
+			char *description = NULL;
+			description = atspi_accessible_get_description(root, NULL);
+			if(!strcmp(description,""))
+				description = generate_what_to_read(root);
+
+			tts_speak(description, EINA_TRUE);
+			free(description);
+		}
+		break;
+	case ATSPI_ROLE_DIALOG :
+		_current_highlight_object_set(flat_navi_context_current_get(context));
+		break;
+	default :
+		break;
+	}
 }
 
 static void _new_highlighted_obj_changed(AtspiAccessible * new_highlighted_obj, void *user_data)
