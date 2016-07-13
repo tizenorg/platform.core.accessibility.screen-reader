@@ -2292,13 +2292,49 @@ static void on_gesture_detected(void *data, const Eldbus_Message *msg)
 
 static void _view_content_changed(AtspiAccessible * root, void *user_data)
 {
+	bool is_highlight = FALSE;
+	AtspiAccessible *cur = NULL;
+
 	if (flat_navi_is_valid(context, root))
 		return;
 	if (!_widget_has_state(root, ATSPI_STATE_SHOWING))
 		return;
 	flat_navi_context_free(context);
 	context = flat_navi_context_create(root);
-	_current_highlight_object_set(flat_navi_context_current_get(context));
+
+	switch(atspi_accessible_get_role(root, NULL))
+	{
+	case ATSPI_ROLE_WINDOW :
+		while(cur != flat_navi_context_current_get(context))
+		{
+			cur = flat_navi_context_current_get(context);
+			AtspiRole role = atspi_accessible_get_role(cur, NULL);
+			if(role == ATSPI_ROLE_PAGE_TAB ||	//add more roles...
+				role == ATSPI_ROLE_PAGE_TAB_LIST)
+			{
+				is_highlight = EINA_TRUE;
+				_current_highlight_object_set(cur);
+				break;
+			}
+			flat_navi_context_next(context);
+		}
+		if(!is_highlight)
+		{
+			char *description = NULL;
+			description = atspi_accessible_get_description(root, NULL);
+			if(!strcmp(description,""))
+				description = generate_what_to_read(root);
+
+			tts_speak(description, EINA_TRUE);
+			free(description);
+		}
+		break;
+	case ATSPI_ROLE_DIALOG :
+		_current_highlight_object_set(flat_navi_context_current_get(context));
+		break;
+	default :
+		break;
+	}
 }
 
 static void _new_highlighted_obj_changed(AtspiAccessible * new_highlighted_obj, void *user_data)
