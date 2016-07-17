@@ -17,6 +17,7 @@
 #include "flat_navi.h"
 #include "logger.h"
 #include "smart_notification.h"
+#include "screen_reader_actions.h"
 
 struct _FlatNaviContext {
 	AtspiAccessible *root;
@@ -70,30 +71,6 @@ static const AtspiRole interesting_roles[] = {
 	ATSPI_ROLE_TREE_ITEM,
 	ATSPI_ROLE_LAST_DEFINED
 };
-
-static Eina_Bool _has_activate_action(AtspiAccessible * obj)
-{
-	Eina_Bool ret = EINA_FALSE;
-
-	AtspiAction *action = NULL;
-
-	action = atspi_accessible_get_action_iface(obj);
-	if (action) {
-		int i = 0;
-		for (; i < atspi_action_get_n_actions(action, NULL); i++) {
-			gchar *action_name = atspi_action_get_action_name(action, i, NULL);
-			Eina_Bool equal = !strcmp(action_name, "activate");
-			g_free(action_name);
-			if (equal) {
-				ret = EINA_TRUE;
-				break;
-			}
-		}
-		g_object_unref(action);
-	}
-	DEBUG("Obj %s %s activate action", atspi_accessible_get_role_name(obj, NULL), ret ? "has" : "doesn't have");
-	return ret;
-}
 
 static Eina_Bool _is_collapsed(AtspiStateSet * ss)
 {
@@ -158,7 +135,7 @@ static Eina_Bool _accept_object(AtspiAccessible * obj)
 	Eina_Bool ret = EINA_FALSE;
 	gchar *name = NULL;
 	gchar *desc = NULL;
-	AtspiAction *action = NULL;
+	AtspiAction *action_iface = NULL;
 	AtspiEditableText *etext = NULL;
 	AtspiText *text = NULL;
 	AtspiValue *value = NULL;
@@ -186,7 +163,10 @@ static Eina_Bool _accept_object(AtspiAccessible * obj)
 	case ATSPI_ROLE_INPUT_METHOD_WINDOW:
 		return EINA_FALSE;
 	case ATSPI_ROLE_DIALOG:
-		if (!_has_activate_action(obj))
+		action_iface = atspi_accessible_get_action_iface(obj);
+		Eina_Bool contains_user_triggerable_action = atspi_action_iface_contains_user_triggerable_actions(action_iface, get_user_triggerable_actions(), ANY);
+		g_object_unref(action_iface);
+		if (!contains_user_triggerable_action)
 			return EINA_FALSE;
 		break;
 	default:
@@ -259,11 +239,11 @@ static Eina_Bool _accept_object(AtspiAccessible * obj)
 		}
 	}
 	if (!ret) {
-		action = atspi_accessible_get_action_iface(obj);
-		if (action && _has_activate_action(obj)) {
-			DEBUG("Has action interface with activate action");
+		action_iface = atspi_accessible_get_action_iface(obj);
+		if (action_iface && atspi_action_iface_contains_user_triggerable_actions(action_iface, get_user_triggerable_actions(), ANY)) {
+			DEBUG("Has action interface with at least one triggerable action");
 			ret = EINA_TRUE;
-			g_object_unref(action);
+			g_object_unref(action_iface);
 		}
 	}
 	if (!ret) {

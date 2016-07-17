@@ -36,6 +36,7 @@
 #include "screen_reader_haptic.h"
 #include "screen_reader_tts.h"
 #include "screen_reader_gestures.h"
+#include "screen_reader_actions.h"
 #include "dbus_gesture_adapter.h"
 #include "elm_access_adapter.h"
 
@@ -1334,15 +1335,12 @@ static void _activate_widget(void)
 	AtspiAccessible *parent = NULL;
 	AtspiStateSet *ss = NULL;
 	AtspiSelection *selection = NULL;
-	AtspiAction *action;
+	AtspiAction *action_iface;
 	AtspiEditableText *edit = NULL;
 
 	GError *err = NULL;
-	gchar *actionName = NULL;
-	gint number = 0;
 	gint i = 0;
 	gint index = 0;
-	Eina_Bool activate_found = EINA_FALSE;
 	AtspiRole role = ATSPI_ROLE_INVALID;
 
 	if (!current_obj)
@@ -1386,32 +1384,18 @@ static void _activate_widget(void)
 		// activate the interface to generate clicked event to app, and also to open
 		// keypad again in case keypad was closed by clicking back key and entry still had focus.
 	}
-	action = atspi_accessible_get_action_iface(current_widget);
-	if (action) {
-		number = atspi_action_get_n_actions(action, &err);
-		GERROR_CHECK(err);
-		activate_found = EINA_FALSE;
-		DEBUG("Number of available action = %d\n", number);
-		while (i < number && !activate_found) {
-			actionName = atspi_action_get_action_name(action, i, &err);
-			GERROR_CHECK(err);
-			if (actionName && !strcmp("activate", actionName)) {
-				DEBUG("There is activate action");
-				activate_found = EINA_TRUE;
-			} else {
-				i++;
-			}
-			g_free(actionName);
-		}
-		if (activate_found) {
+	action_iface = atspi_accessible_get_action_iface(current_widget);
+	if (action_iface) {
+		int activate_action_idx = atspi_action_iface_find_user_triggerable_action(action_iface, USER_TRIGGERABLE_ACTION_ACTIVATE);
+		if (activate_action_idx >= 0) {
 			DEBUG("PERFORMING ATSPI ACTION NO.%d", i);
-			atspi_action_do_action(action, i, &err);
+			atspi_action_do_action(action_iface, i, &err);
 			GERROR_CHECK(err);
-			g_object_unref(action);
+			g_object_unref(action_iface);
 			return;
 		} else
 			ERROR("There is no activate action inside Action interface");
-		g_object_unref(action);
+		g_object_unref(action_iface);
 	}
 
 	ss = atspi_accessible_get_state_set(current_widget);
@@ -2103,62 +2087,45 @@ static void _move_slider(Gesture_Info * gi)
 	DEBUG("END");
 }
 
-AtspiAction *_get_main_window(void)
+AtspiAction *_get_main_window_action_iface(void)
 {
 	AtspiAccessible *win = flat_navi_context_root_get(context);
 	if (!win) {
-		ERROR("win == NULL");
+		ERROR("main window == NULL");
 		return NULL;
 	}
 
-	AtspiAction *action = atspi_accessible_get_action_iface(win);
-	if (!action) {
-		ERROR("action == NULL");
+	AtspiAction *action_iface = atspi_accessible_get_action_iface(win);
+	if (!action_iface) {
+		ERROR("main window action_iface == NULL");
 		return NULL;
 	}
 
-	return action;
+	return action_iface;
 }
 
-static int _find_action_index(AtspiAction * action, char *action_name_to_find)
-{
-	int action_num = atspi_action_get_n_actions(action, NULL);
-	char *action_name = NULL;
-
-	int i = 0;
-	for (i = 0; i < action_num; ++i) {
-		action_name = atspi_action_get_action_name(action, i, NULL);
-
-		if (!strcmp(action_name_to_find, action_name)) {
-			return i;
-		}
-	}
-
-	return -i;
-}
-
-static void _start_stop_signal_send(void)
+static void _pause_play_signal_send(void)
 {
 	int action_index = -1;
-	char *action_name = "pause_play";
-	AtspiAction *action = _get_main_window();
-	if (!action) {
-		ERROR("Could not get the action inteface");
+	const char *action_name = user_triggerable_action_get_name(USER_TRIGGERABLE_ACTION_PAUSE_PLAY);
+	AtspiAction *action_iface = _get_main_window_action_iface();
+	if (!action_iface) {
+		ERROR("Could not handle pause/play action, no action inteface for main window");
 	}
 
-	if (!action) {
-		ERROR("action == NULL");
+	if (!action_iface) {
+		ERROR("action_iface == NULL");
 		return;
 	}
 
-	action_index = _find_action_index(action, action_name);
+	action_index = atspi_action_iface_find_user_triggerable_action(action_iface, USER_TRIGGERABLE_ACTION_PAUSE_PLAY);
 	if (action_index < 0) {
-		ERROR("Pause_play action not found");
+		ERROR("%s action not found", action_name);
 		return;
 	}
 
 	DEBUG("ACTION: %s has index: %d", action_name, action_index);
-	atspi_action_do_action(action, action_index, NULL);
+	atspi_action_do_action(action_iface, action_index, NULL);
 }
 
 static void on_gesture_detected(void *data, const Eldbus_Message *msg)
@@ -2294,7 +2261,7 @@ static void on_gesture_detected(void *data, const Eldbus_Message *msg)
 		_set_pause();
 		break;
 	case TWO_FINGERS_DOUBLE_TAP:
-		_start_stop_signal_send();
+		_pause_play_signal_send();
 		break;
 	case TWO_FINGERS_TRIPLE_TAP:
 #ifndef SCREEN_READER_TV

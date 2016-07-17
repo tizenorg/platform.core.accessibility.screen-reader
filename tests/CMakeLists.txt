@@ -37,6 +37,7 @@ SET(TESTED_SRCS ${CMAKE_SOURCE_DIR}/src/screen_reader.c
                 ${CMAKE_SOURCE_DIR}/src/screen_reader_vconf.c
                 ${CMAKE_SOURCE_DIR}/src/screen_reader_spi.c
                 ${CMAKE_SOURCE_DIR}/src/screen_reader_tts.c
+                ${CMAKE_SOURCE_DIR}/src/screen_reader_actions.c
                 ${CMAKE_SOURCE_DIR}/src/dbus_direct_reading_adapter.c
                 ${CMAKE_SOURCE_DIR}/src/screen_reader_haptic.c
                 ${CMAKE_SOURCE_DIR}/src/smart_notification.c

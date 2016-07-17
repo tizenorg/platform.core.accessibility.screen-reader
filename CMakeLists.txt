@@ -8,6 +8,7 @@ SET(SRCS ${CMAKE_SOURCE_DIR}/src/app_tracker.c
 	 ${CMAKE_SOURCE_DIR}/src/flat_navi.c
 	 ${CMAKE_SOURCE_DIR}/src/main.c
 	 ${CMAKE_SOURCE_DIR}/src/screen_reader.c
+	 ${CMAKE_SOURCE_DIR}/src/screen_reader_actions.c
 	 ${CMAKE_SOURCE_DIR}/src/screen_reader_haptic.c
 	 ${CMAKE_SOURCE_DIR}/src/screen_reader_spi.c
 	 ${CMAKE_SOURCE_DIR}/src/screen_reader_switch.c
