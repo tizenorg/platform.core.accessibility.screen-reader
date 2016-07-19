@@ -495,9 +495,7 @@ char *generate_trait(AtspiAccessible * obj)
 			snprintf(tab_index, MENU_ITEM_TAB_INDEX_SIZE, _("IDS_TRAIT_MENU_ITEM_TAB_INDEX"), index + 1, children_count);
 			strncat(ret, tab_index, sizeof(ret) - strlen(ret) - 1);
 			strncat(ret, ", ", sizeof(ret) - strlen(ret) - 1);
-			if (is_selected)
-				strncat(ret, _("IDS_TRAIT_ITEM_SELECTED"), sizeof(ret) - strlen(ret) - 1);
-			else
+			if (!is_selected)
 				strncat(ret, _("IDS_TRAIT_ITEM_SELECT"), sizeof(ret) - strlen(ret) - 1);
 			g_object_unref(selection);
 		}

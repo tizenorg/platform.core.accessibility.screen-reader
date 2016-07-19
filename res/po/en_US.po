@@ -14,7 +14,7 @@ msgid "IDS_TRAIT_SLIDER_SWIPE_COMMUNICATE"
 msgstr "flick up and down to adjust the position. "
 
 msgid "IDS_TRAIT_SLIDER_VALUE"
-msgstr "%.*f of %.*f"
+msgstr " %.*f of %.*f, "
 
 msgid "IDS_SCROLLING_FINISHED"
 msgstr "Scrolling finished"
@@ -83,7 +83,7 @@ msgid "IDS_TRAIT_ITEMS"
 msgstr "Items"
 
 msgid "IDS_TRAIT_POPUP_CLOSE"
-msgstr "double tap to close it"
+msgstr "Press back key to close pop-up"
 
 msgid "IDS_TRAIT_TEXT_EDIT_FOCUSED"
 msgstr "Editing"
@@ -104,10 +104,10 @@ msgid "IDS_TRAIT_TEXT_EDIT_FOCUSED_TV"
 msgstr "editing"
 
 msgid "IDS_TRAIT_PD_PROGRESSBAR"
-msgstr "Processing"
+msgstr "In progress"
 
 msgid "IDS_TRAIT_PD_PROGRESSBAR_PERCENT"
-msgstr "%.0f percent, Progressing"
+msgstr "%.0f percent, In progress"
 
 msgid "IDS_TRAIT_PUSH_BUTTON"
 msgstr "button"
