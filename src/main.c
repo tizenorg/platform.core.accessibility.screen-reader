@@ -221,8 +221,8 @@ static int app_create(void *data)
 #ifndef SCREEN_READER_TV
 	//screen_reader_gestures_init();
 	navigator_init();
-#endif
 	keyboard_tracker_init();
+#endif
 	screen_reader_switch_enabled_set(EINA_TRUE);
 	screen_reader_switch_wm_enabled_set(EINA_TRUE);
 	return 0;
@@ -236,8 +236,9 @@ static int app_terminate(void *data)
 	navigator_shutdown();
 	DEBUG("terminate gestures");
 	//screen_reader_gestures_shutdown();
-#endif
+	DEBUG("terminate keyboard tracker");
 	keyboard_tracker_shutdown();
+#endif
 	DEBUG("terminate service");
 	screen_reader_terminate_service(data);
 	DEBUG("clear ScreenReaderEnabled property");

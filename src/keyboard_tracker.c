@@ -280,6 +280,7 @@ void keyboard_geometry_get(int *x, int *y, int *width, int *height)
 
 Eina_Bool keyboard_event_status(int x, int y)
 {
+#ifndef SCREEN_READER_TV
 	gchar* name = NULL;
 	if (prev_keyboard_state == VCONFKEY_ISF_INPUT_PANEL_STATE_SHOW) {
 		if (top_win)
@@ -292,6 +293,7 @@ Eina_Bool keyboard_event_status(int x, int y)
 		}
 		g_free(name);
 	}
+#endif
 	return EINA_FALSE;
 }
 
