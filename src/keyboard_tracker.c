@@ -31,7 +31,11 @@ static int keyboardX = 0;
 static int keyboardY = 0;
 static int keyboardW = 0;
 static int keyboardH = 0;
+
+#ifndef SCREEN_READER_TV
 extern AtspiAccessible *top_win;
+#endif
+
 #define E_KEYBOARD_SERVICE_BUS_NAME "org.tizen.keyboard"
 #define E_KEYBOARD_SERVICE_NAVI_IFC_NAME "org.tizen.KBGestureNavigation"
 #define E_KEYBOARD_SERVICE_NAVI_OBJ_PATH "/org/tizen/KBGestureNavigation"
@@ -280,6 +284,7 @@ void keyboard_geometry_get(int *x, int *y, int *width, int *height)
 
 Eina_Bool keyboard_event_status(int x, int y)
 {
+#ifndef SCREEN_READER_TV
 	gchar* name = NULL;
 	if (prev_keyboard_state == VCONFKEY_ISF_INPUT_PANEL_STATE_SHOW) {
 		if (top_win)
@@ -292,6 +297,7 @@ Eina_Bool keyboard_event_status(int x, int y)
 		}
 		g_free(name);
 	}
+#endif
 	return EINA_FALSE;
 }
 
