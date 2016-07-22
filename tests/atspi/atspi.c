@@ -123,7 +123,7 @@ gchar *atspi_accessible_get_localized_role_name(AtspiAccessible * obj, GError **
 	case ATSPI_ROLE_CHECK_BOX:
 		return strdup("Check box");
 	case ATSPI_ROLE_ENTRY:
-		return strdup("Entry");
+		return strdup("Edit field");
 	case ATSPI_ROLE_FILLER:
 		return strdup("filler");
 	default:

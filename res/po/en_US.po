@@ -68,10 +68,10 @@ msgid "IDS_TRAIT_MENU_ITEM_TAB_INDEX"
 msgstr "Tab %1$d of %2$d"
 
 msgid "IDS_TRAIT_TEXT_EDIT"
-msgstr "Double tap to edit"
+msgstr "Double tap to enter text"
 
 msgid "IDS_TRAIT_CTX_POPUP"
-msgstr "Contextual popup"
+msgstr "Alert"
 
 msgid "IDS_TRAIT_POPUP"
 msgstr "popup"
@@ -83,7 +83,7 @@ msgid "IDS_TRAIT_ITEMS"
 msgstr "Items"
 
 msgid "IDS_TRAIT_POPUP_CLOSE"
-msgstr "Press back key to close pop-up"
+msgstr "Press back key to close"
 
 msgid "IDS_TRAIT_TEXT_EDIT_FOCUSED"
 msgstr "Editing"
@@ -265,3 +265,5 @@ msgstr "Started dragging item at position %d"
 msgid "IDS_TRAIT_REORDER_DRAG_STOP"
 msgstr "Item dropped into position %d"
 
+msgid "IDS_TRAIT_ITEM_EDIT"
+msgstr "Double tap to edit"

@@ -505,12 +505,11 @@ char *generate_trait(AtspiAccessible * obj)
 	case ATSPI_ROLE_POPUP_MENU: {
 		AtspiAccessible *parent = atspi_accessible_get_parent(obj, NULL);
 		AtspiRole parent_role = atspi_accessible_get_role(parent, NULL);
+		if (parent_role == ATSPI_ROLE_COMBO_BOX) break;
 		int children_count;
 		char trait[HOVERSEL_TRAIT_SIZE];
-		if (parent_role == ATSPI_ROLE_COMBO_BOX)
-			children_count = atspi_accessible_get_child_count(parent, NULL);
-		else
-			children_count = atspi_accessible_get_child_count(obj, NULL);
+
+		children_count = atspi_accessible_get_child_count(obj, NULL);
 
 		snprintf(trait, HOVERSEL_TRAIT_SIZE, _("IDS_TRAIT_CTX_POPUP"));
 		strncat(ret, trait, sizeof(ret) - strlen(ret) - 1);
@@ -673,7 +672,7 @@ char *generate_trait(AtspiAccessible * obj)
 		}
 		else {
 			if (atspi_state_set_contains(state_set, ATSPI_STATE_EDITABLE)) {
-				strncat(ret, _("IDS_TRAIT_TEXT_EDIT"), sizeof(ret) - strlen(ret) - 1);
+				strncat(ret, _("IDS_TRAIT_ITEM_EDIT"), sizeof(ret) - strlen(ret) - 1);
 			}
 			else if (parent_role != ATSPI_ROLE_COLOR_CHOOSER)
 				strncat(ret, _("IDS_TRAIT_CHECK_BOX_NOT_SELECTED"), sizeof(ret) - strlen(ret) - 1);
@@ -717,6 +716,7 @@ char *generate_trait(AtspiAccessible * obj)
 	}
 	case ATSPI_ROLE_HEADING:
 	case ATSPI_ROLE_PAGE_TAB:
+	case ATSPI_ROLE_SCROLL_BAR:
 	case ATSPI_ROLE_GROUPING: {
 		break;
 	}
