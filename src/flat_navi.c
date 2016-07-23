@@ -479,14 +479,15 @@ AtspiAccessible *_directional_depth_first_search(AtspiAccessible * root, AtspiAc
 		// 2. internal nodes of flow relation chains
 		// 3. parent before children in backward traversing
 		// 4. If page tab list being returned as not a first object
+		// 5. If ctxpopup, hoversel (ATSPI_ROLE_POPUP_MENU) being returned as not a first object
 		role = atspi_accessible_get_role(node, NULL);
 		if (node != start && (relation_mode || !prev_related_in_direction) && !(cc > 0 && next_sibling_idx_modifier < 0 && !all_children_visited) && stop_condition(node))
 		{
-			if (role == ATSPI_ROLE_PAGE_TAB)
+			if (role == ATSPI_ROLE_PAGE_TAB || role == ATSPI_ROLE_POPUP_MENU)
 			{
 				if (start == NULL)
 				{
-					DEBUG("next_sibling_idx_modifier == 1 && role == ATSPI_ROLE_PAGE_TAB");
+					DEBUG("next_sibling_idx_modifier == 1 && (role == ATSPI_ROLE_PAGE_TAB || ATSPI_ROLE_POPUP_MENU)");
 					g_object_unref(prev_related_in_direction);
 					return node;
 				}
