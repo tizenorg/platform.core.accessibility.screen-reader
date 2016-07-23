@@ -962,7 +962,7 @@ static void _current_highlight_object_set(AtspiAccessible * obj)
 			haptic_vibrate_start(HAPTIC_VIBRATE_DURATION, HAPTIC_VIBRATE_INTENSITY);
 
 		role = atspi_accessible_get_role(obj, NULL);
-		if (role != ATSPI_ROLE_PAGE_TAB) {
+		if (role != ATSPI_ROLE_PAGE_TAB && role != ATSPI_ROLE_POPUP_MENU) { /* ctxpopup outline does not show highlight frame */
 			atspi_component_grab_highlight(comp, &err);
 		}
 		current_comp = comp;
