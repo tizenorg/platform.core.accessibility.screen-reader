@@ -78,6 +78,14 @@ typedef struct {
 	int x, y;
 } last_focus_t;
 
+enum Reading_Info
+{
+   ACCESSIBLE_INFO_NAME = 1 << 0,
+   ACCESSIBLE_INFO_ROLE = 1 << 1,
+   ACCESSIBLE_INFO_DESCRIPTION = 1 << 2,
+   ACCESSIBLE_INFO_STATE = 1 << 3
+}
+
 static last_focus_t gesture_start_p = { -1, -1 };
 static last_focus_t last_focus = { -1, -1 };
 static last_focus_t last_pos = { -1, -1 };
@@ -840,9 +848,43 @@ static char *generate_what_to_read(AtspiAccessible * obj)
 	char ret[TTS_MAX_TEXT_SIZE] = "\0";
 	char *description_from_relation;
 	char *name_from_relation;
-
+	GHashTable *hash_table = NULL;
+	gchar *reading_info = NULL;
+	char **list;
+	unsigned int n = 0;
+	int i = 0;
+	unsigned short int attribute = 0;
+	hash_table = atspi_accessible_get_attributes(obj, NULL);
+	if (hash_table) {
+		reading_info = g_hash_table_lookup(hash_table, "reading_information");
+		if (reading_info)
+		{
+			list = eina_str_split_full(reading_info, "|", 100, &n);
+			for (i = 0; i < n; i++)
+			{
+				if (!strcmp(list[i], "name"))
+				{
+					attribute = attribute | (ACCESSIBLE_INFO_NAME);
+				}
+				else if (!strcmp(list[i], "role"))
+				{
+					attribute = attribute | (ACCESSIBLE_INFO_ROLE);
+				}
+				else if (!strcmp(list[i], "description"))
+				{
+					attribute = attribute | (ACCESSIBLE_INFO_DESCRIPTION);
+				}
+				else if (!strcmp(list[i], "state"))
+				{
+					attribute = attribute | (ACCESSIBLE_INFO_STATE);
+				}
+			}
+		}
+	}
+	//Need to organize below code distinctly based on above parameters
 	description = atspi_accessible_get_description(obj, NULL);
 	name = atspi_accessible_get_name(obj, NULL);
+	//Need to divide below function based on role and state
 	role_name = generate_trait(obj);
 	other = generate_description_for_subtrees(obj);
 	description_from_relation = generate_text_for_relation_objects(obj, ATSPI_RELATION_DESCRIBED_BY, generate_description_from_relation_object);
