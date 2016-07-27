@@ -267,3 +267,6 @@ msgstr "Item dropped into position %d"
 
 msgid "IDS_TRAIT_ITEM_EDIT"
 msgstr "Double tap to edit"
+
+msgid "IDS_PASSWORD_CHARACTER_COUNT"
+msgstr "%d characters"

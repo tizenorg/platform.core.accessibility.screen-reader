@@ -225,6 +225,19 @@ static void _on_atspi_event_cb(const AtspiEvent * event)
 			DEBUG("Text deleted :%s", buf);
 			tts_speak(buf, EINA_TRUE);
 		}
+
+		if ((!strcmp(event->type, "object:text-changed:insert") || !strcmp(event->type, "object:text-changed:delete")) && atspi_accessible_get_role(event->source, NULL) == ATSPI_ROLE_PASSWORD_TEXT) {
+			AtspiText *iface_text = NULL;
+			char buf[64] = "\0";
+			iface_text = atspi_accessible_get_text_iface(event->source);
+			if (iface_text) {
+				gint count = atspi_text_get_character_count(iface_text, NULL);
+				snprintf(buf, sizeof(buf), _("IDS_PASSWORD_CHARACTER_COUNT"), count);
+				g_object_unref(iface_text);
+			}
+			tts_speak(buf, EINA_TRUE);
+		}
+
 	}
 	if (!strcmp(event->type, "object:property-change:accessible-name") && _object_has_highlighted_state(event->source)) {
 		gchar *name = atspi_accessible_get_name(event->source, NULL);
