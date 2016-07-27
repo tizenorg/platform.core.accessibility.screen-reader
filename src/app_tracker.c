@@ -183,47 +183,73 @@ static void _on_atspi_event_cb(const AtspiEvent * event)
 	}
 #endif
 	if (keyboard_feedback) {
-		if (!strcmp(event->type, "object:text-changed:insert") && (atspi_accessible_get_role(event->source, NULL) == ATSPI_ROLE_ENTRY)) {
-			char buf[256] = "\0";
-			const gchar *text = NULL;
-			text = g_value_get_string(&event->any_data);
-			if ((event->detail2 == 1) && isupper((int)*text)) {
-				strncat(buf, _("IDS_CAPITAL"), sizeof(buf) - strlen(buf) - 1);
-				strncat(buf, " ", sizeof(buf) - strlen(buf) - 1);
+		if (!strcmp(event->type, "object:text-changed:insert")) {
+			if (atspi_accessible_get_role(event->source, NULL) == ATSPI_ROLE_ENTRY) {
+				char buf[256] = "\0";
+				const gchar *text = NULL;
+				text = g_value_get_string(&event->any_data);
+				if ((event->detail2 == 1) && isupper((int)*text)) {
+					strncat(buf, _("IDS_CAPITAL"), sizeof(buf) - strlen(buf) - 1);
+					strncat(buf, " ", sizeof(buf) - strlen(buf) - 1);
+				}
+				strncat(buf, text, sizeof(buf) - strlen(buf) - 1);
+				DEBUG("Text Inserted :%s", buf);
+				tts_speak(buf, EINA_TRUE);
 			}
-			strncat(buf, text, sizeof(buf) - strlen(buf) - 1);
-			DEBUG("Text Inserted :%s", buf);
-			tts_speak(buf, EINA_TRUE);
-		}
-		if (!strcmp(event->type, "object:text-changed:delete") && (atspi_accessible_get_role(event->source, NULL) == ATSPI_ROLE_ENTRY)) {
-			char buf[256] = "\0";
-			const gchar *text = NULL;
-			char *etext = NULL;
-			AtspiText *iface_text = NULL;
-			text = g_value_get_string(&event->any_data);
-			if ((event->detail2 == 1) && isupper((int)*text)) {
-				strncat(buf, _("IDS_CAPITAL"), sizeof(buf) - strlen(buf) - 1);
-				strncat(buf, " ", sizeof(buf) - strlen(buf) - 1);
-			}
-			strncat(buf, text, sizeof(buf) - strlen(buf) - 1);
-			strncat(buf, " ", sizeof(buf) - strlen(buf) - 1);
-			strncat(buf, _("IDS_DELETED"), sizeof(buf) - strlen(buf) - 1);
-			if (event->detail1 == 0) {
+			else if (atspi_accessible_get_role(event->source, NULL) == ATSPI_ROLE_PASSWORD_TEXT) {
+				AtspiText *iface_text = NULL;
+				char buf[64] = "\0";
 				iface_text = atspi_accessible_get_text_iface(event->source);
 				if (iface_text) {
-					etext = atspi_text_get_text(iface_text, 0, atspi_text_get_character_count(iface_text, NULL), NULL);
-					if (etext) {
-						if (!strcmp(etext, "")) {
-							strncat(buf, " ", sizeof(buf) - strlen(buf) - 1);//entry should be empty, need to find/get more detail here
-							strncat(buf, _("IDS_ALL_CHARACTERS_DELETED"), sizeof(buf) - strlen(buf) - 1);
-						}
-						free(etext);
-					}
+					gint count = atspi_text_get_character_count(iface_text, NULL);
+					snprintf(buf, sizeof(buf), _("IDS_PASSWORD_CHARACTER_COUNT"), count);
 					g_object_unref(iface_text);
 				}
+				tts_speak(buf, EINA_TRUE);
 			}
-			DEBUG("Text deleted :%s", buf);
-			tts_speak(buf, EINA_TRUE);
+		}
+		if (!strcmp(event->type, "object:text-changed:delete")) {
+			if (atspi_accessible_get_role(event->source, NULL) == ATSPI_ROLE_ENTRY) {
+				char buf[256] = "\0";
+				const gchar *text = NULL;
+				char *etext = NULL;
+				AtspiText *iface_text = NULL;
+				text = g_value_get_string(&event->any_data);
+				if ((event->detail2 == 1) && isupper((int)*text)) {
+					strncat(buf, _("IDS_CAPITAL"), sizeof(buf) - strlen(buf) - 1);
+					strncat(buf, " ", sizeof(buf) - strlen(buf) - 1);
+				}
+				strncat(buf, text, sizeof(buf) - strlen(buf) - 1);
+				strncat(buf, " ", sizeof(buf) - strlen(buf) - 1);
+				strncat(buf, _("IDS_DELETED"), sizeof(buf) - strlen(buf) - 1);
+				if (event->detail1 == 0) {
+					iface_text = atspi_accessible_get_text_iface(event->source);
+					if (iface_text) {
+						etext = atspi_text_get_text(iface_text, 0, atspi_text_get_character_count(iface_text, NULL), NULL);
+						if (etext) {
+							if (!strcmp(etext, "")) {
+								strncat(buf, " ", sizeof(buf) - strlen(buf) - 1);//entry should be empty, need to find/get more detail here
+								strncat(buf, _("IDS_ALL_CHARACTERS_DELETED"), sizeof(buf) - strlen(buf) - 1);
+							}
+							free(etext);
+						}
+						g_object_unref(iface_text);
+					}
+				}
+				DEBUG("Text deleted :%s", buf);
+				tts_speak(buf, EINA_TRUE);
+			}
+			else if (atspi_accessible_get_role(event->source, NULL) == ATSPI_ROLE_PASSWORD_TEXT) {
+				AtspiText *iface_text = NULL;
+				char buf[64] = "\0";
+				iface_text = atspi_accessible_get_text_iface(event->source);
+				if (iface_text) {
+					gint count = atspi_text_get_character_count(iface_text, NULL);
+					snprintf(buf, sizeof(buf), _("IDS_PASSWORD_CHARACTER_COUNT"), count);
+					g_object_unref(iface_text);
+				}
+				tts_speak(buf, EINA_TRUE);
+			}
 		}
 	}
 	if (!strcmp(event->type, "object:property-change:accessible-name") && _object_has_highlighted_state(event->source)) {
