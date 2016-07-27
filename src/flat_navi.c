@@ -758,3 +758,15 @@ Eina_Bool flat_navi_is_valid(FlatNaviContext * context, AtspiAccessible * new_ro
 	g_object_unref(ss);
 	return ret;
 }
+
+AtspiAccessible *flat_navi_get_object_in_relation(AtspiAccessible *source, AtspiRelationType search_type)
+{
+	AtspiAccessible *ret = NULL;
+	if(!source)
+		return NULL;
+
+	ret = _get_object_in_relation(source, search_type);
+
+	return ret;
+}
+

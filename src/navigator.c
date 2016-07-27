@@ -1353,7 +1353,6 @@ static void _activate_widget(void)
 		DEBUG("Widget is disabled so cannot be activated");
 		return;
 	}
-
 	current_widget = current_obj;
 
 	role = atspi_accessible_get_role(current_widget, NULL);
@@ -2167,6 +2166,7 @@ static void _start_stop_signal_send(void)
 
 static void on_gesture_detected(void *data, const Eldbus_Message *msg)
 {
+	AtspiAccessible *relation = NULL;
 #ifdef X11_ENABLED
 	Ecore_X_Window keyboard_win;
 #else
@@ -2191,6 +2191,10 @@ static void on_gesture_detected(void *data, const Eldbus_Message *msg)
 	      info->x_beg, info->y_beg, info->x_end, info->y_end, info->state);
 
 	_on_auto_review_stop();
+
+	relation = flat_navi_get_object_in_relation(current_obj, ATSPI_RELATION_CONTROLLER_FOR);
+	if(relation)
+		current_obj = relation;
 
 	if (info->type == ONE_FINGER_SINGLE_TAP && info->state == 3) {
 			DEBUG("One finger single tap aborted");
