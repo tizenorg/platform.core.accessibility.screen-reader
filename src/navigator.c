@@ -628,18 +628,7 @@ char *generate_trait(AtspiAccessible * obj)
 					GERROR_CHECK(err);
 					if(child_role == ATSPI_ROLE_CHECK_BOX) {
 						strncat(ret, _("IDS_TRAIT_GROUP_INDEX_IN_CHECK_BOX"), sizeof(ret) - strlen(ret) - 1);
-
-						AtspiStateSet *child_state_set = atspi_accessible_get_state_set(child_iter);
-						gboolean is_selected = atspi_state_set_contains(child_state_set, ATSPI_STATE_CHECKED);;
-						g_object_unref(child_state_set);
 						g_object_unref(child_iter);
-						strncat(ret, ", ", sizeof(ret) - strlen(ret) - 1);
-						if(is_selected) {
-							strncat(ret, _("IDS_TRAIT_CHECK_BOX_SELECTED"), sizeof(ret) - strlen(ret) - 1);
-						}
-						else {
-							strncat(ret, _("IDS_TRAIT_CHECK_BOX_NOT_SELECTED"), sizeof(ret) - strlen(ret) - 1);
-						}
 						break;
 					}
 					g_object_unref(child_iter);
