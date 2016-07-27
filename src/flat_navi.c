@@ -204,6 +204,13 @@ static Eina_Bool _accept_object(AtspiAccessible * obj)
 
 	ss = atspi_accessible_get_state_set(obj);
 	if (ss) {
+		// All toolkit must handle ATSPI_STATE_HIGHLIGHTABLE, ATSPI_STATE_HIGHLIGHTED
+		ret = atspi_state_set_contains(ss, ATSPI_STATE_HIGHLIGHTABLE);
+		if (!ret) {
+			g_object_unref(ss);
+			return EINA_FALSE;
+		}
+
 		if (_object_is_item(obj)) {
 			AtspiAccessible *parent = atspi_accessible_get_parent(obj, NULL);
 			if (parent) {

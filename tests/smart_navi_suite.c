@@ -86,6 +86,12 @@ void setup_flat_navi()
 	child2->role = ATSPI_ROLE_ICON;
 	child3->role = ATSPI_ROLE_CHECK_BOX;
 	child4->role = ATSPI_ROLE_ENTRY;
+
+	atspi_state_set_add(child1->states, ATSPI_STATE_HIGHLIGHTABLE);
+	atspi_state_set_add(child2->states, ATSPI_STATE_HIGHLIGHTABLE);
+	atspi_state_set_add(child3->states, ATSPI_STATE_HIGHLIGHTABLE);
+	atspi_state_set_add(child4->states, ATSPI_STATE_HIGHLIGHTABLE);
+
 	atspi_accessible_add_child(root, child1);
 	atspi_accessible_add_child(root, child2);
 	atspi_accessible_add_child(root, child3);
@@ -125,6 +131,15 @@ void setup_flat_navi2()
 	child5->name = "btn1";
 	child6->role = ATSPI_ROLE_PUSH_BUTTON;
 	child6->name = "btn2";
+
+	atspi_state_set_add(child1->states, ATSPI_STATE_HIGHLIGHTABLE);
+	atspi_state_set_add(child2->states, ATSPI_STATE_HIGHLIGHTABLE);
+	atspi_state_set_add(child3->states, ATSPI_STATE_HIGHLIGHTABLE);
+	atspi_state_set_add(child4->states, ATSPI_STATE_HIGHLIGHTABLE);
+	atspi_state_set_add(child5->states, ATSPI_STATE_HIGHLIGHTABLE);
+	atspi_state_set_add(child6->states, ATSPI_STATE_HIGHLIGHTABLE);
+	atspi_state_set_add(child7->states, ATSPI_STATE_HIGHLIGHTABLE);
+	atspi_state_set_add(child8->states, ATSPI_STATE_HIGHLIGHTABLE);
 
 	atspi_accessible_add_child(app, win);
 	atspi_accessible_add_child(win, child1);
@@ -209,6 +224,30 @@ void setup_flat_navi3()
 	child19->name = "btn4";
 	child22->role = ATSPI_ROLE_PUSH_BUTTON;
 	child22->name = "btn5";
+
+	atspi_state_set_add(child1->states, ATSPI_STATE_HIGHLIGHTABLE);
+	atspi_state_set_add(child2->states, ATSPI_STATE_HIGHLIGHTABLE);
+	atspi_state_set_add(child3->states, ATSPI_STATE_HIGHLIGHTABLE);
+	atspi_state_set_add(child4->states, ATSPI_STATE_HIGHLIGHTABLE);
+	atspi_state_set_add(child5->states, ATSPI_STATE_HIGHLIGHTABLE);
+	atspi_state_set_add(child6->states, ATSPI_STATE_HIGHLIGHTABLE);
+	atspi_state_set_add(child7->states, ATSPI_STATE_HIGHLIGHTABLE);
+	atspi_state_set_add(child8->states, ATSPI_STATE_HIGHLIGHTABLE);
+	atspi_state_set_add(child9->states, ATSPI_STATE_HIGHLIGHTABLE);
+	atspi_state_set_add(child10->states, ATSPI_STATE_HIGHLIGHTABLE);
+	atspi_state_set_add(child11->states, ATSPI_STATE_HIGHLIGHTABLE);
+	atspi_state_set_add(child12->states, ATSPI_STATE_HIGHLIGHTABLE);
+	atspi_state_set_add(child13->states, ATSPI_STATE_HIGHLIGHTABLE);
+	atspi_state_set_add(child14->states, ATSPI_STATE_HIGHLIGHTABLE);
+	atspi_state_set_add(child15->states, ATSPI_STATE_HIGHLIGHTABLE);
+	atspi_state_set_add(child16->states, ATSPI_STATE_HIGHLIGHTABLE);
+	atspi_state_set_add(child17->states, ATSPI_STATE_HIGHLIGHTABLE);
+	atspi_state_set_add(child18->states, ATSPI_STATE_HIGHLIGHTABLE);
+	atspi_state_set_add(child19->states, ATSPI_STATE_HIGHLIGHTABLE);
+	atspi_state_set_add(child20->states, ATSPI_STATE_HIGHLIGHTABLE);
+	atspi_state_set_add(child21->states, ATSPI_STATE_HIGHLIGHTABLE);
+	atspi_state_set_add(child22->states, ATSPI_STATE_HIGHLIGHTABLE);
+	atspi_state_set_add(child23->states, ATSPI_STATE_HIGHLIGHTABLE);
 
 	atspi_accessible_add_child(app, win);
 	atspi_accessible_add_child(win, ly);
