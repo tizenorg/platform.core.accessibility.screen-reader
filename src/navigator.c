@@ -1138,7 +1138,11 @@ static void _caret_move_beg(void)
 	if (!current_obj)
 		return;
 
-	current_widget = current_obj;
+	AtspiAccessible *relation = flat_navi_get_object_in_relation(current_obj, ATSPI_RELATION_CONTROLLER_FOR);
+	if(relation)
+		current_widget = relation;
+	else
+		current_widget = current_obj;
 
 	text_interface = atspi_accessible_get_text_iface(current_widget);
 	if (text_interface) {
@@ -1169,7 +1173,11 @@ static void _caret_move_end(void)
 	if (!current_obj)
 		return;
 
-	current_widget = current_obj;
+	AtspiAccessible *relation = flat_navi_get_object_in_relation(current_obj, ATSPI_RELATION_CONTROLLER_FOR);
+	if(relation)
+		current_widget = relation;
+	else
+		current_widget = current_obj;
 
 	text_interface = atspi_accessible_get_text_iface(current_widget);
 	if (text_interface) {
@@ -1197,7 +1205,11 @@ static void _caret_move_forward(void)
 	if (!current_obj)
 		return;
 
-	current_widget = current_obj;
+	AtspiAccessible *relation = flat_navi_get_object_in_relation(current_obj, ATSPI_RELATION_CONTROLLER_FOR);
+	if(relation)
+		current_widget = relation;
+	else
+		current_widget = current_obj;
 
 	text_interface = atspi_accessible_get_text_iface(current_widget);
 	if (text_interface) {
@@ -1242,7 +1254,11 @@ static void _caret_move_backward(void)
 	if (!current_obj)
 		return;
 
-	current_widget = current_obj;
+	AtspiAccessible *relation = flat_navi_get_object_in_relation(current_obj, ATSPI_RELATION_CONTROLLER_FOR);
+	if(relation)
+		current_widget = relation;
+	else
+		current_widget = current_obj;
 
 	GERROR_CHECK(err)
 
@@ -1281,7 +1297,11 @@ static void _value_inc(void)
 	if (!current_obj)
 		return;
 
-	current_widget = current_obj;
+	AtspiAccessible *relation = flat_navi_get_object_in_relation(current_obj, ATSPI_RELATION_CONTROLLER_FOR);
+	if(relation)
+		current_widget = relation;
+	else
+		current_widget = current_obj;
 
 	AtspiValue *value_interface = atspi_accessible_get_value_iface(current_widget);
 	if (value_interface) {
@@ -1306,7 +1326,12 @@ static void _value_dec(void)
 
 	if (!current_obj)
 		return;
-	current_widget = current_obj;
+
+	AtspiAccessible *relation = flat_navi_get_object_in_relation(current_obj, ATSPI_RELATION_CONTROLLER_FOR);
+	if(relation)
+		current_widget = relation;
+	else
+		current_widget = current_obj;
 
 	AtspiValue *value_interface = atspi_accessible_get_value_iface(current_widget);
 	if (value_interface) {
@@ -1354,7 +1379,11 @@ static void _activate_widget(void)
 		return;
 	}
 
-	current_widget = current_obj;
+	AtspiAccessible *relation = flat_navi_get_object_in_relation(current_obj, ATSPI_RELATION_CONTROLLER_FOR);
+	if(relation)
+		current_widget = relation;
+	else
+		current_widget = current_obj;
 
 	role = atspi_accessible_get_role(current_widget, NULL);
 	if (role == ATSPI_ROLE_SLIDER) {
@@ -1915,7 +1944,11 @@ static Eina_Bool _has_value(void)
 	if (!current_obj)
 		return EINA_FALSE;
 
-	obj = current_obj;
+	AtspiAccessible *relation = flat_navi_get_object_in_relation(current_obj, ATSPI_RELATION_CONTROLLER_FOR);
+	if(relation)
+		obj = relation;
+	else
+		obj = current_obj;
 
 	if (!obj)
 		return EINA_FALSE;
@@ -1936,7 +1969,11 @@ static Eina_Bool _is_enabled(void)
 		return EINA_FALSE;
 	}
 
-	return _widget_has_state(current_obj, ATSPI_STATE_ENABLED);
+	AtspiAccessible *relation = flat_navi_get_object_in_relation(current_obj, ATSPI_RELATION_CONTROLLER_FOR);
+	if(relation)
+		return _widget_has_state(relation, ATSPI_STATE_ENABLED);
+	else
+		return _widget_has_state(current_obj, ATSPI_STATE_ENABLED);
 }
 
 static Eina_Bool _is_active_entry(void)
@@ -1953,6 +1990,10 @@ static Eina_Bool _is_active_entry(void)
 
 	if (!obj)
 		return EINA_FALSE;
+
+	AtspiAccessible *relation = flat_navi_get_object_in_relation(obj, ATSPI_RELATION_CONTROLLER_FOR);
+	if(relation)
+		obj = relation;
 
 	role = atspi_accessible_get_role(obj, NULL);
 	if (role == ATSPI_ROLE_ENTRY) {
@@ -2053,6 +2094,10 @@ static void _move_slider(Gesture_Info * gi)
 		return;
 	}
 
+	AtspiAccessible *relation = flat_navi_get_object_in_relation(obj, ATSPI_RELATION_CONTROLLER_FOR);
+	if(relation)
+		obj = relation;
+
 	if (!_is_slider(obj)) {
 		DEBUG("Object is not a slider");
 		prepared = false;
@@ -2064,7 +2109,6 @@ static void _move_slider(Gesture_Info * gi)
 		prepared = false;
 		return;
 	}
-
 	if (gi->state == 0) {
 		comp = atspi_accessible_get_component_iface(obj);
 		if (!comp) {
@@ -2195,9 +2239,12 @@ static void on_gesture_detected(void *data, const Eldbus_Message *msg)
 	if (info->type == ONE_FINGER_SINGLE_TAP && info->state == 3) {
 			DEBUG("One finger single tap aborted");
 			prepared = true;
-			if (_is_slider(current_obj)) _highlight_on_slider(EINA_TRUE);
+			AtspiAccessible *relation = flat_navi_get_object_in_relation(current_obj, ATSPI_RELATION_CONTROLLER_FOR);
+			if(relation)
+				if (_is_slider(relation)) _highlight_on_slider(EINA_TRUE);
+			else
+				if (_is_slider(current_obj)) _highlight_on_slider(EINA_TRUE);
 	}
-
 	switch (info->type) {
 	case ONE_FINGER_HOVER:
 		if (prepared) {
