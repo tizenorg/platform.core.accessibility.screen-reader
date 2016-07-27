@@ -1138,9 +1138,17 @@ static void _caret_move_beg(void)
 	if (!current_obj)
 		return;
 
-	current_widget = current_obj;
+	AtspiAccessible *relation = flat_navi_get_object_in_relation(current_obj, ATSPI_RELATION_CONTROLLER_FOR);
+	if(relation)
+		current_widget = relation;
+	else
+		current_widget = current_obj;
 
 	text_interface = atspi_accessible_get_text_iface(current_widget);
+
+	if(relation)
+		g_object_unref(relation);
+
 	if (text_interface) {
 		ret = atspi_text_set_caret_offset(text_interface, 0, &err);
 		GERROR_CHECK(err)
@@ -1169,9 +1177,17 @@ static void _caret_move_end(void)
 	if (!current_obj)
 		return;
 
-	current_widget = current_obj;
+	AtspiAccessible *relation = flat_navi_get_object_in_relation(current_obj, ATSPI_RELATION_CONTROLLER_FOR);
+	if(relation)
+		current_widget = relation;
+	else
+		current_widget = current_obj;
 
 	text_interface = atspi_accessible_get_text_iface(current_widget);
+
+	if(relation)
+		g_object_unref(relation);
+
 	if (text_interface) {
 		int len = atspi_text_get_character_count(text_interface, NULL);
 		ret = atspi_text_set_caret_offset(text_interface, len, &err);
@@ -1197,9 +1213,17 @@ static void _caret_move_forward(void)
 	if (!current_obj)
 		return;
 
-	current_widget = current_obj;
+	AtspiAccessible *relation = flat_navi_get_object_in_relation(current_obj, ATSPI_RELATION_CONTROLLER_FOR);
+	if(relation)
+		current_widget = relation;
+	else
+		current_widget = current_obj;
 
 	text_interface = atspi_accessible_get_text_iface(current_widget);
+
+	if(relation)
+		g_object_unref(relation);
+
 	if (text_interface) {
 		current_offset = atspi_text_get_caret_offset(text_interface, &err);
 		GERROR_CHECK(err)
@@ -1242,11 +1266,18 @@ static void _caret_move_backward(void)
 	if (!current_obj)
 		return;
 
-	current_widget = current_obj;
+	AtspiAccessible *relation = flat_navi_get_object_in_relation(current_obj, ATSPI_RELATION_CONTROLLER_FOR);
+	if(relation)
+		current_widget = relation;
+	else
+		current_widget = current_obj;
 
 	GERROR_CHECK(err)
-
 		text_interface = atspi_accessible_get_text_iface(current_widget);
+
+	if(relation)
+		g_object_unref(relation);
+
 	if (text_interface) {
 		current_offset = atspi_text_get_caret_offset(text_interface, &err);
 		GERROR_CHECK(err)
@@ -1281,9 +1312,17 @@ static void _value_inc(void)
 	if (!current_obj)
 		return;
 
-	current_widget = current_obj;
+	AtspiAccessible *relation = flat_navi_get_object_in_relation(current_obj, ATSPI_RELATION_CONTROLLER_FOR);
+	if(relation)
+		current_widget = relation;
+	else
+		current_widget = current_obj;
 
 	AtspiValue *value_interface = atspi_accessible_get_value_iface(current_widget);
+
+	if(relation)
+		g_object_unref(relation);
+
 	if (value_interface) {
 		DEBUG("Value interface supported!\n");
 		gdouble current_val = atspi_value_get_current_value(value_interface, &err);
@@ -1306,9 +1345,18 @@ static void _value_dec(void)
 
 	if (!current_obj)
 		return;
-	current_widget = current_obj;
+
+	AtspiAccessible *relation = flat_navi_get_object_in_relation(current_obj, ATSPI_RELATION_CONTROLLER_FOR);
+	if(relation)
+		current_widget = relation;
+	else
+		current_widget = current_obj;
 
 	AtspiValue *value_interface = atspi_accessible_get_value_iface(current_widget);
+
+	if(relation)
+		g_object_unref(relation);
+
 	if (value_interface) {
 		DEBUG("Value interface supported!\n");
 		gdouble current_val = atspi_value_get_current_value(value_interface, &err);
@@ -1354,10 +1402,16 @@ static void _activate_widget(void)
 		return;
 	}
 
-	current_widget = current_obj;
+	AtspiAccessible *relation = flat_navi_get_object_in_relation(current_obj, ATSPI_RELATION_CONTROLLER_FOR);
+	if(relation)
+		current_widget = relation;
+	else
+		current_widget = current_obj;
 
 	role = atspi_accessible_get_role(current_widget, NULL);
 	if (role == ATSPI_ROLE_SLIDER) {
+		if(relation)
+			g_object_unref(relation);
 		return;
 	}
 
@@ -1415,7 +1469,11 @@ static void _activate_widget(void)
 		if (action)
 			g_object_unref(action);
 		GERROR_CHECK(err)
+		{
+			if(relation)
+				g_object_unref(relation);
 			return;
+		}
 	}
 
 	ss = atspi_accessible_get_state_set(current_widget);
@@ -1433,7 +1491,8 @@ static void _activate_widget(void)
 					DEBUG("SELECT CHILD NO:%d\n", index);
 					atspi_selection_select_child(selection, index, NULL);
 				}
-
+				if(relation)
+					g_object_unref(relation);
 				g_object_unref(selection);
 				g_object_unref(parent);
 				g_object_unref(ss);
@@ -1444,6 +1503,8 @@ static void _activate_widget(void)
 			g_object_unref(parent);
 		}
 	}
+	if(relation)
+		g_object_unref(relation);
 	g_object_unref(ss);
 
 }
@@ -1915,12 +1976,19 @@ static Eina_Bool _has_value(void)
 	if (!current_obj)
 		return EINA_FALSE;
 
-	obj = current_obj;
+	AtspiAccessible *relation = flat_navi_get_object_in_relation(current_obj, ATSPI_RELATION_CONTROLLER_FOR);
+	if(relation)
+		obj = relation;
+	else
+		obj = current_obj;
 
 	if (!obj)
 		return EINA_FALSE;
 
 	AtspiValue *value = atspi_accessible_get_value_iface(obj);
+
+	if(relation)
+		g_object_unref(relation);
 
 	if (value) {
 		g_object_unref(value);
@@ -1936,7 +2004,17 @@ static Eina_Bool _is_enabled(void)
 		return EINA_FALSE;
 	}
 
-	return _widget_has_state(current_obj, ATSPI_STATE_ENABLED);
+	AtspiAccessible *relation = flat_navi_get_object_in_relation(current_obj, ATSPI_RELATION_CONTROLLER_FOR);
+	if(relation)
+	{
+		Eina_Bool ret = _widget_has_state(relation, ATSPI_STATE_ENABLED);
+		g_object_unref(relation);
+		return ret;
+	}
+	else
+	{
+		return _widget_has_state(current_obj, ATSPI_STATE_ENABLED);
+	}
 }
 
 static Eina_Bool _is_active_entry(void)
@@ -1954,16 +2032,27 @@ static Eina_Bool _is_active_entry(void)
 	if (!obj)
 		return EINA_FALSE;
 
+	AtspiAccessible *relation = flat_navi_get_object_in_relation(obj, ATSPI_RELATION_CONTROLLER_FOR);
+	if(relation)
+		obj = relation;
+
 	role = atspi_accessible_get_role(obj, NULL);
 	if (role == ATSPI_ROLE_ENTRY) {
 		AtspiStateSet *state_set = atspi_accessible_get_state_set(obj);
 		if (atspi_state_set_contains(state_set, ATSPI_STATE_FOCUSED)) {
 			g_object_unref(state_set);
+			if(relation)
+				g_object_unref(relation);
 			return EINA_TRUE;
 		}
 		g_object_unref(state_set);
+		if(relation)
+			g_object_unref(relation);
 		return EINA_FALSE;
 	}
+
+	if(relation)
+		g_object_unref(relation);
 
 	DEBUG("END");
 	return EINA_FALSE;
@@ -2053,23 +2142,32 @@ static void _move_slider(Gesture_Info * gi)
 		return;
 	}
 
+	AtspiAccessible *relation = flat_navi_get_object_in_relation(obj, ATSPI_RELATION_CONTROLLER_FOR);
+	if(relation)
+		obj = relation;
+
 	if (!_is_slider(obj)) {
 		DEBUG("Object is not a slider");
 		prepared = false;
+		if(relation)
+			g_object_unref(relation);
 		return;
 	}
 
 	if (!_widget_has_state(obj, ATSPI_STATE_ENABLED)) {
 		DEBUG("Slider is disabled");
 		prepared = false;
+		if(relation)
+			g_object_unref(relation);
 		return;
 	}
-
 	if (gi->state == 0) {
 		comp = atspi_accessible_get_component_iface(obj);
 		if (!comp) {
 			ERROR("that slider do not have component interface");
 			prepared = false;
+			if(relation)
+				g_object_unref(relation);
 			return;
 		}
 
@@ -2104,6 +2202,10 @@ static void _move_slider(Gesture_Info * gi)
 		last_pos.x = -1;
 		last_pos.y = -1;
 	}
+
+	if(relation)
+		g_object_unref(relation);
+
 	DEBUG("END");
 }
 
@@ -2195,9 +2297,19 @@ static void on_gesture_detected(void *data, const Eldbus_Message *msg)
 	if (info->type == ONE_FINGER_SINGLE_TAP && info->state == 3) {
 			DEBUG("One finger single tap aborted");
 			prepared = true;
-			if (_is_slider(current_obj)) _highlight_on_slider(EINA_TRUE);
+			AtspiAccessible *relation = flat_navi_get_object_in_relation(current_obj, ATSPI_RELATION_CONTROLLER_FOR);
+			if(relation)
+			{
+				if (_is_slider(relation))
+					_highlight_on_slider(EINA_TRUE);
+				g_object_unref(relation);
+			}
+			else
+			{
+				if (_is_slider(current_obj))
+					_highlight_on_slider(EINA_TRUE);
+			}
 	}
-
 	switch (info->type) {
 	case ONE_FINGER_HOVER:
 		if (prepared) {
