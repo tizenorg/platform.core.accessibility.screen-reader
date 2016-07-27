@@ -138,4 +138,6 @@ const AtspiAccessible *flat_navi_context_last_get(FlatNaviContext *ctx);
 
 Eina_Bool flat_navi_is_valid(FlatNaviContext *context, AtspiAccessible *new_root);
 
+AtspiAccessible *flat_navi_get_object_in_relation(AtspiAccessible *source, AtspiRelationType search_type);
+
 #endif /* end of include guard: FLAT_NAVI_H_ */

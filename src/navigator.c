@@ -1353,8 +1353,12 @@ static void _activate_widget(void)
 		DEBUG("Widget is disabled so cannot be activated");
 		return;
 	}
-
-	current_widget = current_obj;
+	//relation for
+	AtspiAccessible *relation = flat_navi_get_object_in_relation(current_obj, ATSPI_RELATION_CONTROLLER_FOR);
+	if(relation)
+		current_widget = relation;
+	else
+		current_widget = current_obj;
 
 	role = atspi_accessible_get_role(current_widget, NULL);
 	if (role == ATSPI_ROLE_SLIDER) {
@@ -2167,6 +2171,7 @@ static void _start_stop_signal_send(void)
 
 static void on_gesture_detected(void *data, const Eldbus_Message *msg)
 {
+	AtspiAccessible *relation = NULL;
 #ifdef X11_ENABLED
 	Ecore_X_Window keyboard_win;
 #else
@@ -2244,6 +2249,11 @@ static void on_gesture_detected(void *data, const Eldbus_Message *msg)
 
 		break;
 	case ONE_FINGER_FLICK_UP:
+		//relation for
+		relation = flat_navi_get_object_in_relation(current_obj, ATSPI_RELATION_CONTROLLER_FOR);
+		if(relation)
+			current_obj = relation;
+
 		if (_is_active_entry())
 			_caret_move_backward();
 		else if (_has_value() && _is_enabled())
@@ -2252,6 +2262,11 @@ static void on_gesture_detected(void *data, const Eldbus_Message *msg)
 			_focus_prev();
 		break;
 	case ONE_FINGER_FLICK_DOWN:
+		//relation for
+		relation = flat_navi_get_object_in_relation(current_obj, ATSPI_RELATION_CONTROLLER_FOR);
+		if(relation)
+			current_obj = relation;
+
 		if (_is_active_entry())
 			_caret_move_forward();
 		else if (_has_value() && _is_enabled())
