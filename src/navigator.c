@@ -839,6 +839,8 @@ static char *generate_what_to_read(AtspiAccessible * obj)
 	char *name_from_relation = NULL;;
 	GHashTable *hash_table = NULL;
 	gchar *reading_info = NULL;
+	gchar *type = NULL;
+	gchar *style = NULL;
 	char **list;
 	unsigned int n = 0;
 	int i = 0;
@@ -847,6 +849,8 @@ static char *generate_what_to_read(AtspiAccessible * obj)
 	hash_table = atspi_accessible_get_attributes(obj, NULL);
 	if (hash_table) {
 		reading_info = g_hash_table_lookup(hash_table, "reading_information");
+		style = g_hash_table_lookup(hash_table, "style");
+		type = g_hash_table_lookup(hash_table, "type");
 		if (reading_info)
 		{
 			list = eina_str_split_full(reading_info, "|", 100, &n);
@@ -875,6 +879,10 @@ static char *generate_what_to_read(AtspiAccessible * obj)
 		attribute = attribute | (ACCESSIBLE_INFO_NAME) |
 				(ACCESSIBLE_INFO_ROLE) | (ACCESSIBLE_INFO_DESCRIPTION) | (ACCESSIBLE_INFO_STATE);
 	}
+	if (reading_info) g_free(reading_info);
+	if (type) g_free(type);
+	if (style) g_free(style);
+	if (hash_table) g_hash_table_unref(hash_table);
 	if (attribute & ACCESSIBLE_INFO_NAME) {
 		name = atspi_accessible_get_name(obj, NULL);
 		other = generate_description_for_subtrees(obj);
