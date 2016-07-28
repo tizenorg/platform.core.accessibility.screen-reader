@@ -78,6 +78,14 @@ typedef struct {
 	int x, y;
 } last_focus_t;
 
+enum Reading_Info
+{
+   ACCESSIBLE_INFO_NAME = 1 << 0,
+   ACCESSIBLE_INFO_ROLE = 1 << 1,
+   ACCESSIBLE_INFO_DESCRIPTION = 1 << 2,
+   ACCESSIBLE_INFO_STATE = 1 << 3
+};
+
 static last_focus_t gesture_start_p = { -1, -1 };
 static last_focus_t last_focus = { -1, -1 };
 static last_focus_t last_pos = { -1, -1 };
@@ -613,7 +621,7 @@ char *generate_trait(AtspiAccessible * obj)
 
 		}
 		else if(!atspi_state_set_contains(state_set, ATSPI_STATE_EXPANDABLE)
-                 && (atspi_state_set_contains(state_set, ATSPI_STATE_EXPANDED) || atspi_state_set_contains(state_set, ATSPI_STATE_COLLAPSED))) {
+				&& (atspi_state_set_contains(state_set, ATSPI_STATE_EXPANDED) || atspi_state_set_contains(state_set, ATSPI_STATE_COLLAPSED))) {
 			//ELM_GENLIST_ITEM_GROUP
 			GError *err = NULL;
 			int childrens_count = atspi_accessible_get_child_count(obj, &err);
@@ -820,92 +828,125 @@ static char *generate_name_from_relation_object(AtspiAccessible *obj)
 
 static char *generate_what_to_read(AtspiAccessible * obj)
 {
-	char *name;
+	char *name = NULL;
 	char *names = NULL;
-	char *description;
-	char *role_name;
-	char *other;
+	char *description = NULL;
+	char *role_name = NULL;
+	char *other = NULL;
 	char *text = NULL;
 	char ret[TTS_MAX_TEXT_SIZE] = "\0";
-	char *description_from_relation;
-	char *name_from_relation;
-
-	description = atspi_accessible_get_description(obj, NULL);
-	name = atspi_accessible_get_name(obj, NULL);
-	role_name = generate_trait(obj);
-	other = generate_description_for_subtrees(obj);
-	description_from_relation = generate_text_for_relation_objects(obj, ATSPI_RELATION_DESCRIBED_BY, generate_description_from_relation_object);
-	name_from_relation = generate_text_for_relation_objects(obj, ATSPI_RELATION_LABELLED_BY, generate_name_from_relation_object);
-	AtspiText *iface_text = atspi_accessible_get_text_iface(obj);
-	if (iface_text) {
-		text = atspi_text_get_text(iface_text, 0, atspi_text_get_character_count(iface_text, NULL), NULL);
-		g_object_unref(iface_text);
-	}
-
-	DEBUG("->->->->->-> WIDGET GAINED HIGHLIGHT: %s <-<-<-<-<-<-<-", name);
-	DEBUG("->->->->->-> FROM SUBTREE HAS NAME:  %s <-<-<-<-<-<-<-", other);
-
+	char *description_from_relation = NULL;
+	char *name_from_relation = NULL;;
+	GHashTable *hash_table = NULL;
+	gchar *reading_info = NULL;
+	char **list;
+	unsigned int n = 0;
+	int i = 0;
+	unsigned short int attribute = 0;
 	display_info_about_object(obj, false);
-
-	if (name && strncmp(name, "\0", 1))
-		names = strdup(name);
-	else if (other && strncmp(other, "\0", 1))
-		names = strdup(other);
-
-	if (text) {
-		strncat(ret, text, sizeof(ret) - strlen(ret) - 1);
-	}
-
-	DEBUG("Text:%s", text);
-
-	if (names && strlen(names) > 0) {
-		if (strlen(ret) > 0)
-			strncat(ret, ", ", sizeof(ret) - strlen(ret) - 1);
-		strncat(ret, names, sizeof(ret) - strlen(ret) - 1);
-	}
-
-	if (name_from_relation && strlen(name_from_relation) > 0) {
-		if(strlen(ret) > 0)
-			strncat(ret, ", ", sizeof(ret) - strlen(ret) - 1);
-		strncat(ret, name_from_relation, sizeof(ret) - strlen(ret) - 1);
-	}
-
-	if (role_name && strlen(role_name) > 0) {
-		if (strlen(ret) > 0)
-			strncat(ret, ", ", sizeof(ret) - strlen(ret) - 1);
-		strncat(ret, role_name, sizeof(ret) - strlen(ret) - 1);
-	}
-
-	if (!_widget_has_state(obj, ATSPI_STATE_ENABLED)) {
-		strncat(ret, ", ", sizeof(ret) - strlen(ret) - 1);
-		strncat(ret, _("IDS_TRAIT_DISABLED"), sizeof(ret) - strlen(ret) - 1);
-	}
-
-	DEBUG("Description:%s VALUE %d", description,read_description);
-	if (description && strlen(description) > 0) {
-		/* If description reading is enabled */
-		if (read_description) {
-			if (strlen(ret) > 0)
-				strncat(ret, ", ", sizeof(ret) - strlen(ret) - 1);
-			strncat(ret, description, sizeof(ret) - strlen(ret) - 1);
+	hash_table = atspi_accessible_get_attributes(obj, NULL);
+	if (hash_table) {
+		reading_info = g_hash_table_lookup(hash_table, "reading_information");
+		if (reading_info)
+		{
+			list = eina_str_split_full(reading_info, "|", 100, &n);
+			for (i = 0; i < n; i++)
+			{
+				if (!strcmp(list[i], "name"))
+				{
+					attribute = attribute | (ACCESSIBLE_INFO_NAME);
+				}
+				else if (!strcmp(list[i], "role"))
+				{
+					attribute = attribute | (ACCESSIBLE_INFO_ROLE);
+				}
+				else if (!strcmp(list[i], "description"))
+				{
+					attribute = attribute | (ACCESSIBLE_INFO_DESCRIPTION);
+				}
+				else if (!strcmp(list[i], "state"))
+				{
+					attribute = attribute | (ACCESSIBLE_INFO_STATE);
+				}
+			}
 		}
 	}
-
-	if (description_from_relation && (description_from_relation[0] != '\n')) {
-		if (strlen(ret) > 0)
-			strncat(ret, ", ", sizeof(ret) - strlen(ret) - 1);
-		strncat(ret, description_from_relation, sizeof(ret) - strlen(ret) - 1);
+	if (!hash_table || !reading_info) {
+		attribute = attribute | (ACCESSIBLE_INFO_NAME) |
+				(ACCESSIBLE_INFO_ROLE) | (ACCESSIBLE_INFO_DESCRIPTION) | (ACCESSIBLE_INFO_STATE);
 	}
-
-	free(text);
-	free(name);
-	free(names);
-	free(name_from_relation);
-	free(description);
-	free(role_name);
-	free(other);
-	free(description_from_relation);
-
+	if (attribute & ACCESSIBLE_INFO_NAME) {
+		name = atspi_accessible_get_name(obj, NULL);
+		other = generate_description_for_subtrees(obj);
+		name_from_relation = generate_text_for_relation_objects(obj,
+				ATSPI_RELATION_LABELLED_BY, generate_name_from_relation_object);
+		AtspiText *iface_text = atspi_accessible_get_text_iface(obj);
+		if (iface_text) {
+			text = atspi_text_get_text(iface_text, 0, atspi_text_get_character_count(iface_text, NULL), NULL);
+			g_object_unref(iface_text);
+		}
+		if (name && strncmp(name, "\0", 1))
+			names = strdup(name);
+		else if (other && strncmp(other, "\0", 1))
+			names = strdup(other);
+		if (text) {
+			strncat(ret, text, sizeof(ret) - strlen(ret) - 1);
+		}
+		DEBUG("Text:%s", text);
+		if (names && strlen(names) > 0) {
+			if (strlen(ret) > 0)
+				strncat(ret, ", ", sizeof(ret) - strlen(ret) - 1);
+			strncat(ret, names, sizeof(ret) - strlen(ret) - 1);
+		}
+		if (name_from_relation && strlen(name_from_relation) > 0) {
+			if(strlen(ret) > 0)
+				strncat(ret, ", ", sizeof(ret) - strlen(ret) - 1);
+			strncat(ret, name_from_relation, sizeof(ret) - strlen(ret) - 1);
+		}
+		free(text);
+		free(name);
+		free(other);
+		free(name_from_relation);
+		free(names);
+	}
+	if (attribute & ACCESSIBLE_INFO_ROLE) {
+		role_name = generate_trait(obj);
+		if (role_name && strlen(role_name) > 0) {
+			if (strlen(ret) > 0)
+				strncat(ret, ", ", sizeof(ret) - strlen(ret) - 1);
+			strncat(ret, role_name, sizeof(ret) - strlen(ret) - 1);
+		}
+		free(role_name);
+	}
+	if (attribute & ACCESSIBLE_INFO_DESCRIPTION) {
+		description = atspi_accessible_get_description(obj, NULL);
+		description_from_relation = generate_text_for_relation_objects(obj, ATSPI_RELATION_DESCRIBED_BY,
+			generate_description_from_relation_object);
+		DEBUG("Description:%s VALUE %d", description,read_description);
+		if (description && strlen(description) > 0) {
+			/* If description reading is enabled */
+			if (read_description) {
+				if (strlen(ret) > 0)
+					strncat(ret, ", ", sizeof(ret) - strlen(ret) - 1);
+				strncat(ret, description, sizeof(ret) - strlen(ret) - 1);
+			}
+		}
+		if (description_from_relation && (description_from_relation[0] != '\n')) {
+			if (strlen(ret) > 0)
+				strncat(ret, ", ", sizeof(ret) - strlen(ret) - 1);
+			strncat(ret, description_from_relation, sizeof(ret) - strlen(ret) - 1);
+		}
+		free(description);
+		free(description_from_relation);
+	}
+	DEBUG("->->->->->-> WIDGET GAINED HIGHLIGHT: %s <-<-<-<-<-<-<-", name);
+	DEBUG("->->->->->-> FROM SUBTREE HAS NAME:  %s <-<-<-<-<-<-<-", other);
+	if (attribute & ACCESSIBLE_INFO_STATE) {
+		if (!_widget_has_state(obj, ATSPI_STATE_ENABLED)) {
+			strncat(ret, ", ", sizeof(ret) - strlen(ret) - 1);
+			strncat(ret, _("IDS_TRAIT_DISABLED"), sizeof(ret) - strlen(ret) - 1);
+		}
+	}
 	return strdup(ret);
 }
 
@@ -985,7 +1026,7 @@ void test_debug(AtspiAccessible * current_widget)
 	AtspiAccessible *parent = atspi_accessible_get_parent(current_widget, &err);
 	GERROR_CHECK(err)
 
-		if (!parent)
+	if (!parent)
 		return;
 	count_child = atspi_accessible_get_child_count(parent, &err);
 	GERROR_CHECK(err)
