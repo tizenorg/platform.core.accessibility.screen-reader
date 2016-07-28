@@ -717,6 +717,7 @@ char *generate_trait(AtspiAccessible * obj)
 	case ATSPI_ROLE_HEADING:
 	case ATSPI_ROLE_PAGE_TAB:
 	case ATSPI_ROLE_SCROLL_BAR:
+	case ATSPI_ROLE_EDITBAR:
 	case ATSPI_ROLE_GROUPING: {
 		break;
 	}
