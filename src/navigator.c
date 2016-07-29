@@ -1405,31 +1405,6 @@ static void _activate_widget(void)
 
 	display_info_about_object(current_widget, false);
 
-	edit = atspi_accessible_get_editable_text_iface(current_widget);
-	if (edit) {
-		DEBUG("Activated object has editable Interface");
-		focus_component = atspi_accessible_get_component_iface(current_widget);
-		if (focus_component) {
-			if (atspi_component_grab_focus(focus_component, &err) == TRUE) {
-				GERROR_CHECK(err)
-
-					DEBUG("Entry activated\n");
-
-				char *text_to_speak = NULL;
-				text_to_speak = generate_what_to_read(current_widget);
-
-				DEBUG("SPEAK:%s", text_to_speak);
-
-				tts_speak(text_to_speak, EINA_TRUE);
-				g_free(text_to_speak);
-				g_object_unref(focus_component);
-			}
-		}
-		g_object_unref(edit);
-		// Intend to not return; here. After grabbing focus in editable interface,
-		// activate the interface to generate clicked event to app, and also to open
-		// keypad again in case keypad was closed by clicking back key and entry still had focus.
-	}
 	action = atspi_accessible_get_action_iface(current_widget);
 	if (action) {
 		number = atspi_action_get_n_actions(action, &err);
@@ -1457,7 +1432,27 @@ static void _activate_widget(void)
 		if (action)
 			g_object_unref(action);
 		GERROR_CHECK(err)
-			return;
+			//return;
+	}
+
+	edit = atspi_accessible_get_editable_text_iface(current_widget);
+	if (edit) {
+		DEBUG("Activated object has editable Interface");
+		focus_component = atspi_accessible_get_component_iface(current_widget);
+		if (focus_component) {
+			if (atspi_component_grab_focus(focus_component, &err) == TRUE) {
+				GERROR_CHECK(err)
+				DEBUG("Entry activated\n");
+				char *text_to_speak = NULL;
+				text_to_speak = generate_what_to_read(current_widget);
+				DEBUG("SPEAK:%s", text_to_speak);
+				tts_speak(text_to_speak, EINA_TRUE);
+				g_free(text_to_speak);
+				g_object_unref(focus_component);
+			}
+		}
+		g_object_unref(edit);
+		return;
 	}
 
 	ss = atspi_accessible_get_state_set(current_widget);
