@@ -2387,10 +2387,23 @@ static void _view_content_changed(AtspiAccessible * root, void *user_data)
 
 static void _new_highlighted_obj_changed(AtspiAccessible * new_highlighted_obj, void *user_data)
 {
-	DEBUG("context: %p, current: %p, new_highlighted_obj: %p", context, flat_navi_context_current_get(context), new_highlighted_obj);
+	AtspiAccessible * current = flat_navi_context_current_get(context);
+	DEBUG("context: %p, current: %p, new_highlighted_obj: %p", context, current, new_highlighted_obj);
+
 	if (context && flat_navi_context_current_get(context) != new_highlighted_obj) {
 		flat_navi_context_current_set(context, g_object_ref(new_highlighted_obj));
+
+		if ((atspi_accessible_get_role(current, NULL) == ATSPI_ROLE_PUSH_BUTTON || atspi_accessible_get_role(current, NULL) == ATSPI_ROLE_EDITBAR) && atspi_accessible_get_role(new_highlighted_obj, NULL) == ATSPI_ROLE_ENTRY) {
+			char *text_to_speak = NULL;
+			text_to_speak = generate_what_to_read(new_highlighted_obj);
+
+			DEBUG("SPEAK:%s", text_to_speak);
+
+			tts_speak(text_to_speak, EINA_TRUE);
+			g_free(text_to_speak);
+		}
 	}
+	g_object_unref(current);
 }
 
 void clear(gpointer d)
