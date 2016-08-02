@@ -19,7 +19,7 @@ BuildRequires:  pkgconfig(ecore-wayland)
 BuildRequires:  pkgconfig(eina)
 BuildRequires:  pkgconfig(eldbus)
 BuildRequires:  pkgconfig(elementary)
-BuildRequires:  pkgconfig(capi-media-tone-player)
+BuildRequires:  pkgconfig(capi-media-wav-player)
 BuildRequires:  pkgconfig(capi-system-device)
 BuildRequires:  tts
 BuildRequires:  tts-devel
@@ -87,5 +87,6 @@ rm -rf %{buildroot}
 %manifest org.tizen.screen-reader.manifest
 %{AppDir}/bin/screen-reader
 %{AppDir}/res/icons/screen-reader.png
+%{AppDir}/res/sounds/*
 %{AppDir}/res/locale/*/LC_MESSAGES/*
 %{DataDir}/packages/%{name}.xml
