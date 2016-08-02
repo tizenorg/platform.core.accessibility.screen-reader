@@ -99,6 +99,7 @@ static int counter = 0;
 int _last_hover_event_time = -1;
 extern bool read_description;
 extern bool haptic;
+extern bool sound_feedback;
 
 static struct {
 	AtspiAccessible *focused_object;
@@ -996,7 +997,18 @@ static void _current_highlight_object_set(AtspiAccessible * obj)
 			atspi_component_clear_highlight(current_comp, &err);
 		}
 
-		smart_notification(HIGHLIGHT_NOTIFICATION_EVENT, 0, 0);
+		if (sound_feedback) {
+			AtspiAction *action = atspi_accessible_get_action_iface(obj);
+			if (action) {
+				DEBUG("Shilpa SPEAK:HIGHLIGHT_NOTIFICATION_EVENT_ACTIONABLE");
+				smart_notification(HIGHLIGHT_NOTIFICATION_EVENT_ACTIONABLE, 0, 0);
+			}
+			else {
+				DEBUG("Shilpa SPEAK:HIGHLIGHT_NOTIFICATION_EVENT");
+				smart_notification(HIGHLIGHT_NOTIFICATION_EVENT, 0, 0);
+			}
+		}
+
 		if (haptic)
 			haptic_vibrate_start(HAPTIC_VIBRATE_DURATION, HAPTIC_VIBRATE_INTENSITY);
 
@@ -1401,6 +1413,9 @@ static void _activate_widget(void)
 	}
 
 	display_info_about_object(current_widget, false);
+	if (sound_feedback) {
+		smart_notification(ACTION_NOTIFICATION_EVENT, 0, 0);
+	}
 
 	edit = atspi_accessible_get_editable_text_iface(current_widget);
 	if (edit) {
@@ -1410,7 +1425,7 @@ static void _activate_widget(void)
 			if (atspi_component_grab_focus(focus_component, &err) == TRUE) {
 				GERROR_CHECK(err)
 
-					DEBUG("Entry activated\n");
+				DEBUG("Entry activated\n");
 
 				char *text_to_speak = NULL;
 				text_to_speak = generate_what_to_read(current_widget);
@@ -1702,6 +1717,8 @@ static void _read_quickpanel(void)
 
 	device_date_get();
 	device_missed_events_get();
+	if (sound_feedback)
+		smart_notification(CONTEXTUAL_MENU_NOTIFICATION_EVENT, 0, 0);
 	DEBUG("END");
 }
 #endif
@@ -1838,7 +1855,8 @@ static void _direct_scroll_back(void)
 	if (index <= 0) {
 		DEBUG("first element");
 		obj = atspi_accessible_get_child_at_index(parent, 0, NULL);
-		smart_notification(FOCUS_CHAIN_END_NOTIFICATION_EVENT, 0, 0);
+		if (sound_feedback)
+			smart_notification(FOCUS_CHAIN_END_NOTIFICATION_EVENT, 0, 0);
 	}
 
 	else {
@@ -1897,7 +1915,8 @@ static void _direct_scroll_forward(void)
 	if (index >= children_count) {
 		DEBUG("last element");
 		obj = atspi_accessible_get_child_at_index(parent, children_count - 1, NULL);
-		smart_notification(FOCUS_CHAIN_END_NOTIFICATION_EVENT, 0, 0);
+		if (sound_feedback)
+			smart_notification(FOCUS_CHAIN_END_NOTIFICATION_EVENT, 0, 0);
 	}
 
 	else {
@@ -2103,6 +2122,9 @@ static void _move_slider(Gesture_Info * gi)
 		prepared = false;
 		return;
 	}
+
+	if (sound_feedback)
+		smart_notification(LONG_PRESS_NOTIFICATION_EVENT, 0, 0);
 
 	if (gi->state == 0) {
 		comp = atspi_accessible_get_component_iface(obj);
@@ -2421,6 +2443,8 @@ static void _view_content_changed(AtspiAccessible * root, void *user_data)
 	default :
 		break;
 	}
+	if (sound_feedback)
+		smart_notification(WINDOW_STATE_CHANGE_NOTIFICATION_EVENT, 0, 0);
 }
 
 static void _new_highlighted_obj_changed(AtspiAccessible * new_highlighted_obj, void *user_data)

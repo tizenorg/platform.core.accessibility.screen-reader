@@ -21,7 +21,7 @@ pkg_check_modules(tests REQUIRED
     check
     vconf
     elementary
-    capi-media-tone-player
+    capi-media-wav-player
     capi-system-device
 )
 
