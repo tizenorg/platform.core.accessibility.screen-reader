@@ -35,6 +35,7 @@ keylist_t *keys = NULL;
 bool read_description = true;
 bool haptic = true;
 bool keyboard_feedback = true;
+bool sound_feedback = true;
 
 // ------------------------------ vconf callbacks----------------------
 
@@ -133,6 +134,20 @@ void keyboard_feedback_cb(keynode_t * node, void *user_data)
 	DEBUG("END");
 }
 
+void sound_feedback_cb(keynode_t * node, void *user_data)
+{
+	DEBUG("START");
+	DEBUG("Trying to set sound feedback to: %d", vconf_keynode_get_bool(node));
+	int snd_feedback = 1;
+	int ret = vconf_get_bool("db/setting/accessibility/screen_reader/sound_feedback", &snd_feedback);
+	if (ret != 0) {
+		ERROR("ret == %d", ret);
+		return;
+	}
+	sound_feedback = snd_feedback;
+	DEBUG("END");
+}
+
 void _set_vconf_key_changed_callback_reader_haptic()
 {
 	DEBUG("START");
@@ -186,7 +201,26 @@ void _set_vconf_key_changed_callback_reader_keyboard_feedback()
 	if (ret != 0)
 		DEBUG("Could not add notify callback to db/setting/accessibility/screen_reader/keyboard_feedback key");
 
-DEBUG("END");
+	DEBUG("END");
+}
+
+void _set_vconf_key_changed_callback_reader_sound_feedback()
+{
+	DEBUG("START");
+
+	int snd_feedback = 0;
+	int ret = vconf_get_bool("db/setting/accessibility/screen_reader/sound_feedback", &snd_feedback);
+	if (ret != 0) {
+		ERROR("ret == %d", ret);
+		return;
+	}
+	sound_feedback = snd_feedback;
+	DEBUG("sound feedback status %d ",sound_feedback);
+	ret = vconf_notify_key_changed("db/setting/accessibility/screen_reader/sound_feedback", sound_feedback_cb, NULL);
+	if (ret != 0)
+		DEBUG("Could not add notify callback to db/setting/accessibility/screen_reader/sound_feedback key");
+
+	DEBUG("END");
 }
 
 bool vconf_init(Service_Data * service_data)
@@ -212,6 +246,7 @@ bool vconf_init(Service_Data * service_data)
 	_set_vconf_key_changed_callback_reader_description();
 	_set_vconf_key_changed_callback_reader_haptic();
 	_set_vconf_key_changed_callback_reader_keyboard_feedback();
+	_set_vconf_key_changed_callback_reader_sound_feedback();
 
 	DEBUG("---------------------- VCONF_init END ----------------------\n\n");
 	return true;
@@ -223,4 +258,5 @@ void vconf_exit()
 	_unset_vconf_callback("db/setting/accessibility/screen_reader/keyboard_feedback", keyboard_feedback_cb);
 	_unset_vconf_callback("db/setting/accessibility/screen_reader/haptic", haptic_changed_cb);
 	_unset_vconf_callback("db/setting/accessibility/screen_reader/description", reader_description_cb);
+	_unset_vconf_callback("db/setting/accessibility/screen_reader/sound_feedback", sound_feedback_cb);
 }

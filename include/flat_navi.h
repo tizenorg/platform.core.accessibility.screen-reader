@@ -3,6 +3,7 @@
 
 #include <atspi/atspi.h>
 #include <Eina.h>
+#include <stdbool.h>
 
 typedef struct _FlatNaviContext FlatNaviContext;
 
