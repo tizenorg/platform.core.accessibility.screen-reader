@@ -43,6 +43,14 @@ static AtspiEventListener *_listener;
 static AppTrackerEventCB _new_obj_highlighted_callback;
 extern bool keyboard_feedback;
 
+enum Reading_Info
+{
+   ACCESSIBLE_INFO_NAME = 1 << 0,
+   ACCESSIBLE_INFO_ROLE = 1 << 1,
+   ACCESSIBLE_INFO_DESCRIPTION = 1 << 2,
+   ACCESSIBLE_INFO_STATE = 1 << 3
+};
+
 static int _is_descendant(AtspiAccessible * ancestor, AtspiAccessible * descendant)
 {
 	return 1;
@@ -171,6 +179,50 @@ static void _on_atspi_event_cb(const AtspiEvent * event)
 	}
 
 	_print_event_object_info(event);
+
+	//getting attributes of event->source
+	char **list;
+	unsigned int n = 0;
+	int i = 0;
+	unsigned short int attribute = 0;
+	GHashTable *hash_table = NULL;
+	gchar *reading_info = NULL;
+
+	hash_table = atspi_accessible_get_attributes(event->source, NULL);
+	if (hash_table) {
+		reading_info = g_hash_table_lookup(hash_table, "reading_information");
+		if (reading_info)
+		{
+			list = eina_str_split_full(reading_info, "|", 100, &n);
+			for (i = 0; i < n; i++)
+			{
+				if (!strcmp(list[i], "name"))
+				{
+					attribute = attribute | (ACCESSIBLE_INFO_NAME);
+				}
+				else if (!strcmp(list[i], "role"))
+				{
+					attribute = attribute | (ACCESSIBLE_INFO_ROLE);
+				}
+				else if (!strcmp(list[i], "description"))
+				{
+					attribute = attribute | (ACCESSIBLE_INFO_DESCRIPTION);
+				}
+				else if (!strcmp(list[i], "state"))
+				{
+					attribute = attribute | (ACCESSIBLE_INFO_STATE);
+				}
+			}
+		}
+	}
+	if (!hash_table || !reading_info) {
+		attribute = attribute | (ACCESSIBLE_INFO_NAME) |
+				(ACCESSIBLE_INFO_ROLE) | (ACCESSIBLE_INFO_DESCRIPTION) | (ACCESSIBLE_INFO_STATE);
+	}
+	if (reading_info) g_free(reading_info);
+	if (hash_table) g_hash_table_unref(hash_table);
+	//
+
 #ifndef X11_ENABLED
 	if (!strcmp(event->type, "object:bounds-changed")
 		&& (atspi_accessible_get_role(event->source, NULL) == ATSPI_ROLE_INPUT_METHOD_WINDOW)) {
@@ -239,7 +291,7 @@ static void _on_atspi_event_cb(const AtspiEvent * event)
 		}
 
 	}
-	if (!strcmp(event->type, "object:property-change:accessible-name") && _object_has_highlighted_state(event->source)) {
+	if (!strcmp(event->type, "object:property-change:accessible-name") && _object_has_highlighted_state(event->source) && (attribute & ACCESSIBLE_INFO_NAME)) {
 		gchar *name = atspi_accessible_get_name(event->source, NULL);
 		DEBUG("New name for object, read:%s", name);
 		tts_speak (name, EINA_TRUE);
@@ -262,7 +314,7 @@ static void _on_atspi_event_cb(const AtspiEvent * event)
 	}
 	//
 
-	if (!strcmp(event->type, "object:state-changed:animated") && (atspi_accessible_get_role(event->source, NULL) == ATSPI_ROLE_LIST_ITEM)) {
+	if (!strcmp(event->type, "object:state-changed:animated") && (atspi_accessible_get_role(event->source, NULL) == ATSPI_ROLE_LIST_ITEM) && (attribute & ACCESSIBLE_INFO_DESCRIPTION)) {
 		GError *err = NULL;
 		char buf[256] = "\0";
 		gint idx = atspi_accessible_get_index_in_parent(event->source, &err);
@@ -274,7 +326,7 @@ static void _on_atspi_event_cb(const AtspiEvent * event)
 		g_error_free(err);
 	}
 
-	if (!strcmp(event->type, "object:state-changed:checked")) {
+	if (!strcmp(event->type, "object:state-changed:checked") && (attribute & ACCESSIBLE_INFO_STATE)) {
 		char buf[256] = "\0";
 		gchar *name = atspi_accessible_get_name(event->source, NULL);
 		strncat(buf, name, sizeof(buf) - strlen(buf) - 1);
@@ -287,7 +339,7 @@ static void _on_atspi_event_cb(const AtspiEvent * event)
 		g_free(name);
 	}
 
-	if (!strcmp(event->type, "object:state-changed:selected") && (atspi_accessible_get_role(event->source, NULL) == ATSPI_ROLE_MENU_ITEM)) {
+	if (!strcmp(event->type, "object:state-changed:selected") && (atspi_accessible_get_role(event->source, NULL) == ATSPI_ROLE_MENU_ITEM) && (attribute & ACCESSIBLE_INFO_STATE)) {
 		char buf[256] = "\0";
 		char tab_index[16] = "\0";
 		AtspiAccessible *parent = atspi_accessible_get_parent(event->source, NULL);
