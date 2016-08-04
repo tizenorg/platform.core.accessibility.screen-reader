@@ -23,6 +23,8 @@ SET(SRCS ${CMAKE_SOURCE_DIR}/src/app_tracker.c
 INCLUDE(CMakeLists.sub)
 SET(RESOURCE_DIR "${CMAKE_SOURCE_DIR}/res")
 SET(LOCALEDIR "${TZ_SYS_RO_APP}/org.tizen.screen-reader/res/locale")
+SET(SOUNDDIR "${TZ_SYS_RO_APP}/org.tizen.screen-reader/res/sounds")
+ADD_DEFINITIONS("-D_TZ_SYS_RO_APP=\"${TZ_SYS_RO_APP}\"")
 
 IF("${SEC_FEATURE_TAPI_ENABLE}" STREQUAL "1")
     MESSAGE("SEC_FEATURE_TAPI_ENABLE: ${SEC_FEATURE_TAPI_ENABLE}")
@@ -58,7 +60,7 @@ pkg_check_modules(pkgs REQUIRED
 	dlog
 	vconf
 	tts
-	capi-media-tone-player
+	capi-media-wav-player
 	capi-system-device
 	capi-network-bluetooth
 	notification
@@ -82,12 +84,14 @@ TARGET_LINK_LIBRARIES(${PROJECT_NAME} ${pkgs_LDFLAGS} ${SLP_LD_PATH_FLAGS} ${SLP
 
 # Install
 INSTALL(TARGETS ${PROJECT_NAME} DESTINATION bin)
-INSTALL(DIRECTORY ${RESOURCE_DIR}/icons DESTINATION res) 
+INSTALL(DIRECTORY ${RESOURCE_DIR}/icons DESTINATION res)
+INSTALL(DIRECTORY ${RESOURCE_DIR}/sounds DESTINATION res)
 # Install Manifest File
 configure_file(${CMAKE_CURRENT_SOURCE_DIR}/org.tizen.screen-reader.xml.in ${CMAKE_CURRENT_BINARY_DIR}/org.tizen.screen-reader.xml)
 INSTALL(FILES ${CMAKE_CURRENT_BINARY_DIR}/org.tizen.screen-reader.xml DESTINATION ${TZ_SYS_RO_PACKAGES})
 
 ADD_SUBDIRECTORY(${CMAKE_SOURCE_DIR}/res/po)
+ADD_SUBDIRECTORY(${CMAKE_SOURCE_DIR}/res/sounds)
 ADD_SUBDIRECTORY(${CMAKE_SOURCE_DIR}/tests)
 ADD_TEST(NAME smart_navi_tests COMMAND ${CMAKE_SOURCE_DIR}/tests/smart_navi_test_suite)
 # END OF A FILE
